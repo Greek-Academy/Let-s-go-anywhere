@@ -4,6 +4,7 @@ import { MobileFrame } from './components/MobileFrame'
 import { EmptyState, Header } from './components/ui'
 import { Onboarding, Welcome } from './screens/Onboarding'
 import { Discover, EventDetail } from './screens/Discover'
+import { Arrival } from './screens/Arrival'
 import { Saved } from './screens/Saved'
 import { Cars, StationDetail } from './screens/Cars'
 import { CheckSetup, Learn, LearningDetail, Quiz, Results } from './screens/Learning'
@@ -50,6 +51,7 @@ function AppRoutes() {
         <Route path="/onboarding/:step" element={<Onboarding />} />
         <Route path="/discover" element={<Discover />} />
         <Route path="/events/:id" element={<EventDetail />} />
+        <Route path="/events/:id/arrival" element={<Arrival />} />
         <Route path="/saved" element={<Saved />} />
         <Route path="/cars" element={<Cars />} />
         <Route path="/stations/:id" element={<StationDetail />} />
