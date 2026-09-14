@@ -89,6 +89,7 @@ export interface Consultation {
 export interface SavedLink {
   id: string
   url: string
+  originalUrl?: string
   title: string
   source: string
   addedAt: string

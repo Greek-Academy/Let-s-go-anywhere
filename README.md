@@ -4,6 +4,8 @@
 
 ## 起動
 
+追加開発の操作手順・画像・本番化の残作業は [下見・お出かけ条件・SNS保存のレビュー](docs/reviews/development-batch-1/README.md) にまとめています。
+
 Node.js **24.20.0**、npm **11.19.0**で動作確認しています。Node.jsの指定は`.nvmrc`、npmの指定は`package.json`に記載しています。
 
 ```bash
