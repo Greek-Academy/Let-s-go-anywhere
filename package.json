@@ -1,0 +1,37 @@
+{
+  "name": "driveplus-mobile-mock",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "npm@11.19.0",
+  "engines": {
+    "node": "24.20.x",
+    "npm": "11.19.x"
+  },
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test:e2e": "playwright test",
+    "test:report": "playwright show-report",
+    "capture:ui": "node scripts/capture-ui.mjs",
+    "format": "prettier --write src tests scripts .github CONTRIBUTING.md *.ts *.json index.html",
+    "format:check": "prettier --check src tests scripts .github CONTRIBUTING.md *.ts *.json index.html"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.8.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "prettier": "3.9.6",
+    "typescript": "~5.9.2",
+    "vite": "^7.1.5"
+  }
+}
