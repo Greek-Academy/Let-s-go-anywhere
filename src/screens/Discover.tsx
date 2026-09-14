@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   ArrowLeft,
@@ -17,9 +17,20 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { normalizeSavedUrl, savedUrlKey } from '../domain/savedUrls'
 import { outings } from '../data/mockData'
 import type { Outing } from '../data/types'
 import { useApp } from '../state/AppState'
+import { ConditionsSheet, ConditionReasons, OutingConditions } from '../components/TripConditions'
+import {
+  evaluateConditions,
+  hasConditions,
+  overallMatch,
+  matchLabels,
+} from '../domain/tripConditions'
+import type { ConditionFilter } from '../domain/tripConditions'
+import { tripFacts } from '../data/tripFacts'
+import { ArrivalTeaser } from './Arrival'
 import { EventCard } from '../components/Cards'
 import {
   BottomSheet,
@@ -38,33 +49,22 @@ import {
 
 export function SnsSheet({ onClose }: { onClose: () => void }) {
   const { state, update, toast } = useApp()
+  const navigate = useNavigate()
+  const errorId = useId()
+  const [duplicate, setDuplicate] = useState(false)
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
   const [error, setError] = useState('')
   const submit = (e: FormEvent) => {
     e.preventDefault()
     try {
-      const parsed = new URL(url.trim())
-      if (
-        !['https:', 'http:'].includes(parsed.protocol) ||
-        !parsed.hostname.includes('.') ||
-        parsed.username ||
-        parsed.password
-      )
-        throw new Error()
-      const clean = parsed.toString()
-      if (state.links.some((l) => l.url === clean)) {
-        setError('このリンクはすでに保存されています。')
+      const normalized = normalizeSavedUrl(url)
+      if (state.links.some((l) => savedUrlKey(l.url) === normalized.key)) {
+        setDuplicate(true)
+        setError('この投稿はすでに保存されています。保存済みの内容を確認できます。')
         return
       }
-      const host = parsed.hostname.replace(/^www\./, '')
-      const source = host.endsWith('tiktok.com')
-        ? 'TikTok'
-        : ['x.com', 'twitter.com'].includes(host)
-          ? 'X'
-          : host.endsWith('instagram.com')
-            ? 'Instagram'
-            : host
+      const { url: clean, source } = normalized
       update((s) => ({
         ...s,
         links: [
@@ -72,6 +72,7 @@ export function SnsSheet({ onClose }: { onClose: () => void }) {
           {
             id: crypto.randomUUID(),
             url: clean,
+            originalUrl: url.trim(),
             title: title.trim() || `${source}で見つけたお出かけ`,
             source,
             addedAt: new Date().toISOString(),
@@ -80,8 +81,8 @@ export function SnsSheet({ onClose }: { onClose: () => void }) {
       }))
       toast('リンクを行きたいに保存しました')
       onClose()
-    } catch {
-      setError('https:// で始まる有効なURLを入力してください。')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'URLを確認してください。')
     }
   }
   return (
@@ -96,15 +97,19 @@ export function SnsSheet({ onClose }: { onClose: () => void }) {
           ここに残しておきましょう。
         </p>
       </div>
-      <form onSubmit={submit}>
+      <form onSubmit={submit} noValidate>
         <label className="field-label">
           投稿のURL
           <input
             autoFocus
             type="url"
+            maxLength={2048}
+            aria-invalid={!!error}
+            aria-describedby={error ? errorId : undefined}
             value={url}
             onChange={(e) => {
               setUrl(e.target.value)
+              setDuplicate(false)
               setError('')
             }}
             placeholder="https://www.tiktok.com/..."
@@ -121,9 +126,20 @@ export function SnsSheet({ onClose }: { onClose: () => void }) {
           />
         </label>
         {error && (
-          <p className="field-error" role="alert">
+          <p className="field-error" role="alert" id={errorId}>
             {error}
           </p>
+        )}
+        {duplicate && (
+          <PrimaryButton
+            variant="secondary"
+            onClick={() => {
+              onClose()
+              navigate('/saved?type=events')
+            }}
+          >
+            保存済みリンクを見る
+          </PrimaryButton>
         )}
         <div className="notice">
           「リンクとして保存・内容未確認」で残します。開催日や場所を自動で補完することはありません。
@@ -138,6 +154,7 @@ export function SnsSheet({ onClose }: { onClose: () => void }) {
 export function Discover() {
   const { state, update } = useApp()
   const navigate = useNavigate()
+  const [conditionsOpen, setConditionsOpen] = useState(false)
   const [sns, setSns] = useState(false)
   const [filter, setFilter] = useState(false)
   const [reason, setReason] = useState<Outing | null>(null)
@@ -146,7 +163,10 @@ export function Discover() {
   const { category, search, tag } = state.discover
   const setFilterState = (value: Partial<typeof state.discover>) =>
     update((s) => ({ ...s, discover: { ...s.discover, ...value } }))
-  const filtered = outings
+  const conditionsActive = hasConditions(state.searchConditions)
+  const matchResults = (id: string) =>
+    evaluateConditions(state.searchConditions, tripFacts[id], state.profile.area)
+  const candidates = outings
     .filter(
       (o) =>
         !state.hiddenEvents.includes(o.id) &&
@@ -162,6 +182,12 @@ export function Discover() {
         b.tags.filter((t) => state.profile.interests.includes(t)).length -
         a.tags.filter((t) => state.profile.interests.includes(t)).length,
     )
+  const filtered = candidates.filter(
+    (o) =>
+      !conditionsActive ||
+      state.conditionFilter === 'all' ||
+      overallMatch(matchResults(o.id)) === state.conditionFilter,
+  )
   const openCars = () => {
     update((s) => ({ ...s, map: { ...s.map, area: s.profile.area, query: '', selected: null } }))
     navigate('/cars')
@@ -202,6 +228,47 @@ export function Discover() {
             onClick={() => setFilter(true)}
           />
         </div>
+        <button
+          className="condition-edit-button discovery-conditions"
+          onClick={() => setConditionsOpen(true)}
+        >
+          <SlidersHorizontal size={18} />
+          <span>
+            <strong>今回のお出かけ条件</strong>
+            <small>
+              {conditionsActive ? '時間・予算・避けたい場面を変更' : '無理のない休日の条件を決める'}
+            </small>
+          </span>
+          <ChevronDown size={16} />
+        </button>
+        {conditionsActive && (
+          <div className="condition-filter">
+            <p className="small muted">確認状態で絞り込み（架空の条件データ）</p>
+            <div className="chips wrap">
+              {(
+                [
+                  ['all', 'すべて'],
+                  ['match', '確認済みで合う'],
+                  ['unknown', '未確認'],
+                  ['mismatch', '合わない'],
+                ] as [ConditionFilter, string][]
+              ).map(([value, label]) => (
+                <Chip
+                  key={value}
+                  selected={state.conditionFilter === value}
+                  onClick={() => update((s) => ({ ...s, conditionFilter: value }))}
+                >
+                  {label}{' '}
+                  {
+                    candidates.filter(
+                      (o) => value === 'all' || overallMatch(matchResults(o.id)) === value,
+                    ).length
+                  }
+                </Chip>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="chips discovery-chips">
           {['おすすめ', '今週末', 'イベント', 'スポット'].map((c) => (
             <Chip selected={c === category} key={c} onClick={() => setFilterState({ category: c })}>
@@ -234,15 +301,35 @@ export function Discover() {
         />
         <div className="event-list">
           {filtered.map((o) => (
-            <EventCard key={o.id} outing={o} onMore={() => setReason(o)} />
+            <div key={o.id}>
+              <EventCard outing={o} onMore={() => setReason(o)} />
+              {conditionsActive && (
+                <button className="condition-summary" onClick={() => setReason(o)}>
+                  <Tag tone={overallMatch(matchResults(o.id)) === 'mismatch' ? 'peach' : 'neutral'}>
+                    {matchLabels[overallMatch(matchResults(o.id))]}
+                  </Tag>{' '}
+                  条件の理由を見る <ArrowRight size={13} />
+                </button>
+              )}
+            </div>
           ))}
         </div>
         {filtered.length === 0 && (
           <EmptyState
             title="ぴったりの候補が見つかりません"
-            description="検索する言葉や興味の条件を変えてみましょう。"
-            action="条件をリセット"
-            onAction={() => setFilterState({ category: 'おすすめ', search: '', tag: '' })}
+            description={
+              conditionsActive
+                ? '未確認や合わない理由も確認できます。条件の見直しや、別の候補・移動方法を検討してみましょう。'
+                : '検索する言葉や興味の条件を変えてみましょう。'
+            }
+            action={conditionsActive ? 'すべての確認状態を見る' : '条件をリセット'}
+            onAction={() =>
+              update((s) => ({
+                ...s,
+                discover: { category: 'おすすめ', search: '', tag: '' },
+                conditionFilter: 'all',
+              }))
+            }
           />
         )}
         <button className="sns-banner" onClick={() => setSns(true)}>
@@ -272,6 +359,13 @@ export function Discover() {
           </p>
         </div>
       </div>
+      {conditionsOpen && (
+        <ConditionsSheet
+          value={state.searchConditions}
+          onClose={() => setConditionsOpen(false)}
+          onSave={(v) => update((s) => ({ ...s, searchConditions: v, conditionFilter: 'all' }))}
+        />
+      )}
       {sns && <SnsSheet onClose={() => setSns(false)} />}
       {filter && (
         <BottomSheet title="お出かけの絞り込み" onClose={() => setFilter(false)}>
@@ -295,6 +389,7 @@ export function Discover() {
       {reason && (
         <BottomSheet title="このお出かけについて" onClose={() => setReason(null)}>
           <h3>{reason.title}</h3>
+          {conditionsActive && <ConditionReasons results={matchResults(reason.id)} />}
           <p className="body-copy">
             {reason.tags.some((t) => state.profile.interests.includes(t))
               ? `登録した「${reason.tags.filter((t) => state.profile.interests.includes(t)).join('・')}」に合うお出かけサンプルです。`
@@ -464,6 +559,8 @@ export function EventDetail() {
           チェックをせずに講習を探す <ArrowRight size={14} />
         </button>
         <div className="divider" />
+        <ArrivalTeaser outingId={outing.id} />
+        <OutingConditions outingId={outing.id} />
         <SectionHeading title="お出かけの基本情報" />
         <InfoRows
           rows={[
