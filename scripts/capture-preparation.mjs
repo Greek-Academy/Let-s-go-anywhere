@@ -1,0 +1,41 @@
+import { chromium, expect } from '@playwright/test'
+import { mkdir } from 'node:fs/promises'
+const browser = await chromium.launch({ headless: true })
+const dir = 'docs/reviews/development-batch-1'
+await mkdir(dir, { recursive: true })
+const context = await browser.newContext({
+  viewport: { width: 402, height: 874 },
+  deviceScaleFactor: 1,
+  locale: 'ja-JP',
+})
+const page = await context.newPage()
+await page.clock.install({ time: new Date('2026-09-14T03:00:00Z') })
+await page.goto('http://localhost:5173/#/welcome')
+await page.getByRole('button', { name: 'まずは見てみる' }).click()
+await page.goto('http://localhost:5173/#/events/fuji/arrival')
+await page.screenshot({ path: `${dir}/arrival.png`, animations: 'disabled' })
+await page.goto('http://localhost:5173/#/discover')
+await page.getByRole('button', { name: /今回のお出かけ条件/ }).click()
+await page.getByLabel('お出かけ日').fill('2026-09-19')
+await page.getByLabel('出発時刻', { exact: true }).fill('09:00')
+await page.getByLabel('帰宅希望時刻').fill('18:00')
+await page.getByLabel('1人あたりの予算（円）').fill('8000')
+await page.getByRole('button', { name: '夜間', exact: true }).click()
+await page.screenshot({ path: `${dir}/conditions-input.png`, animations: 'disabled' })
+await page.getByRole('button', { name: '条件を保存', exact: true }).click()
+await page.getByRole('button', { name: '確認済みで合う 1', exact: true }).click()
+await page.screenshot({ path: `${dir}/conditions-results.png`, animations: 'disabled' })
+await page.getByRole('button', { name: /条件の理由を見る/ }).click()
+await page.screenshot({ path: `${dir}/conditions-reasons.png`, animations: 'disabled' })
+await page.getByRole('button', { name: '閉じる', exact: true }).click()
+await page.goto('http://localhost:5173/#/saved')
+await page.getByRole('button', { name: 'SNSで見つけた場所を追加', exact: true }).click()
+await page.getByLabel('投稿のURL').fill('https://twitter.com/sample/status/12345?s=20')
+await page.getByLabel(/自分用のタイトル/).fill('次の休日の候補')
+await page.getByRole('button', { name: '行きたいに追加', exact: true }).click()
+await page.getByRole('button', { name: 'SNSで見つけた場所を追加', exact: true }).click()
+await page.getByLabel('投稿のURL').fill('https://x.com/sample/status/12345/photo/1?t=tracking')
+await page.getByRole('button', { name: '行きたいに追加', exact: true }).click()
+await expect(page.locator('.toast')).not.toHaveClass(/visible/)
+await page.screenshot({ path: `${dir}/sns-duplicate.png`, animations: 'disabled' })
+await browser.close()
