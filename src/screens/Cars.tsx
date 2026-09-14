@@ -1,3 +1,4 @@
+import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -16,7 +17,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
-import { providers, stations } from '../data/mockData'
+
 import type { Station, StationType } from '../data/types'
 import type { AppState } from '../state/AppState'
 import { useApp } from '../state/AppState'
@@ -37,7 +38,7 @@ import {
   Tag,
 } from '../components/ui'
 
-export function filteredStations(map: AppState['map']) {
+export function filteredStations(map: AppState['map'], stations: readonly Station[]) {
   const area = map.area.includes('新宿')
     ? '新宿'
     : map.area.includes('渋谷') || map.area === '東京'
@@ -51,6 +52,8 @@ export function filteredStations(map: AppState['map']) {
   )
 }
 export function Cars() {
+  const { stations } = useContent()
+  const providers = [...new Set(stations.map((station) => station.provider))]
   const { state, update, toast } = useApp()
   const navigate = useNavigate()
   const map = state.map
@@ -60,7 +63,7 @@ export function Cars() {
   const [external, setExternal] = useState<{ title: string; kind: 'official' | 'map' } | null>(null)
   const [draftType, setDraftType] = useState<StationType>(map.type)
   const [draftProviders, setDraftProviders] = useState(map.providers)
-  const filtered = filteredStations(map)
+  const filtered = filteredStations(map, stations)
   const selected = filtered.find((s) => s.id === map.selected)
   const preview = selected ?? filtered[0]
   const setMap = (patch: Partial<typeof map>) =>
@@ -398,6 +401,7 @@ export function Cars() {
   )
 }
 export function StationDetail() {
+  const { stations } = useContent()
   const { id } = useParams()
   const station = stations.find((s) => s.id === id)
   const navigate = useNavigate()

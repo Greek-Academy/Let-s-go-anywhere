@@ -1,9 +1,10 @@
+import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
 import { ArrowRight, CameraOff, CarFront, MapPin } from 'lucide-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { arrivalGuides, unknownFact } from '../data/arrivalGuides'
+import { unknownFact } from '../domain/evidence'
 import type { ArrivalPhoto } from '../data/arrivalGuides'
-import { outings } from '../data/mockData'
+
 import { confirmedValue, evidenceLabels, evidenceState } from '../domain/evidence'
 import type { Evidence } from '../domain/evidence'
 import {
@@ -118,6 +119,7 @@ export function ArrivalTeaser({ outingId }: { outingId: string }) {
 }
 
 export function Arrival() {
+  const { outings, arrivalGuides } = useContent()
   const { id } = useParams()
   const navigate = useNavigate()
   const [external, setExternal] = useState(false)

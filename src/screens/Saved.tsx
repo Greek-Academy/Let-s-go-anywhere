@@ -1,7 +1,8 @@
+import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, CarFront, ChevronRight, Heart, Link2, Plus, Trash2 } from 'lucide-react'
-import { outings, stations } from '../data/mockData'
+
 import { useApp } from '../state/AppState'
 import { StationCard } from '../components/Cards'
 import {
@@ -16,6 +17,7 @@ import {
 import { SnsSheet } from './Discover'
 
 export function Saved() {
+  const { outings, stations } = useContent()
   const { state, update, toggleEvent, toast } = useApp()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()

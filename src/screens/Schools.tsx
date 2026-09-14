@@ -1,3 +1,4 @@
+import { useContent } from '../content/ContentProvider'
 import { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
@@ -16,8 +17,8 @@ import {
   ShieldCheck,
   SlidersHorizontal,
 } from 'lucide-react'
-import { drivingSchools, sharingLabels } from '../data/mockData'
-import type { SharedField } from '../data/types'
+import { sharingLabels } from '../data/options'
+import type { SharedField, School, Question } from '../data/types'
 import type { AppState } from '../state/AppState'
 import { useApp } from '../state/AppState'
 import { SchoolCard } from '../components/Cards'
@@ -35,6 +36,7 @@ import {
 import { getResults } from './Learning'
 
 export function Schools() {
+  const { drivingSchools } = useContent()
   const { state, update } = useApp()
   const [filterOpen, setFilterOpen] = useState(false)
   const filters = state.schoolFilters
@@ -197,6 +199,7 @@ export function Schools() {
   )
 }
 export function SchoolDetail() {
+  const { drivingSchools } = useContent()
   const { id } = useParams()
   const school = drivingSchools.find((s) => s.id === id)
   const navigate = useNavigate()
@@ -290,12 +293,13 @@ export function SchoolDetail() {
     </div>
   )
 }
-function schoolFromId(id: string | undefined) {
+function schoolFromId(id: string | undefined, drivingSchools: readonly School[]) {
   return drivingSchools.find((s) => s.id === id)
 }
 export function ConsultationMemo() {
+  const { drivingSchools } = useContent()
   const { id } = useParams()
-  const school = schoolFromId(id)
+  const school = schoolFromId(id, drivingSchools)
   const navigate = useNavigate()
   const { state, update } = useApp()
   const memo = state.memo
@@ -391,8 +395,11 @@ export function ConsultationMemo() {
     </div>
   )
 }
-function sharedValues(state: AppState): Record<SharedField, string> {
-  const results = getResults(state.quiz)
+function sharedValues(
+  state: AppState,
+  quizQuestions: readonly Question[],
+): Record<SharedField, string> {
+  const results = getResults(state.quiz, quizQuestions)
   return {
     goal: state.memo.goal || '相談しながら決めたい',
     when: state.memo.when || '日時も含めて相談したい',
@@ -404,8 +411,9 @@ function sharedValues(state: AppState): Record<SharedField, string> {
   }
 }
 export function SharingReview() {
+  const { drivingSchools, quizQuestions } = useContent()
   const { id } = useParams()
-  const school = schoolFromId(id)
+  const school = schoolFromId(id, drivingSchools)
   const { state, update } = useApp()
   const navigate = useNavigate()
   const [selected, setSelected] = useState<SharedField[]>(['goal', 'when', 'vehicle', 'questions'])
@@ -423,7 +431,7 @@ export function SharingReview() {
         />
       </>
     )
-  const values = sharedValues(state)
+  const values = sharedValues(state, quizQuestions)
   const send = () => {
     if (!consent || !selected.length || sending.current) return
     sending.current = true
@@ -506,6 +514,7 @@ export function SharingReview() {
   )
 }
 export function ConsultationStatus() {
+  const { drivingSchools } = useContent()
   const { id } = useParams()
   const { state, update, toast } = useApp()
   const navigate = useNavigate()
@@ -523,7 +532,7 @@ export function ConsultationStatus() {
         />
       </>
     )
-  const school = schoolFromId(item.schoolId)
+  const school = schoolFromId(item.schoolId, drivingSchools)
   const accepted = item.status === '相談受付（デモ）'
   const cancelled = item.status === 'キャンセル（デモ）'
   return (

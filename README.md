@@ -21,9 +21,12 @@ npm run dev
 - もう一度最初から試す: 右上プロフィール → 設定 →「モックの保存データを削除」。
 
 ```bash
-npm run build      # TypeScriptの型チェックと本番形式のビルド
-npm run preview    # ビルドした静的ファイルの確認
+npm run build           # TypeScriptの型チェックとサンプル検証版のビルド
+npm run verify:preview  # 配信するファイル・設定の検査
+npm run preview         # ビルドした静的ファイルの確認（通常 http://localhost:4173）
 ```
+
+今回の結果と確認画像は [Issue #5・#14のレビュー](docs/reviews/static-preview/README.md) にまとめています。データ差し替えの構成、ビルド設定、CIで生成する配信ファイル、後日の配信・巻き戻し手順は [静的検証版のガイド](docs/STATIC_PREVIEW.md) を参照してください。外部サービスへの配信はまだ実施していません。
 
 ## 実装した画面
 
@@ -82,9 +85,14 @@ src/
     Cards.tsx                EventCard、StationCard、LessonCard、SchoolCard等
     RentalMap.tsx            SVG地図、ドラッグ、選択可能なピン
     RoadScene.tsx            SVG道路場面、確認箇所のマーク
+  content/
+    catalog.ts               掲載データの型・ID整合性検査・読み取り用スナップショット
+    sampleCatalog.ts         同梱サンプルを集約する入口
+    ContentProvider.tsx      各画面へのデータ供給
   data/
     types.ts                 API置き換え時にも使えるデータ型
     mockData.ts              お出かけ、拠点、設問、教材、講習会社等
+    options.ts               選択肢・初期プロフィール
   state/AppState.tsx          状態更新・localStorage・通知
   screens/                   各領域の画面実装
 public/images/               同梱したイメージ写真（実行時の外部取得なし）
@@ -113,13 +121,15 @@ localStorageキーは `driveplus.mock.v1`。初回回答、お出かけ・車の
 
 ```bash
 npx playwright install chromium
-npm run test:e2e
+npm run test:e2e     # 開発サーバーで操作を確認
+npm run build
+CI=true PLAYWRIGHT_PORT=5176 npm run test:preview  # 配信ファイルで確認
 npm run test:report  # 画像・操作結果付きHTMLレポートを開く
 ```
 
 PCとiPhone相当のモバイルサイズで、初回設定、5タブ、保存、SNS追加、チェック・未回答、学習履歴、地図と絞り込み、同意付き相談、プロフィール、振り返り、データ削除、戻る、フォーカス制御、横はみ出し、画像欠損を確認します。実機Safari・Android端末でのネイティブ動作は別途確認が必要です。
 
-GitHubのPRでも同じ確認を自動実行します。成功した各テストの操作後の画面と、失敗時の画像・トレースをHTMLレポートに保存します。CI実行画面のArtifactsからダウンロードでき、保持期間は14日です。Issueへの結果報告とレビューの手順は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
+GitHubのPRではビルド済みの静的ファイルを検査し、そのファイルで操作確認を自動実行します。成功した配信ファイルは `static-preview-<SHA>` Artifactに保存します（自動デプロイは行いません）。成功した各テストの操作後の画面と、失敗時の画像・トレースをHTMLレポートに保存します。CI実行画面のArtifactsからダウンロードでき、保持期間は14日です。Issueへの結果報告とレビューの手順は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
 
 スクリーンショットは開発サーバー起動中に再生成できます。
 

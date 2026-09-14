@@ -1,8 +1,9 @@
+import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { useApp } from '../state/AppState'
-import { tripFacts } from '../data/tripFacts'
+
 import {
   conditionsError,
   drivingScenes,
@@ -148,6 +149,7 @@ export function ConditionReasons({ results }: { results: ConditionResult[] }) {
 }
 
 export function OutingConditions({ outingId }: { outingId: string }) {
+  const { tripFacts } = useContent()
   const { state, update } = useApp()
   const [open, setOpen] = useState(false)
   const value = state.outingConditions[outingId] ?? emptyConditions()

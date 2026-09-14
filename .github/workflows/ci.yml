@@ -41,14 +41,25 @@ jobs:
       - name: Type-check and build
         run: npm run build
 
+      - name: Verify static preview artifact
+        run: npm run verify:preview -- --for-upload
+
       - name: Install Chromium and browser dependencies
         run: npx playwright install --with-deps chromium
 
       - name: Install Japanese fonts for screenshots
         run: sudo apt-get install --no-install-recommends -y fonts-noto-cjk
 
-      - name: Run desktop and mobile flows
-        run: npm run test:e2e
+      - name: Run desktop and mobile flows on the built preview
+        run: npm run test:preview
+
+      - name: Save tested static preview
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: static-preview-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload browser report and screenshots
         if: ${{ !cancelled() }}

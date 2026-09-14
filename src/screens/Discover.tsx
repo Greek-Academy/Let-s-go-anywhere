@@ -1,3 +1,4 @@
+import { useContent } from '../content/ContentProvider'
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
@@ -18,7 +19,7 @@ import {
 } from 'lucide-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { normalizeSavedUrl, savedUrlKey } from '../domain/savedUrls'
-import { outings } from '../data/mockData'
+
 import type { Outing } from '../data/types'
 import { useApp } from '../state/AppState'
 import { ConditionsSheet, ConditionReasons, OutingConditions } from '../components/TripConditions'
@@ -29,7 +30,7 @@ import {
   matchLabels,
 } from '../domain/tripConditions'
 import type { ConditionFilter } from '../domain/tripConditions'
-import { tripFacts } from '../data/tripFacts'
+
 import { ArrivalTeaser } from './Arrival'
 import { EventCard } from '../components/Cards'
 import {
@@ -152,6 +153,7 @@ export function SnsSheet({ onClose }: { onClose: () => void }) {
   )
 }
 export function Discover() {
+  const { outings, tripFacts } = useContent()
   const { state, update } = useApp()
   const navigate = useNavigate()
   const [conditionsOpen, setConditionsOpen] = useState(false)
@@ -434,6 +436,7 @@ export function Discover() {
   )
 }
 export function EventDetail() {
+  const { outings } = useContent()
   const { id } = useParams()
   const outing = outings.find((o) => o.id === id)
   const navigate = useNavigate()

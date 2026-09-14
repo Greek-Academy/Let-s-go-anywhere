@@ -1,3 +1,5 @@
+import type { Question } from '../data/types'
+import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
@@ -12,7 +14,7 @@ import {
   RotateCcw,
   Sparkles,
 } from 'lucide-react'
-import { experiences, learningContents, quizQuestions, scenarios } from '../data/mockData'
+import { experiences, scenarios } from '../data/options'
 import { useApp } from '../state/AppState'
 import type { AppState } from '../state/AppState'
 import { LessonCard } from '../components/Cards'
@@ -29,7 +31,7 @@ import {
   Tag,
 } from '../components/ui'
 
-export function getResults(quiz: AppState['quiz']) {
+export function getResults(quiz: AppState['quiz'], quizQuestions: readonly Question[]) {
   const known = quizQuestions.filter((q) => quiz.answers[q.id] === q.correct).map((q) => q.category)
   const review = quizQuestions
     .filter((q) => typeof quiz.answers[q.id] === 'number' && quiz.answers[q.id] !== q.correct)
@@ -129,6 +131,7 @@ export function CheckSetup() {
   )
 }
 export function Quiz() {
+  const { quizQuestions } = useContent()
   const { index: raw } = useParams()
   const index = Number(raw)
   const q = quizQuestions[index]
@@ -211,9 +214,10 @@ export function Quiz() {
   )
 }
 export function Results() {
+  const { quizQuestions } = useContent()
   const { state, update } = useApp()
   const navigate = useNavigate()
-  const result = getResults(state.quiz)
+  const result = getResults(state.quiz, quizQuestions)
   const [explanationsOpen, setExplanationsOpen] = useState(false)
   const groups = [
     {
@@ -353,11 +357,13 @@ export function Results() {
   )
 }
 export function Learn() {
+  const { learningContents, quizQuestions } = useContent()
   const [use, setUse] = useState('すべて')
   const { state } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
-  const recommended: string[] = location.state?.recommended ?? getResults(state.quiz).review
+  const recommended: string[] =
+    location.state?.recommended ?? getResults(state.quiz, quizQuestions).review
   const filtered = learningContents
     .filter((l) => use === 'すべて' || l.uses.includes(use))
     .sort(
@@ -418,6 +424,7 @@ export function Learn() {
   )
 }
 export function LearningDetail() {
+  const { learningContents } = useContent()
   const { id } = useParams()
   const lesson = learningContents.find((l) => l.id === id)
   const [params, setParams] = useSearchParams()

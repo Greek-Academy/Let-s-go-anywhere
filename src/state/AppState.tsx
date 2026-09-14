@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { userProfile } from '../data/mockData'
+import { userProfile } from '../data/options'
 import type {
   Consultation,
   ConsultationMemo,
