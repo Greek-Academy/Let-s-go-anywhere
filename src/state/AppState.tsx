@@ -10,8 +10,14 @@ import type {
   UserProfile,
 } from '../data/types'
 
+import { emptyConditions } from '../domain/tripConditions'
+import type { TripConditions, ConditionFilter } from '../domain/tripConditions'
+
 export const STORAGE_KEY = 'driveplus.mock.v1'
 export interface AppState {
+  searchConditions: TripConditions
+  conditionFilter: ConditionFilter
+  outingConditions: Record<string, TripConditions>
   onboarded: boolean
   profile: UserProfile
   savedEvents: string[]
@@ -44,6 +50,9 @@ export interface AppState {
   settings: { largeText: boolean; reducedMotion: boolean }
 }
 export const createInitialState = (): AppState => ({
+  searchConditions: emptyConditions(),
+  conditionFilter: 'all',
+  outingConditions: {},
   onboarded: false,
   profile: { ...userProfile, interests: [] },
   savedEvents: [],
@@ -86,6 +95,7 @@ function readState(): AppState {
     return {
       ...initial,
       ...data,
+      searchConditions: { ...initial.searchConditions, ...data.searchConditions },
       profile: { ...initial.profile, ...data.profile },
       map: { ...initial.map, ...data.map },
       quiz: { ...initial.quiz, ...data.quiz },
