@@ -30,11 +30,12 @@ Linuxでブラウザの依存パッケージも入れる場合は`npx playwright
 ```bash
 npm run format:check
 npm run build
-npm run test:e2e
+npm run verify:preview
+CI=true PLAYWRIGHT_PORT=5176 npm run test:preview
 npm run test:report
 ```
 
-E2Eは必要に応じてViteを起動します。PCとスマートフォン幅のChromiumで既存の操作フローを確認します。実機Safari・Androidの動作を保証するテストではありません。
+`test:preview` はビルド済みの静的ファイルでVite previewを起動します。開発中にVite開発サーバーで確認する場合は `npm run test:e2e` を使います。PCとスマートフォン幅のChromiumで既存の操作フローを確認します。実機Safari・Androidの動作を保証するテストではありません。
 
 起動中の開発サーバーから分離して確認する場合は、`CI=true PLAYWRIGHT_PORT=5175 npm run test:e2e`を使用します。CIでは既存サーバーを再利用せず、指定したポートで対象チェックアウトのアプリを起動します。
 
@@ -52,7 +53,9 @@ npx playwright show-report /path/to/extracted/playwright-report
 
 成功画面は各テストの添付から、失敗時の操作経過はトレースから確認できます。失敗時は`browser-failure-details`も保存します。Artifactsの保持期間は14日です。期間を超えて残す確認画像・要約は、PRに含めた`docs/`へのリンクとともにIssueへ記録します。
 
-CIはPRと`main`更新で、固定したNode.js・ロックファイルを使い、整形、型チェック、ビルド、ブラウザテストを実行します。依存関係の変更はDependabotが週次でPRを作り、同じ検証とレビューを通します。ランタイムを変更する場合は`.nvmrc`、`packageManager`、`engines`と起動手順をまとめて更新してください。
+CIはPRと`main`更新で、固定したNode.js・ロックファイルを使い、整形、型チェック、ビルド、配信物検査、ビルド済みアプリのブラウザテストを実行します。すべて成功した場合だけ `static-preview-<SHA>` に配信ファイルを保存します。自動デプロイは行いません。設定・メタデータ・後日の配信手順は [静的検証版のガイド](docs/STATIC_PREVIEW.md) を参照してください。
+
+依存関係の変更はDependabotが週次でPRを作り、同じ検証とレビューを通します。ランタイムを変更する場合は`.nvmrc`、`packageManager`、`engines`と起動手順をまとめて更新してください。
 
 GitHubの「必須チェック」や承認人数はリポジトリ管理者の設定で決まります。このCI追加だけではマージ制限を変更しません。レビュー運用ではCI成功と担当者の確認後にマージしてください。
 

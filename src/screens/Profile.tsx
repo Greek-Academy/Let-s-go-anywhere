@@ -1,3 +1,4 @@
+import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -16,7 +17,7 @@ import {
   Trash2,
   UserRound,
 } from 'lucide-react'
-import { companions, drivingSchools, interests, learningContents } from '../data/mockData'
+import { companions, interests } from '../data/options'
 import { useApp } from '../state/AppState'
 import {
   Chip,
@@ -212,6 +213,7 @@ export function ProfileEdit() {
   )
 }
 export function LearningHistory() {
+  const { learningContents } = useContent()
   const { state } = useApp()
   const navigate = useNavigate()
   const learned = learningContents.filter((l) => state.learned.includes(l.id))
@@ -250,6 +252,7 @@ export function LearningHistory() {
   )
 }
 export function ConsultationHistory() {
+  const { drivingSchools } = useContent()
   const { state } = useApp()
   const navigate = useNavigate()
   return (

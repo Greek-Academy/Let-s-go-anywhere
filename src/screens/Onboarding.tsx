@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, Check, MapPin, Search, Sparkles } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../state/AppState'
-import { companions, interests } from '../data/mockData'
+import { companions, interests } from '../data/options'
 import { Brand, Choice, IconButton, PrimaryButton } from '../components/ui'
 
 export function Welcome() {

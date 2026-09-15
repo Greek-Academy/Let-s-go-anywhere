@@ -1,3 +1,5 @@
+import { unknownFact } from '../domain/evidence'
+export { unknownFact } from '../domain/evidence'
 import type { Evidence } from '../domain/evidence'
 
 export interface Entrance {
@@ -29,9 +31,6 @@ export function sampleFact<T>(value: T): Evidence<T> {
     checkedAt: '2026-09-14',
     reviewBy: '2026-12-31',
   }
-}
-export function unknownFact<T>(): Evidence<T> {
-  return { value: null, status: 'unconfirmed', source: '', checkedAt: null, reviewBy: null }
 }
 
 export const arrivalGuides: Record<string, ArrivalGuide> = {

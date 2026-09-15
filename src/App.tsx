@@ -1,3 +1,6 @@
+import { ContentProvider } from './content/ContentProvider'
+import { sampleCatalog } from './content/sampleCatalog'
+import type { ContentCatalog } from './content/catalog'
 import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { AppStateProvider, useApp } from './state/AppState'
 import { MobileFrame } from './components/MobileFrame'
@@ -76,12 +79,14 @@ function AppRoutes() {
     </MobileFrame>
   )
 }
-export default function App() {
+export default function App({ catalog = sampleCatalog }: { catalog?: ContentCatalog }) {
   return (
-    <AppStateProvider>
-      <HashRouter>
-        <AppRoutes />
-      </HashRouter>
-    </AppStateProvider>
+    <ContentProvider catalog={catalog}>
+      <AppStateProvider>
+        <HashRouter>
+          <AppRoutes />
+        </HashRouter>
+      </AppStateProvider>
+    </ContentProvider>
   )
 }

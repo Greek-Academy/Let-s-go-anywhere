@@ -12,7 +12,8 @@
 
 - [ ] `npm run format:check`
 - [ ] `npm run build`
-- [ ] `npm run test:e2e`
+- [ ] `npm run verify:preview`
+- [ ] `npm run test:preview`（ビルド済みアプリ）
 
 CI実行URL・画像・HTMLレポートへのリンク：
 

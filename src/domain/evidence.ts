@@ -49,3 +49,7 @@ export const evidenceLabels: Record<EvidenceState, string> = {
 export function confirmedValue<T>(fact: Evidence<T>, at = today()): T | null {
   return evidenceState(fact, at) === 'confirmed' ? fact.value : null
 }
+
+export function unknownFact<T>(): Evidence<T> {
+  return { value: null, status: 'unconfirmed', source: '', checkedAt: null, reviewBy: null }
+}
