@@ -4,3 +4,6 @@ test-results
 playwright-report
 package-lock.json
 docs/screenshots
+review-dist/
+review-playwright-report/
+review-test-results/
