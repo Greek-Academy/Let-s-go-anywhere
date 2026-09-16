@@ -35,7 +35,7 @@ test('personal link opens only after confirmation without opener, referrer, priv
     await route.fulfill({
       status: 200,
       contentType: 'text/html; charset=utf-8',
-      body: '<title>テスト用の外部ページ</title><p>外部遷移をローカルで検証しています</p>',
+      body: '<!doctype html><meta charset="utf-8"><title>テスト用の外部ページ</title><p>外部遷移をローカルで検証しています</p>',
     })
   })
   await enter(page)
@@ -81,7 +81,7 @@ test('a failed external page offers an explicit same-tab action and browser back
     route.fulfill({
       status: 404,
       contentType: 'text/html; charset=utf-8',
-      body: '<h1>テスト用：ページがありません</h1>',
+      body: '<!doctype html><meta charset="utf-8"><h1>テスト用：ページがありません</h1>',
     }),
   )
   await enter(page)

@@ -50,7 +50,13 @@ export function IconButton({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { icon: LucideIcon; label: string }) {
   return (
-    <button type="button" className={`icon-button ${className}`} aria-label={label} {...props}>
+    <button
+      type="button"
+      className={`icon-button ${className}`}
+      aria-label={label}
+      data-focus-key={`icon:${label}`}
+      {...props}
+    >
       <Icon size={21} strokeWidth={1.8} />
     </button>
   )
@@ -305,18 +311,20 @@ export function Overlay({
       if (e.key === 'Tab') {
         const list = getFocusable()
         const first = list[0]
-        const last = list[list.length - 1]
         if (!first) {
           e.preventDefault()
           return
         }
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault()
-          last.focus()
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault()
-          first.focus()
-        }
+        // Keep every control, including links, in the dialog tab order in WebKit.
+        e.preventDefault()
+        const index = list.indexOf(document.activeElement as HTMLElement)
+        const next =
+          index < 0
+            ? e.shiftKey
+              ? list.length - 1
+              : 0
+            : (index + (e.shiftKey ? -1 : 1) + list.length) % list.length
+        list[next].focus()
       }
     }
     document.addEventListener('keydown', keydown)
@@ -325,7 +333,7 @@ export function Overlay({
       nodes.forEach((node) => {
         node.inert = false
       })
-      previous?.focus()
+      if (previous?.isConnected) previous.focus({ preventScroll: true })
     }
   }, [])
   const target = document.getElementById('overlay-root')
@@ -395,7 +403,7 @@ export function MenuRow({
   onClick: () => void
 }) {
   return (
-    <button className="menu-row" onClick={onClick}>
+    <button className="menu-row" data-focus-key={`menu:${title}`} onClick={onClick}>
       <Icon size={20} strokeWidth={1.7} />
       <span>{title}</span>
       {value && <small>{value}</small>}

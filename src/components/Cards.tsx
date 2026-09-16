@@ -33,6 +33,7 @@ export function EventCard({
     <article className={`event-card ${compact ? 'compact' : ''}`}>
       <button
         className="event-photo-button"
+        data-focus-key={`event-photo:${outing.id}`}
         onClick={() => navigate(`/events/${outing.id}`)}
         aria-label={`${outing.title}の詳細を見る`}
       >
@@ -52,7 +53,11 @@ export function EventCard({
         <Heart size={20} fill={saved ? 'currentColor' : 'none'} strokeWidth={1.8} />
       </button>
       <div className="event-card-body">
-        <button className="card-title-button" onClick={() => navigate(`/events/${outing.id}`)}>
+        <button
+          className="card-title-button"
+          data-focus-key={`event-title:${outing.id}`}
+          onClick={() => navigate(`/events/${outing.id}`)}
+        >
           <h3>{outing.title}</h3>
         </button>
         <p className="event-subtitle">{outing.subtitle}</p>
@@ -125,7 +130,11 @@ export function StationCard({
   const { state, toggleStation } = useApp()
   return (
     <article className="station-card">
-      <button className="station-card-main" onClick={onClick}>
+      <button
+        className="station-card-main"
+        data-focus-key={`station:${station.id}`}
+        onClick={onClick}
+      >
         <span className={`station-avatar ${station.type === 'レンタカー' ? 'blue' : ''}`}>
           <CarFront size={26} strokeWidth={1.6} />
         </span>
@@ -153,7 +162,11 @@ export function LessonCard({ lesson }: { lesson: LearningContent }) {
   const navigate = useNavigate()
   const completed = state.learned.includes(lesson.id)
   return (
-    <button className="lesson-card" onClick={() => navigate(`/learn/${lesson.id}`)}>
+    <button
+      className="lesson-card"
+      data-focus-key={`lesson:${lesson.id}`}
+      onClick={() => navigate(`/learn/${lesson.id}`)}
+    >
       <div className="lesson-photo">
         <img src={lesson.image} alt="" loading="lazy" />
         {completed && (
@@ -203,7 +216,10 @@ export function SchoolCard({ school }: { school: School }) {
           <strong>¥{school.price.toLocaleString()}</strong>
           <small> / {school.duration}〜（例）</small>
         </p>
-        <button onClick={() => navigate(`/schools/${school.id}`)}>
+        <button
+          data-focus-key={`school:${school.id}`}
+          onClick={() => navigate(`/schools/${school.id}`)}
+        >
           詳細を見る
           <ArrowUpRight size={15} />
         </button>
