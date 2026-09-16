@@ -87,7 +87,7 @@ test('a verified release restores the same origin after a failed deployment and 
     expect(failed?.status()).toBe(503)
     await expect(page.getByRole('heading', { name: '復旧テスト用：配信失敗' })).toBeVisible()
     await test.info().attach('配信失敗を模擬した画面', {
-      body: await page.screenshot(),
+      body: await page.screenshot({ animations: 'disabled', scale: 'css' }),
       contentType: 'image/png',
     })
     const result = cli('restore', backup, restored)
@@ -101,7 +101,7 @@ test('a verified release restores the same origin after a failed deployment and 
     expect(await page.evaluate(() => localStorage.getItem('driveplus.mock.v1'))).toBe(saved)
     expect(await (await page.request.get(origin + '/release.json')).json()).toEqual(release)
     await test.info().attach('復元後の保存一覧', {
-      body: await page.screenshot(),
+      body: await page.screenshot({ animations: 'disabled', scale: 'css' }),
       contentType: 'image/png',
     })
     for (const name of ['見つける', '行きたい', '車を探す', '学ぶ', '講習']) {
