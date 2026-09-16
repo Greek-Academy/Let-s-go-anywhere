@@ -1,3 +1,4 @@
+import { ExternalModal } from '../components/ExternalLinkModal'
 import { useContent } from '../content/ContentProvider'
 import { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -199,7 +200,8 @@ export function Schools() {
   )
 }
 export function SchoolDetail() {
-  const { drivingSchools } = useContent()
+  const { drivingSchools, source } = useContent()
+  const [external, setExternal] = useState(false)
   const { id } = useParams()
   const school = drivingSchools.find((s) => s.id === id)
   const navigate = useNavigate()
@@ -286,10 +288,25 @@ export function SchoolDetail() {
         <PrimaryButton icon={CalendarDays} onClick={() => navigate(`/consult/${school.id}`)}>
           希望日時を相談
         </PrimaryButton>
+        <PrimaryButton variant="secondary" onClick={() => setExternal(true)}>
+          公式情報を確認
+        </PrimaryButton>
         <p className="disclosure">
           掲載・紹介報酬がある場合は申込前に表示する設計です。この会社・講師・料金は架空のサンプルです。
         </p>
       </div>
+      {external && (
+        <ExternalModal
+          title={school.name}
+          request={{
+            type: 'listing',
+            catalogSource: source,
+            kind: 'official',
+            links: school.links,
+          }}
+          onClose={() => setExternal(false)}
+        />
+      )}
     </div>
   )
 }

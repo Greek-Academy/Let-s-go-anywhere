@@ -1,3 +1,4 @@
+import type { ListingLinks } from '../domain/externalLinks'
 import { unknownFact } from '../domain/evidence'
 export { unknownFact } from '../domain/evidence'
 import type { Evidence } from '../domain/evidence'
@@ -12,6 +13,7 @@ export interface ArrivalPhoto {
   permission: Evidence<string>
 }
 export interface ArrivalGuide {
+  links?: ListingLinks
   outingId: string
   availability: 'published' | 'withdrawn'
   vehicleEntrance: Evidence<Entrance>

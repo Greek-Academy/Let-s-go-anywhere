@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
-  ArrowUpRight,
   BookOpen,
   CarFront,
   Check,
@@ -294,7 +293,7 @@ export function Overlay({
     const getFocusable = () =>
       Array.from(
         ref.current?.querySelectorAll<HTMLElement>(
-          'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), [tabindex="0"]',
+          'a[href], button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), [tabindex="0"]',
         ) ?? [],
       ).filter((el) => el.offsetParent !== null)
     ;(getFocusable()[0] ?? ref.current)?.focus()
@@ -371,44 +370,6 @@ export function BottomSheet(props: Omit<Parameters<typeof Overlay>[0], 'type'>) 
 }
 export function Modal(props: Omit<Parameters<typeof Overlay>[0], 'type'>) {
   return <Overlay {...props} type="modal" />
-}
-export function ExternalModal({
-  title,
-  onClose,
-  kind = 'official',
-}: {
-  title: string
-  onClose: () => void
-  kind?: 'official' | 'map' | 'sns'
-}) {
-  return (
-    <Modal
-      title={
-        kind === 'map'
-          ? '外部地図へのご案内'
-          : kind === 'sns'
-            ? '元の投稿へのご案内'
-            : '公式サービスへのご案内'
-      }
-      onClose={onClose}
-    >
-      <div className="external-symbol">
-        <ArrowUpRight size={34} />
-      </div>
-      <h3 className="external-title">{title}</h3>
-      <p className="body-copy">
-        {kind === 'map'
-          ? '地図サービスで所在地・行き方を確認する想定です。'
-          : kind === 'sns'
-            ? '元の投稿を開き、内容を確認する想定です。'
-            : '空き状況・料金・利用条件を、提供元の公式サイトやアプリで確認する想定です。'}
-      </p>
-      <div className="notice">
-        このモックでは外部サイトを開きません。予約や問い合わせは実行されません。
-      </div>
-      <PrimaryButton onClick={onClose}>アプリに戻る</PrimaryButton>
-    </Modal>
-  )
 }
 export function InfoRows({ rows }: { rows: [string, ReactNode][] }) {
   return (

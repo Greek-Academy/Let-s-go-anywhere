@@ -1,3 +1,4 @@
+import { ExternalModal } from '../components/ExternalLinkModal'
 import { japanDate } from '../domain/dates'
 import { useContent, useContentTime } from '../content/ContentProvider'
 import { useState } from 'react'
@@ -8,15 +9,7 @@ import type { ArrivalPhoto } from '../data/arrivalGuides'
 
 import { confirmedValue, evidenceLabels, evidenceState } from '../domain/evidence'
 import type { Evidence } from '../domain/evidence'
-import {
-  EmptyState,
-  ExternalModal,
-  Header,
-  PrimaryButton,
-  SampleNote,
-  Tag,
-  useBack,
-} from '../components/ui'
+import { EmptyState, Header, PrimaryButton, SampleNote, Tag, useBack } from '../components/ui'
 
 function Fact({ fact }: { fact: Evidence<string> }) {
   const at = japanDate(useContentTime())
@@ -122,7 +115,7 @@ export function ArrivalTeaser({ outingId }: { outingId: string }) {
 }
 
 export function Arrival() {
-  const { outings, arrivalGuides } = useContent()
+  const { outings, arrivalGuides, source } = useContent()
   const at = japanDate(useContentTime())
   const { id } = useParams()
   const navigate = useNavigate()
@@ -250,6 +243,13 @@ export function Arrival() {
       {external && entrance && (
         <ExternalModal
           kind="map"
+          request={{
+            type: 'listing',
+            catalogSource: source,
+            kind: 'map',
+            links: visible?.links,
+            stopped,
+          }}
           title={entrance?.mapLabel ?? ''}
           onClose={() => setExternal(false)}
         />
