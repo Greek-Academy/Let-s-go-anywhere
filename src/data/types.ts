@@ -1,8 +1,10 @@
+import type { ListingLinks } from '../domain/externalLinks'
 import type { OutingLifecycle } from '../domain/outingLifecycle'
 
 export type Tab = 'discover' | 'saved' | 'cars' | 'learn' | 'schools'
 export type StationType = 'すべて' | 'レンタカー' | 'カーシェア'
 export interface Outing {
+  links?: ListingLinks
   id: string
   title: string
   subtitle: string
@@ -18,6 +20,7 @@ export interface Outing {
   price: string
 }
 export interface Station {
+  links?: ListingLinks
   id: string
   name: string
   type: Exclude<StationType, 'すべて'>
@@ -32,6 +35,7 @@ export interface Station {
   checkedAt: string
 }
 export interface School {
+  links?: ListingLinks
   id: string
   name: string
   area: string[]

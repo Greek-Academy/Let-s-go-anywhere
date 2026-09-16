@@ -3979,3 +3979,52 @@ small {
 .event-meta > span {
   min-width: 0;
 }
+
+/* External destinations stay inside the existing phone dialog. */
+.external-destination {
+  background: #f2f7f3;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 13px;
+  margin: 14px 0;
+}
+.external-destination strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.external-destination p {
+  font-size: 11px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  margin: 8px 0 0;
+  color: #59766d;
+}
+.external-destination small {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+}
+.external-help {
+  margin: 13px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.external-help-content {
+  padding: 0 10px 10px;
+  border-left: 2px solid var(--line);
+}
+.external-disclosure {
+  margin-top: 18px;
+  line-height: 1.9;
+}
+.external-fallback,
+.external-app-host {
+  margin: 14px 0 7px;
+}
+.modal a.button {
+  text-decoration: none;
+}

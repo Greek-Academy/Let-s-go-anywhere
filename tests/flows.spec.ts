@@ -170,7 +170,9 @@ test('map pins, station details, provider filters, lists and zero-result search'
   ).toBeVisible()
   await page.getByRole('button', { name: '車候補に保存', exact: true }).click()
   await page.getByRole('button', { name: '公式で空き状況・予約を確認' }).click()
-  await expect(page.getByRole('dialog')).toContainText('予約や問い合わせは実行されません')
+  await expect(page.getByRole('dialog')).toContainText(
+    'リンクを開くだけでは予約・問い合わせは完了しません',
+  )
   await page.getByRole('button', { name: 'アプリに戻る' }).click()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
   await expect(page.locator('.map-pin[aria-pressed="true"]')).toHaveCount(1)

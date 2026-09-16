@@ -1,3 +1,4 @@
+import { ExternalModal } from '../components/ExternalLinkModal'
 import { OutingImage, OutingStatus } from '../components/OutingStatus'
 import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
@@ -6,15 +7,7 @@ import { ArrowRight, CarFront, ChevronRight, Heart, Link2, Plus, Trash2 } from '
 
 import { useApp } from '../state/AppState'
 import { StationCard } from '../components/Cards'
-import {
-  Chip,
-  EmptyState,
-  ExternalModal,
-  Header,
-  IconButton,
-  PrimaryButton,
-  Tag,
-} from '../components/ui'
+import { Chip, EmptyState, Header, IconButton, PrimaryButton, Tag } from '../components/ui'
 import { SnsSheet } from './Discover'
 
 export function Saved() {
@@ -24,7 +17,8 @@ export function Saved() {
   const [params, setParams] = useSearchParams()
   const current = params.get('type') === 'cars' ? 'cars' : 'events'
   const [sns, setSns] = useState(false)
-  const [external, setExternal] = useState('')
+  const [external, setExternal] = useState<string | null>(null)
+  const externalLink = state.links.find((link) => link.id === external)
   const eventList = outings.filter((o) => state.savedEvents.includes(o.id))
   const stationList = stations.filter((s) => state.savedStations.includes(s.id))
   return (
@@ -102,7 +96,7 @@ export function Saved() {
                       />
                     </div>
                     <p className="link-url">{link.url}</p>
-                    <button className="text-button" onClick={() => setExternal(link.title)}>
+                    <button className="text-button" onClick={() => setExternal(link.id)}>
                       元の投稿を確認 <ArrowRight size={14} />
                     </button>
                   </article>
@@ -171,7 +165,14 @@ export function Saved() {
         </button>
       </div>
       {sns && <SnsSheet onClose={() => setSns(false)} />}
-      {external && <ExternalModal title={external} kind="sns" onClose={() => setExternal('')} />}
+      {externalLink && (
+        <ExternalModal
+          title={externalLink.title}
+          kind="sns"
+          request={{ type: 'personal', url: externalLink.url }}
+          onClose={() => setExternal(null)}
+        />
+      )}
     </div>
   )
 }

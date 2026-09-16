@@ -1,3 +1,4 @@
+import { ExternalModal } from '../components/ExternalLinkModal'
 import { evaluateOuting, occursThisWeekend, outingStateLabels } from '../domain/outingLifecycle'
 import { OutingImage, OutingStatus } from '../components/OutingStatus'
 import { useContent, useContentTime } from '../content/ContentProvider'
@@ -39,7 +40,6 @@ import {
   BottomSheet,
   Chip,
   EmptyState,
-  ExternalModal,
   Header,
   IconButton,
   InfoRows,
@@ -440,7 +440,7 @@ export function Discover() {
   )
 }
 export function EventDetail() {
-  const { outings } = useContent()
+  const { outings, source } = useContent()
   const now = useContentTime()
   const { id } = useParams()
   const outing = outings.find((o) => o.id === id)
@@ -623,7 +623,18 @@ export function EventDetail() {
         <SampleNote />
       </div>
       {external && (
-        <ExternalModal title={outing.title} kind={external} onClose={() => setExternal(null)} />
+        <ExternalModal
+          title={outing.title}
+          kind={external}
+          request={{
+            type: 'listing',
+            catalogSource: source,
+            kind: external,
+            links: outing.links,
+            stopped: outing.lifecycle?.availability === 'withdrawn',
+          }}
+          onClose={() => setExternal(null)}
+        />
       )}
       {goalOpen && (
         <BottomSheet title="このお出かけのメモ" onClose={() => setGoalOpen(false)}>

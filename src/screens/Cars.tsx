@@ -1,3 +1,4 @@
+import { ExternalModal } from '../components/ExternalLinkModal'
 import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
@@ -28,7 +29,6 @@ import {
   Chip,
   Choice,
   EmptyState,
-  ExternalModal,
   Header,
   IconButton,
   InfoRows,
@@ -52,7 +52,7 @@ export function filteredStations(map: AppState['map'], stations: readonly Statio
   )
 }
 export function Cars() {
-  const { stations } = useContent()
+  const { stations, source } = useContent()
   const providers = [...new Set(stations.map((station) => station.provider))]
   const { state, update, toast } = useApp()
   const navigate = useNavigate()
@@ -60,7 +60,10 @@ export function Cars() {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [locationOpen, setLocationOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
-  const [external, setExternal] = useState<{ title: string; kind: 'official' | 'map' } | null>(null)
+  const [external, setExternal] = useState<{ stationId: string; kind: 'official' | 'map' } | null>(
+    null,
+  )
+  const externalStation = stations.find((station) => station.id === external?.stationId)
   const [draftType, setDraftType] = useState<StationType>(map.type)
   const [draftProviders, setDraftProviders] = useState(map.providers)
   const filtered = filteredStations(map, stations)
@@ -214,14 +217,14 @@ export function Cars() {
                     />
                     <PrimaryButton
                       icon={ExternalLink}
-                      onClick={() => setExternal({ title: preview.name, kind: 'official' })}
+                      onClick={() => setExternal({ stationId: preview.id, kind: 'official' })}
                     >
                       公式で空き状況・予約を確認
                     </PrimaryButton>
                     <PrimaryButton
                       variant="secondary"
                       icon={MapPin}
-                      onClick={() => setExternal({ title: preview.name, kind: 'map' })}
+                      onClick={() => setExternal({ stationId: preview.id, kind: 'map' })}
                     >
                       外部地図で行き方を見る
                     </PrimaryButton>
@@ -390,9 +393,15 @@ export function Cars() {
           </PrimaryButton>
         </Modal>
       )}
-      {external && (
+      {external && externalStation && (
         <ExternalModal
-          title={external.title}
+          title={externalStation.name}
+          request={{
+            type: 'listing',
+            catalogSource: source,
+            kind: external.kind,
+            links: externalStation.links,
+          }}
           kind={external.kind}
           onClose={() => setExternal(null)}
         />
@@ -401,7 +410,7 @@ export function Cars() {
   )
 }
 export function StationDetail() {
-  const { stations } = useContent()
+  const { stations, source } = useContent()
   const { id } = useParams()
   const station = stations.find((s) => s.id === id)
   const navigate = useNavigate()
@@ -458,7 +467,12 @@ export function StationDetail() {
         <p className="muted small centered">車候補の保存は、予約ではありません。</p>
       </div>
       {external && (
-        <ExternalModal title={station.name} kind={external} onClose={() => setExternal(null)} />
+        <ExternalModal
+          title={station.name}
+          kind={external}
+          request={{ type: 'listing', catalogSource: source, kind: external, links: station.links }}
+          onClose={() => setExternal(null)}
+        />
       )}
     </div>
   )
