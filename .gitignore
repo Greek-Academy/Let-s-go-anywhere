@@ -7,3 +7,6 @@ playwright-report/
 .env
 .env.*
 !.env.example
+review-dist/
+review-playwright-report/
+review-test-results/

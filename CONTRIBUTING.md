@@ -30,8 +30,10 @@ Linuxでブラウザの依存パッケージも入れる場合は`npx playwright
 ```bash
 npm run format:check
 npm run build
+npm run build:review
 npm run verify:preview
 CI=true PLAYWRIGHT_PORT=5176 npm run test:preview
+CI=true npm run test:review
 npm run test:report
 ```
 
@@ -50,6 +52,8 @@ PRのChecksからCI実行を開くと、各ステップの成功／失敗とロ�
 ```bash
 npx playwright show-report /path/to/extracted/playwright-report
 ```
+
+掲載情報入力ツールの結果は別の `content-review-report` Artifactに保存します。ローカルでは `npx playwright show-report review-playwright-report` で確認できます。入力・テストには架空のデータを使い、実際の確認メモや許諾記録をリポジトリ・CI成果物へ含めないでください。
 
 成功画面は各テストの添付から、失敗時の操作経過はトレースから確認できます。失敗時は`browser-failure-details`も保存します。Artifactsの保持期間は14日です。期間を超えて残す確認画像・要約は、PRに含めた`docs/`へのリンクとともにIssueへ記録します。
 

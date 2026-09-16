@@ -15,10 +15,15 @@
     "test:e2e": "playwright test",
     "test:report": "playwright show-report",
     "capture:ui": "node scripts/capture-ui.mjs",
-    "format": "prettier --write src tests scripts build .github CONTRIBUTING.md *.ts *.json index.html",
-    "format:check": "prettier --check src tests scripts build .github CONTRIBUTING.md *.ts *.json index.html",
+    "format": "prettier --write src tests tools scripts build .github CONTRIBUTING.md *.ts *.json index.html",
+    "format:check": "prettier --check src tests tools scripts build .github CONTRIBUTING.md *.ts *.json index.html",
     "verify:preview": "node scripts/verify-preview.mjs",
-    "test:preview": "node scripts/test-preview.mjs"
+    "test:preview": "node scripts/test-preview.mjs",
+    "review": "vite --config review.vite.config.ts",
+    "build:review": "vite build --config review.vite.config.ts",
+    "preview:review": "vite preview --config review.vite.config.ts",
+    "test:review": "playwright test --config playwright.review.config.ts",
+    "content:check": "node scripts/check-content.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.45.0",
