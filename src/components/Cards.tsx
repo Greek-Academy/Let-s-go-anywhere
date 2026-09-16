@@ -1,3 +1,6 @@
+import { OutingImage, OutingStatus } from './OutingStatus'
+import { useContentTime } from '../content/ContentProvider'
+import { evaluateOuting } from '../domain/outingLifecycle'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowUpRight,
@@ -25,6 +28,7 @@ export function EventCard({
   const { state, toggleEvent } = useApp()
   const navigate = useNavigate()
   const saved = state.savedEvents.includes(outing.id)
+  const status = evaluateOuting(outing, useContentTime())
   return (
     <article className={`event-card ${compact ? 'compact' : ''}`}>
       <button
@@ -32,12 +36,7 @@ export function EventCard({
         onClick={() => navigate(`/events/${outing.id}`)}
         aria-label={`${outing.title}の詳細を見る`}
       >
-        <img
-          className="event-photo"
-          src={outing.image}
-          alt={outing.title + 'のイメージ'}
-          loading="lazy"
-        />
+        <OutingImage outing={outing} className="event-photo" />
         <span className="photo-gradient" />
         <span className="photo-category">
           {outing.kind === 'event' ? '季節の楽しみ' : '常設スポット'}
@@ -64,9 +63,10 @@ export function EventCard({
           </span>
           <span>
             <CalendarDays size={12} />
-            {outing.kind === 'event' ? '9/19〜（サンプル）' : '常設'}
+            {status.dateLabel}
           </span>
         </div>
+        <OutingStatus outing={outing} />
         <div className="card-bottom">
           <div className="tags">
             {outing.tags.map((tag) => (

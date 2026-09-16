@@ -1,3 +1,4 @@
+import { OutingImage, OutingStatus } from '../components/OutingStatus'
 import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -60,11 +61,9 @@ export function Saved() {
               {eventList.map((o) => (
                 <article className="saved-outing" key={o.id}>
                   <button onClick={() => navigate(`/events/${o.id}`, { state: { tab: 'saved' } })}>
-                    <img src={o.image} alt="" />
+                    <OutingImage outing={o} decorative />
                     <span>
-                      <Tag tone="neutral">
-                        {o.kind === 'event' ? 'イベント・要確認' : '常設スポット'}
-                      </Tag>
+                      <OutingStatus outing={o} />
                       <strong>{o.title}</strong>
                       <small>{o.area}</small>
                       {state.goals[o.id]?.when && <small>{state.goals[o.id].when}</small>}

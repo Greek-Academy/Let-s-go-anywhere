@@ -1,4 +1,5 @@
-import { useContent } from '../content/ContentProvider'
+import { japanDate } from '../domain/dates'
+import { useContent, useContentTime } from '../content/ContentProvider'
 import { useState } from 'react'
 import { ArrowRight, CameraOff, CarFront, MapPin } from 'lucide-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -18,12 +19,13 @@ import {
 } from '../components/ui'
 
 function Fact({ fact }: { fact: Evidence<string> }) {
-  const status = evidenceState(fact)
+  const at = japanDate(useContentTime())
+  const status = evidenceState(fact, at)
   return (
     <div className="arrival-fact">
       <Tag tone={status === 'confirmed' ? 'mint' : 'neutral'}>{evidenceLabels[status]}</Tag>
       <p>
-        {confirmedValue(fact) ??
+        {confirmedValue(fact, at) ??
           (status === 'expired'
             ? '確認期限を過ぎたため、以前の情報の表示を控えています。'
             : '確認できた情報がありません。施設の案内を確認してください。')}
@@ -40,12 +42,13 @@ function Fact({ fact }: { fact: Evidence<string> }) {
 
 export function ArrivalImage({ photo }: { photo?: ArrivalPhoto }) {
   const [failedSrc, setFailedSrc] = useState('')
-  if (!photo || !confirmedValue(photo.permission) || failedSrc === photo.src) {
+  const at = japanDate(useContentTime())
+  if (!photo || !confirmedValue(photo.permission, at) || failedSrc === photo.src) {
     return (
       <div className="arrival-photo-empty">
         <CameraOff size={21} />
         <span>
-          {photo && evidenceState(photo.permission) === 'withdrawn'
+          {photo && evidenceState(photo.permission, at) === 'withdrawn'
             ? '写真は利用停止中です'
             : '掲載できる写真はありません'}
           <small>文章で確認できる情報をまとめています。</small>
@@ -120,14 +123,17 @@ export function ArrivalTeaser({ outingId }: { outingId: string }) {
 
 export function Arrival() {
   const { outings, arrivalGuides } = useContent()
+  const at = japanDate(useContentTime())
   const { id } = useParams()
   const navigate = useNavigate()
   const [external, setExternal] = useState(false)
   const back = useBack(`/events/${id}`)
   const outing = outings.find((o) => o.id === id)
   const guide = id ? arrivalGuides[id] : undefined
-  const visible = guide?.availability === 'published' ? guide : undefined
-  const entrance = visible ? confirmedValue(visible.vehicleEntrance) : null
+  const stopped =
+    outing?.lifecycle?.availability === 'withdrawn' || guide?.availability === 'withdrawn'
+  const visible = !stopped && guide?.availability === 'published' ? guide : undefined
+  const entrance = visible ? confirmedValue(visible.vehicleEntrance, at) : null
   if (!outing)
     return (
       <>
@@ -157,7 +163,7 @@ export function Arrival() {
           <br />
           出発前や停車中に、気になることをひとつずつ。
         </p>
-        {guide?.availability === 'withdrawn' ? (
+        {stopped ? (
           <div className="notice">
             この下見カードは掲載を停止しています。以前の情報は表示していません。
           </div>
@@ -241,7 +247,7 @@ export function Arrival() {
         )}
         <PrimaryButton onClick={back}>お出かけ詳細に戻る</PrimaryButton>
       </div>
-      {external && (
+      {external && entrance && (
         <ExternalModal
           kind="map"
           title={entrance?.mapLabel ?? ''}

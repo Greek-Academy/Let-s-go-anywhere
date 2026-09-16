@@ -3926,3 +3926,56 @@ small {
     font-size: 38px;
   }
 }
+
+/* Status uses the same paper cards; withdrawn image URLs never reach an img element. */
+.outing-status {
+  display: block;
+  margin: 8px 0;
+}
+.outing-status-detail {
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f6f8f4;
+}
+.outing-status-detail .outing-status-reason {
+  display: block;
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 7px 0 0;
+}
+.outing-photo-empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  background: #e6eee8;
+  color: #536e65;
+  text-align: center;
+}
+.outing-photo-empty > span {
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 0 6px;
+}
+.detail-hero > .outing-photo-empty {
+  width: 100%;
+  height: 100%;
+}
+.saved-outing > button > .outing-photo-empty {
+  flex: 0 0 79px;
+  width: 79px;
+  height: 93px;
+  border-radius: 12px;
+}
+.saved-outing .outing-photo-empty > span {
+  font-size: 9px;
+}
+.saved-outing .outing-status {
+  display: block;
+  margin: 0;
+}
+.event-meta > span {
+  min-width: 0;
+}

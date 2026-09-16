@@ -1,3 +1,5 @@
+import type { OutingLifecycle } from '../domain/outingLifecycle'
+
 export type Tab = 'discover' | 'saved' | 'cars' | 'learn' | 'schools'
 export type StationType = 'すべて' | 'レンタカー' | 'カーシェア'
 export interface Outing {
@@ -11,7 +13,7 @@ export interface Outing {
   date: string
   description: string
   source: string
-  weekend: boolean
+  lifecycle?: OutingLifecycle
   mood: string
   price: string
 }

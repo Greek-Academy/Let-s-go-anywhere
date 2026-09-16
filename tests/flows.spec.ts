@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
+test.beforeEach(async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-09-16T03:00:00Z') })
+})
+
 test.afterEach(async ({ page }, testInfo) => {
   if (testInfo.status === 'passed') {
     await testInfo.attach('操作後の画面', {
@@ -62,7 +66,7 @@ test('saved outings stay synchronized; back restores scroll; unverified SNS stay
   await enter(page)
   await page.getByRole('button', { name: '湖畔のオータム花火を保存', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
-  await page.getByRole('button', { name: /イベント・要確認 湖畔のオータム花火/ }).click()
+  await page.getByRole('button', { name: /開催予定（サンプル） 湖畔のオータム花火/ }).click()
   await expect(page.getByRole('button', { name: '行きたいに保存済み' })).toBeVisible()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
   await expect(page).toHaveURL(/#\/saved/)
