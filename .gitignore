@@ -10,3 +10,6 @@ playwright-report/
 review-dist/
 review-playwright-report/
 review-test-results/
+
+# Personal local-state exports must not be committed.
+driveplus-local-backup*.json

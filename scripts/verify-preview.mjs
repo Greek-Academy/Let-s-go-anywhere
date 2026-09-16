@@ -12,6 +12,7 @@ export async function verifyPreview(directory, { forUpload = false } = {}) {
       if (
         entry.isSymbolicLink() ||
         entry.name.startsWith('.') ||
+        /^driveplus-local-backup.*\.json$/i.test(entry.name) ||
         /^(functions|_worker\.js|node_modules|src)$/.test(entry.name)
       ) {
         throw new Error(`Unexpected publish file: ${name}`)

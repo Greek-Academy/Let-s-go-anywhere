@@ -689,16 +689,27 @@ small {
   transform: translate(-50%, 0);
 }
 .storage-notice {
-  position: absolute;
-  z-index: 45;
-  bottom: 90px;
-  left: 10px;
-  right: 10px;
-  padding: 12px;
+  flex-shrink: 0;
+  margin: 0 10px 6px;
+  padding: 8px 12px;
   color: #835235;
   background: #fff0da;
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.7;
   border-radius: 12px;
+}
+.storage-notice p {
+  margin: 0;
+}
+.storage-notice button {
+  font-weight: 650;
+  text-decoration: underline;
+}
+.storage-details {
+  margin-top: 24px;
+}
+.storage-details .notice {
+  display: block;
 }
 
 /* Shared controls and text. */

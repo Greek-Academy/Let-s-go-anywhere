@@ -292,6 +292,7 @@ export function Overlay({
     const nodes = [
       document.querySelector('.app-main'),
       document.querySelector('.bottom-nav'),
+      document.querySelector('.storage-notice'),
     ].filter(Boolean) as HTMLElement[]
     nodes.forEach((node) => {
       node.inert = true

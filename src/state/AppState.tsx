@@ -1,110 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { userProfile } from '../data/options'
-import type {
-  Consultation,
-  ConsultationMemo,
-  Reflection,
-  SavedLink,
-  StationType,
-  UserProfile,
-} from '../data/types'
+import { createInitialState } from './model'
+import type { AppState } from './model'
+import { readStoredState, writeStoredState, STORAGE_KEY } from './storage'
+import type { StorageProblem } from './storage'
+export { createInitialState, STORAGE_KEY }
+export type { AppState }
 
-import { emptyConditions } from '../domain/tripConditions'
-import type { TripConditions, ConditionFilter } from '../domain/tripConditions'
-
-export const STORAGE_KEY = 'driveplus.mock.v1'
-export interface AppState {
-  searchConditions: TripConditions
-  conditionFilter: ConditionFilter
-  outingConditions: Record<string, TripConditions>
-  onboarded: boolean
-  profile: UserProfile
-  savedEvents: string[]
-  savedStations: string[]
-  hiddenEvents: string[]
-  links: SavedLink[]
-  learned: string[]
-  learningDates: Record<string, string>
-  quiz: {
-    experience: string
-    concerns: string[]
-    answers: Record<string, number | null>
-    completed: boolean
-  }
-  memo: ConsultationMemo
-  consultations: Consultation[]
-  reflections: Reflection[]
-  goals: Record<string, { companion: string; when: string; note: string }>
-  map: {
-    type: StationType
-    providers: string[]
-    area: string
-    query: string
-    mode: 'map' | 'list'
-    selected: string | null
-    offset: { x: number; y: number }
-  }
-  discover: { category: string; search: string; tag: string }
-  schoolFilters: { area: string; practice: string; budget: string; vehicle: string }
-  settings: { largeText: boolean; reducedMotion: boolean }
-}
-export const createInitialState = (): AppState => ({
-  searchConditions: emptyConditions(),
-  conditionFilter: 'all',
-  outingConditions: {},
-  onboarded: false,
-  profile: { ...userProfile, interests: [] },
-  savedEvents: [],
-  savedStations: [],
-  hiddenEvents: [],
-  links: [],
-  learned: [],
-  learningDates: {},
-  quiz: { experience: '', concerns: [], answers: {}, completed: false },
-  memo: { goal: '', when: '', vehicle: '相談して決めたい', questions: '' },
-  consultations: [],
-  reflections: [],
-  goals: {},
-  map: {
-    type: 'すべて',
-    providers: [],
-    area: '東京・渋谷駅周辺',
-    query: '',
-    mode: 'map',
-    selected: null,
-    offset: { x: 0, y: 0 },
-  },
-  discover: { category: 'おすすめ', search: '', tag: '' },
-  schoolFilters: { area: 'すべて', practice: 'すべて', budget: 'すべて', vehicle: 'すべて' },
-  settings: { largeText: false, reducedMotion: false },
-})
-function readState(): AppState {
-  const initial = createInitialState()
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return initial
-    const data = JSON.parse(raw)
-    if (
-      !data ||
-      typeof data !== 'object' ||
-      !Array.isArray(data.savedEvents) ||
-      !Array.isArray(data.profile?.interests)
-    )
-      return initial
-    return {
-      ...initial,
-      ...data,
-      searchConditions: { ...initial.searchConditions, ...data.searchConditions },
-      profile: { ...initial.profile, ...data.profile },
-      map: { ...initial.map, ...data.map },
-      quiz: { ...initial.quiz, ...data.quiz },
-      settings: { ...initial.settings, ...data.settings },
-    }
-  } catch {
-    return initial
-  }
-}
 type StateContext = {
   state: AppState
   update: (fn: (current: AppState) => AppState) => void
@@ -112,23 +14,50 @@ type StateContext = {
   message: string
   toggleEvent: (id: string) => void
   toggleStation: (id: string) => void
-  reset: () => void
+  reset: () => boolean
+  storageProblem: StorageProblem | null
+  storageProtected: boolean
+  retryStorage: () => void
+  downloadStoredData: () => void
   storageError: boolean
 }
 const Context = createContext<StateContext | null>(null)
 export function AppStateProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AppState>(readState)
-  const [message, setMessage] = useState('')
-  const [storageError, setStorageError] = useState(false)
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-      setStorageError(false)
-    } catch {
-      setStorageError(true)
+  const persistence = useRef<{
+    raw: string | null
+    blocked: boolean
+    protected: boolean
+    problem: StorageProblem | null
+  }>({ raw: null, blocked: false, protected: false, problem: null })
+  const [state, setState] = useState<AppState>(() => {
+    const loaded = readStoredState()
+    persistence.current = {
+      raw: loaded.raw,
+      blocked: !!loaded.problem,
+      protected: !!loaded.problem,
+      problem: loaded.problem,
     }
-  }, [state])
+    return loaded.state
+  })
+  const persistedState = useRef<AppState | null>(persistence.current.raw === null ? null : state)
+  const [message, setMessage] = useState('')
+  const [storageProblem, setStorageProblem] = useState<StorageProblem | null>(
+    () => persistence.current.problem,
+  )
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const persist = useCallback((value: AppState) => {
+    const result = writeStoredState(value, persistence.current.raw)
+    persistence.current.raw = result.raw
+    persistence.current.blocked = !!result.problem
+    persistence.current.problem = result.problem
+    if (!result.problem) persistedState.current = value
+    if (result.problem === 'changed') persistence.current.protected = true
+    setStorageProblem(result.problem)
+  }, [])
+  useEffect(() => {
+    // Reading an existing record must not rewrite it or create a false conflict in another tab.
+    if (!persistence.current.blocked && state !== persistedState.current) persist(state)
+  }, [state, persist])
   useEffect(() => () => clearTimeout(timer.current), [])
   const toast = useCallback((text: string) => {
     clearTimeout(timer.current)
@@ -152,6 +81,37 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }))
     toast(saved ? '車候補から外しました' : '車候補に保存しました')
   }
+  const reset = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY)
+    } catch {
+      toast('保存データを削除できませんでした。ブラウザの設定を確認してください。')
+      return false
+    }
+    persistence.current = { raw: null, blocked: false, protected: false, problem: null }
+    setStorageProblem(null)
+    setState(createInitialState())
+    return true
+  }
+  const downloadStoredData = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw === null) {
+        toast('ダウンロードできる保存データがありません。')
+        return
+      }
+      const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'driveplus-local-backup.json'
+      document.body.append(link)
+      link.click()
+      link.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch {
+      toast('保存データを取り出せませんでした。ブラウザの設定を確認してください。')
+    }
+  }
   return (
     <Context.Provider
       value={{
@@ -161,8 +121,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         toast,
         toggleEvent,
         toggleStation,
-        reset: () => setState(createInitialState()),
-        storageError,
+        reset,
+        storageError: !!storageProblem,
+        storageProblem,
+        storageProtected: persistence.current.protected,
+        retryStorage: () => {
+          if (!persistence.current.protected) persist(state)
+        },
+        downloadStoredData,
       }}
     >
       {children}

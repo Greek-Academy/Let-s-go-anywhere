@@ -1,3 +1,4 @@
+import { StorageDetails } from '../components/StorageStatus'
 import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -361,6 +362,7 @@ export function AppSettings() {
         >
           おすすめの非表示をリセット
         </PrimaryButton>
+        <StorageDetails />
         <SectionHeading title="このモックについて" />
         <div className="settings-about">
           <p>Drive+（仮） / PRD v0.2</p>
@@ -375,12 +377,12 @@ export function AppSettings() {
       {resetOpen && (
         <Modal title="保存データを削除しますか？" onClose={() => setResetOpen(false)}>
           <p className="body-copy">
-            初回設定、行きたい、車候補、学習、相談、振り返りのデータをこのブラウザから削除し、最初の画面に戻ります。
+            初回設定、行きたい、車候補、学習、相談、振り返りのデータをこのブラウザから削除し、最初の画面に戻ります。読み込めなかった元のデータと、このタブだけの変更も失われます。この操作は取り消せません。
           </p>
           <PrimaryButton
             variant="danger"
             onClick={() => {
-              reset()
+              if (!reset()) return
               setResetOpen(false)
               navigate('/welcome', { replace: true })
             }}
