@@ -1,3 +1,4 @@
+import { lifecycleExamples } from '../data/lifecycleExamples'
 import {
   outings,
   stations,
@@ -12,7 +13,7 @@ import { createContentCatalog } from './catalog'
 // The only composition point for the current sample content.
 export const sampleCatalog = createContentCatalog({
   source: 'sample',
-  outings,
+  outings: [...outings, ...lifecycleExamples],
   stations,
   drivingSchools,
   quizQuestions,

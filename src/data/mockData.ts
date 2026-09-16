@@ -1,3 +1,4 @@
+import { sampleLifecycle } from './outingLifecycle'
 import type { LearningContent, Outing, Question, School, Station } from './types'
 
 // All locations, dates, offers and educational text are fixtures for UX review.
@@ -15,7 +16,11 @@ export const events: Outing[] = [
     description:
       '少し早めに着いたら、湖のまわりをのんびり散歩。日が暮れたら、大切な人と夜空を見上げる。そんな休日を思い描くためのお出かけサンプルです。',
     source: 'X',
-    weekend: true,
+    lifecycle: sampleLifecycle(
+      'fireworks',
+      '2026-09-19T18:30:00+09:00',
+      '2026-09-19T20:00:00+09:00',
+    ),
     mood: '夜空を見上げる休日',
     price: '未確認',
   },
@@ -31,7 +36,7 @@ export const events: Outing[] = [
     description:
       '木漏れ日の下でコーヒーを味わい、気になった小さなお店を巡る。いつもの週末に、ひと息つく時間を。内容は画面確認用のサンプルです。',
     source: 'TikTok',
-    weekend: true,
+    lifecycle: sampleLifecycle('market', '2026-09-19T10:00:00+09:00', '2026-09-20T17:00:00+09:00'),
     mood: 'おいしい寄り道',
     price: '未確認',
   },
@@ -49,7 +54,7 @@ export const spots: Outing[] = [
     description:
       '湖越しに眺める富士山、風の音、小さなカフェ。予定を詰め込みすぎず、景色を楽しむ時間をつくってみませんか。写真は旅の雰囲気を伝えるイメージです。',
     source: '編集部',
-    weekend: false,
+    lifecycle: sampleLifecycle(),
     mood: '自然を楽しむ休日',
     price: '施設ごとに要確認',
   },
@@ -65,7 +70,7 @@ export const spots: Outing[] = [
     description:
       'ゆっくり歩いて、季節の移ろいを見つける。帰り道はお気に入りのカフェへ。場所やアクセスは公式情報で確認する想定のサンプルです。',
     source: 'TikTok',
-    weekend: false,
+    lifecycle: sampleLifecycle(),
     mood: '深呼吸するひととき',
     price: '未確認',
   },
@@ -81,7 +86,7 @@ export const spots: Outing[] = [
     description:
       '海辺の道を歩いた後は、のんびり湯めぐり。景色とくつろぎを楽しむ、お出かけのアイデアです。実在する施設の営業・設備を示すものではありません。',
     source: '編集部',
-    weekend: false,
+    lifecycle: sampleLifecycle(),
     mood: '心ほどける海辺時間',
     price: '未確認',
   },
@@ -97,7 +102,7 @@ export const spots: Outing[] = [
     description:
       '気持ちのいい窓辺の席で、一杯をゆっくり。お店を巡って、自分だけのお気に入りを見つける休日のサンプルです。',
     source: 'X',
-    weekend: false,
+    lifecycle: sampleLifecycle(),
     mood: '街で見つけるお気に入り',
     price: '未確認',
   },

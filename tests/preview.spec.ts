@@ -14,6 +14,7 @@ test('built preview identifies sample content and restores saved data after a pa
     process.env.PLAYWRIGHT_SERVER !== 'preview',
     'Requires npm run build and npm run test:preview',
   )
+  await page.clock.install({ time: new Date('2026-09-16T03:00:00Z') })
   const response = await request.get('/release.json')
   expect(response.ok()).toBe(true)
   expect(await response.json()).toMatchObject({
@@ -43,7 +44,7 @@ test('built preview identifies sample content and restores saved data after a pa
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await page.reload()
   await expect(
-    page.getByRole('button', { name: /イベント・要確認 湖畔のオータム花火/ }),
+    page.getByRole('button', { name: /開催予定（サンプル） 湖畔のオータム花火/ }),
   ).toBeVisible()
   expect(
     await page.evaluate(

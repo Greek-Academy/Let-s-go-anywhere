@@ -1,4 +1,6 @@
-import { useContent } from '../content/ContentProvider'
+import { evaluateOuting, occursThisWeekend, outingStateLabels } from '../domain/outingLifecycle'
+import { OutingImage, OutingStatus } from '../components/OutingStatus'
+import { useContent, useContentTime } from '../content/ContentProvider'
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
@@ -154,6 +156,7 @@ export function SnsSheet({ onClose }: { onClose: () => void }) {
 }
 export function Discover() {
   const { outings, tripFacts } = useContent()
+  const now = useContentTime()
   const { state, update } = useApp()
   const navigate = useNavigate()
   const [conditionsOpen, setConditionsOpen] = useState(false)
@@ -171,9 +174,10 @@ export function Discover() {
   const candidates = outings
     .filter(
       (o) =>
+        evaluateOuting(o, now).recommendable &&
         !state.hiddenEvents.includes(o.id) &&
         (category === 'おすすめ' ||
-          (category === '今週末' && o.weekend) ||
+          (category === '今週末' && occursThisWeekend(o, now)) ||
           (category === 'イベント' && o.kind === 'event') ||
           (category === 'スポット' && o.kind === 'spot')) &&
         (!tag || o.tags.includes(tag)) &&
@@ -280,7 +284,7 @@ export function Discover() {
         </div>
         <SampleNote>
           {category === '今週末'
-            ? '9/19–20の週末を想定したサンプルです。'
+            ? '今週末に期間が重なる架空のイベントです。'
             : 'お出かけ情報はすべてサンプルです。'}
         </SampleNote>
         <SectionHeading
@@ -437,6 +441,7 @@ export function Discover() {
 }
 export function EventDetail() {
   const { outings } = useContent()
+  const now = useContentTime()
   const { id } = useParams()
   const outing = outings.find((o) => o.id === id)
   const navigate = useNavigate()
@@ -458,13 +463,31 @@ export function EventDetail() {
         />
       </>
     )
+  const status = evaluateOuting(outing, now)
+  if (status.state === 'withdrawn')
+    return (
+      <div className="screen">
+        <Header back title="お出かけ" />
+        <div className="page-pad">
+          <h1>このお出かけは掲載停止中です</h1>
+          <OutingStatus outing={outing} detail />
+          <p className="body-copy">以前の紹介・写真・アクセス情報は表示していません。</p>
+          {saved && (
+            <PrimaryButton variant="secondary" onClick={() => toggleEvent(outing.id)}>
+              行きたいから外す
+            </PrimaryButton>
+          )}
+          <PrimaryButton onClick={() => navigate('/discover')}>ほかのお出かけを探す</PrimaryButton>
+        </div>
+      </div>
+    )
   const goal = state.goals[outing.id] ?? { companion: state.profile.companion, when: '', note: '' }
   const setGoal = (patch: Partial<typeof goal>) =>
     update((s) => ({ ...s, goals: { ...s.goals, [outing.id]: { ...goal, ...patch } } }))
   return (
     <div className="screen event-detail">
       <div className="detail-hero">
-        <img src={outing.image} alt={`${outing.title}のイメージ`} />
+        <OutingImage outing={outing} />
         <div className="detail-hero-shade" />
         <div className="detail-hero-actions">
           <IconButton icon={ArrowLeft} label="戻る" onClick={back} />
@@ -494,6 +517,7 @@ export function EventDetail() {
         </div>
         <h1>{outing.title}</h1>
         <p className="detail-subtitle">{outing.subtitle}</p>
+        <OutingStatus outing={outing} detail />
         <div className="detail-meta">
           <p>
             <MapPin size={15} />
@@ -501,7 +525,7 @@ export function EventDetail() {
           </p>
           <p>
             <CalendarDays size={15} />
-            {outing.date}
+            {status.dateLabel}
           </p>
         </div>
         <p className="body-copy">{outing.description}</p>
@@ -567,15 +591,18 @@ export function EventDetail() {
         <SectionHeading title="お出かけの基本情報" />
         <InfoRows
           rows={[
-            ['開催状態', outing.kind === 'spot' ? '常設（サンプル）' : '要確認（サンプル）'],
-            ['日時・期間', outing.date],
+            ['開催状態', `${outingStateLabels[status.state]}（サンプル）`],
+            ['日時・期間', status.dateLabel],
             ['開催地', outing.area],
             ['料金', outing.price],
             ['参加・予約条件', '未確認'],
             ['主催者・施設', 'サンプルのため未確認'],
             ['駐車場・車での所要時間', '要確認'],
             ['発見元', `${outing.source}（サンプル）`],
-            ['情報確認日', '未確認（画面設計用）'],
+            [
+              '情報確認日',
+              status.checkedAt ? `${status.checkedAt}（架空の確認記録）` : '再確認が必要です',
+            ],
           ]}
         />
         <PrimaryButton

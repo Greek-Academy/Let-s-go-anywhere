@@ -163,3 +163,7 @@ node scripts/capture-ui.mjs
 8. 実機で文字拡大・読み上げ・片手操作・キーボード表示・セーフエリアを検証。
 
 詳しい着手時の判断は [実装計画](docs/IMPLEMENTATION_PLAN.md)、デザインの確認結果は [検証メモ](docs/VERIFICATION.md) を参照してください。
+
+### 開催状態・確認期限のモック
+
+終了・中止・延期・期限切れ・掲載停止を判定し、保存一覧にも反映します。写真の利用停止は開催情報と分けて扱います。概要は [仕様と残作業](docs/EVENT_LIFECYCLE.md)、確認URL・画面例は [操作手順](docs/reviews/event-lifecycle/README.md) を参照してください。静的モックの確認期限はサンプル用で、本番の承認・再確認ジョブ・配信キャッシュ削除は未実装です。
