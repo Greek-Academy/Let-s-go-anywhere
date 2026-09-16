@@ -130,14 +130,14 @@ localStorageキーは `driveplus.mock.v1`。初回回答、お出かけ・車の
 ## 検証
 
 ```bash
-npx playwright install chromium
+npx playwright install chromium webkit
 npm run test:e2e     # 開発サーバーで操作を確認
 npm run build
 CI=true PLAYWRIGHT_PORT=5176 npm run test:preview  # 配信ファイルで確認
 npm run test:report  # 画像・操作結果付きHTMLレポートを開く
 ```
 
-PCとiPhone相当のモバイルサイズで、初回設定、5タブ、保存、SNS追加、チェック・未回答、学習履歴、地図と絞り込み、同意付き相談、プロフィール、振り返り、データ削除、戻る、フォーカス制御、横はみ出し、画像欠損を確認します。実機Safari・Android端末でのネイティブ動作は別途確認が必要です。
+PC・スマートフォン幅のChromiumと、iPhone相当のWebKitで、初回設定、5タブ、保存、SNS追加、チェック・未回答、学習履歴、地図と絞り込み、同意付き相談、プロフィール、振り返り、データ削除、戻る、フォーカス制御、横はみ出し、画像欠損を確認します。実機Safari・Android端末でのネイティブ動作は別途確認が必要です。
 
 GitHubのPRではビルド済みの静的ファイルを検査し、そのファイルで操作確認を自動実行します。成功した配信ファイルは `static-preview-<SHA>` Artifactに保存します（自動デプロイは行いません）。成功した各テストの操作後の画面と、失敗時の画像・トレースをHTMLレポートに保存します。CI実行画面のArtifactsからダウンロードでき、保持期間は14日です。Issueへの結果報告とレビューの手順は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
 
@@ -171,3 +171,7 @@ node scripts/capture-ui.mjs
 ### 公式サイト・外部地図・保存URLの案内
 
 Issue #24の先行部分としてURL検証・確認期限・遷移先表示・外部地図への引き渡しを共通化しました。「行きたい」→保存リンクの「元の投稿を確認」から、移動先を確認してHTTPS URLを開けます。詳細は [仕様と残作業](docs/EXTERNAL_LINKS.md)、操作手順・画面例は [外部リンクの確認](docs/reviews/external-links/README.md) を参照してください。実施設のリンク有効化は、確認済みデータと承認の接続後です。
+
+### 画面移動とキーボード操作
+
+画面を開くと見出しへ操作位置を移し、詳細から戻ると元のカードとスクロール位置を復元します。絞り込み操作のたびに先頭へ戻ることはありません。シート内のTab／Shift+Tabと、閉じた後の操作位置も調整しています。[確認手順と実機での残作業](docs/reviews/navigation-accessibility/README.md) を参照してください。

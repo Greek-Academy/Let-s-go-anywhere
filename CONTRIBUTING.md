@@ -12,10 +12,10 @@ Node.jsは`.nvmrc`の24.20.0、npmは`package.json`の11.19.0を使用します�
 nvm install
 nvm use
 npm ci
-npx playwright install chromium
+npx playwright install chromium webkit
 ```
 
-Linuxでブラウザの依存パッケージも入れる場合は`npx playwright install --with-deps chromium`を使用します。
+Linuxでブラウザの依存パッケージも入れる場合は`npx playwright install --with-deps chromium webkit`を使用します。
 
 ## Issueから確認待ちまで
 
@@ -37,7 +37,7 @@ CI=true npm run test:review
 npm run test:report
 ```
 
-`test:preview` はビルド済みの静的ファイルでVite previewを起動します。開発中にVite開発サーバーで確認する場合は `npm run test:e2e` を使います。PCとスマートフォン幅のChromiumで既存の操作フローを確認します。実機Safari・Androidの動作を保証するテストではありません。
+`test:preview` はビルド済みの静的ファイルでVite previewを起動します。開発中にVite開発サーバーで確認する場合は `npm run test:e2e` を使います。PC・スマートフォン幅のChromiumと、スマートフォン幅のWebKitで操作フローを確認します。WebKitはPlaywrightのブラウザエンジンで、実機Safari・Androidの動作を保証するテストではありません。
 
 起動中の開発サーバーから分離して確認する場合は、`CI=true PLAYWRIGHT_PORT=5175 npm run test:e2e`を使用します。CIでは既存サーバーを再利用せず、指定したポートで対象チェックアウトのアプリを起動します。
 

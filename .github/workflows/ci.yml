@@ -47,13 +47,13 @@ jobs:
       - name: Verify static preview artifact
         run: npm run verify:preview -- --for-upload
 
-      - name: Install Chromium and browser dependencies
-        run: npx playwright install --with-deps chromium
+      - name: Install Chromium, WebKit and browser dependencies
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Install Japanese fonts for screenshots
         run: sudo apt-get install --no-install-recommends -y fonts-noto-cjk
 
-      - name: Run desktop and mobile flows on the built preview
+      - name: Run Chromium and WebKit flows on the built preview
         run: npm run test:preview
 
       - name: Test local content review tool

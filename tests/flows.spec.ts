@@ -309,7 +309,20 @@ test('phone contains scroll; all routes render without errors, overflow or broke
   ]) {
     await page.goto(`/#${route}`)
     await expect(page.locator('.app-main')).toBeVisible()
-    await page.waitForFunction(() => Array.from(document.images).every((img) => img.complete))
+    // Exercise lazy images as a user scrolls; offscreen images need not load in WebKit.
+    for (const img of await page.locator('img').all()) {
+      await img.scrollIntoViewIfNeeded()
+      await expect
+        .poll(() =>
+          img.evaluate(
+            (el) => el instanceof HTMLImageElement && el.complete && el.naturalWidth > 0,
+          ),
+        )
+        .toBe(true)
+    }
+    await page.locator('#app-scroll').evaluate((el) => {
+      el.scrollTop = 0
+    })
     const metrics = await page.evaluate(() => {
       const main = document.querySelector('.app-main')!
       return {

@@ -28,6 +28,7 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 1000 } },
     },
     { name: 'mobile', use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' } },
+    { name: 'mobile-webkit', use: { ...devices['iPhone 13'] } },
   ],
   webServer: {
     command: `npm run ${server} -- --host 127.0.0.1 --port ${port} --strictPort`,

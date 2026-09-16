@@ -109,6 +109,7 @@ export function Cars() {
     <div className={`cars-screen ${map.mode === 'list' ? 'cars-list-screen screen' : ''}`}>
       {map.mode === 'map' ? (
         <>
+          <h1 className="sr-only">車を探す・地図</h1>
           <RentalMap
             stations={filtered}
             selected={map.selected}
@@ -232,6 +233,7 @@ export function Cars() {
                 )}
                 <PrimaryButton
                   variant={expanded ? 'ghost' : 'primary'}
+                  data-focus-key="map-station-detail"
                   onClick={() => navigate(`/stations/${preview.id}`)}
                 >
                   拠点の詳細を見る <ChevronRight size={16} />

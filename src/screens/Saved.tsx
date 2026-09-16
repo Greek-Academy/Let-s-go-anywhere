@@ -54,7 +54,10 @@ export function Saved() {
             <div className="saved-list">
               {eventList.map((o) => (
                 <article className="saved-outing" key={o.id}>
-                  <button onClick={() => navigate(`/events/${o.id}`, { state: { tab: 'saved' } })}>
+                  <button
+                    data-focus-key={`saved-event:${o.id}`}
+                    onClick={() => navigate(`/events/${o.id}`, { state: { tab: 'saved' } })}
+                  >
                     <OutingImage outing={o} decorative />
                     <span>
                       <OutingStatus outing={o} />
