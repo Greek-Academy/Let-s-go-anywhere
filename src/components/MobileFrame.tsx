@@ -1,3 +1,4 @@
+import { StorageNotice } from './StorageStatus'
 import { useLayoutEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { BatteryFull, CarFront, Check, Signal, Wifi } from 'lucide-react'
@@ -7,7 +8,7 @@ import { usePageNavigation } from '../hooks/usePageNavigation'
 import { BottomNavigation } from './ui'
 
 export function MobileFrame({ children }: { children: ReactNode }) {
-  const { state, message, storageError } = useApp()
+  const { state, message } = useApp()
   const location = useLocation()
   const stageRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
@@ -65,6 +66,7 @@ export function MobileFrame({ children }: { children: ReactNode }) {
                 <BatteryFull size={20} />
               </div>
             </div>
+            <StorageNotice />
             <main
               ref={scrollRef}
               className={`app-main ${map ? 'map-main' : ''} ${onboarding ? 'onboarding-main' : ''}`}
@@ -90,11 +92,6 @@ export function MobileFrame({ children }: { children: ReactNode }) {
                 </>
               )}
             </div>
-            {storageError && (
-              <div className="storage-notice" role="alert">
-                保存領域が使えないため、この画面を閉じるまで保持します。
-              </div>
-            )}
           </div>
         </div>
       </div>

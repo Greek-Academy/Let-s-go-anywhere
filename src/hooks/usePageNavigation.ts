@@ -19,7 +19,7 @@ export function usePageNavigation(ref: RefObject<HTMLElement | null>, view = '')
   useLayoutEffect(() => {
     const main = ref.current
     if (!main) return
-    const key = `${location.key}:${view}`
+    const key = `${location.key}:${location.pathname}${location.search}:${view}`
     const old = previous.current
     const traversal = navigation === 'POP' && old?.locationKey !== location.key
     const sameScreen = old?.path === location.pathname && old.view === view
@@ -69,5 +69,5 @@ export function usePageNavigation(ref: RefObject<HTMLElement | null>, view = '')
       main.removeEventListener('focusin', rememberFocus)
       main.removeEventListener('click', rememberClick, true)
     }
-  }, [location.key, location.pathname, navigation, ref, view])
+  }, [location.key, location.pathname, location.search, navigation, ref, view])
 }

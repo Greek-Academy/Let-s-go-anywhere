@@ -123,7 +123,7 @@ test('upload verification rejects modified checkouts and accidentally bundled pr
     expect(verify().stderr).toContain('clean, committed checkout')
     writeFileSync(join(dir, 'release.json'), JSON.stringify({ ...metadata, dirty: false }))
     expect(verify().status).toBe(0)
-    for (const name of ['.env', '_worker.js', 'index.js.map']) {
+    for (const name of ['.env', '_worker.js', 'index.js.map', 'driveplus-local-backup.json']) {
       writeFileSync(join(dir, name), 'should not ship')
       const result = verify()
       expect(result.status).not.toBe(0)

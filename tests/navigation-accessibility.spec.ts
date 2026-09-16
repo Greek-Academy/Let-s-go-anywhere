@@ -132,3 +132,18 @@ test('saved sub-tabs keep the activated control focused across URL query changes
   await expect(page).toHaveURL(/#\/saved\?type=events$/)
   await expect(outings).toBeFocused()
 })
+
+test('direct hash entries do not reuse the scroll position of a different screen', async ({
+  page,
+}) => {
+  await enter(page, '/settings')
+  await page.locator('#app-scroll').evaluate((el) => {
+    el.scrollTop = el.scrollHeight
+  })
+  await expect
+    .poll(() => page.locator('#app-scroll').evaluate((el) => el.scrollTop))
+    .toBeGreaterThan(100)
+  await page.goto('/#/saved')
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+  expect(await page.locator('#app-scroll').evaluate((el) => el.scrollTop)).toBe(0)
+})
