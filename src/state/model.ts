@@ -1,4 +1,5 @@
 import { userProfile } from '../data/options'
+import type { DiscoveryRegion } from '../data/regions'
 import type {
   Consultation,
   ConsultationMemo,
@@ -42,7 +43,7 @@ export interface AppState {
     selected: string | null
     offset: { x: number; y: number }
   }
-  discover: { category: string; search: string; tag: string }
+  discover: { category: string; search: string; tag: string; region: DiscoveryRegion }
   schoolFilters: { area: string; practice: string; budget: string; vehicle: string }
   settings: { largeText: boolean; reducedMotion: boolean }
 }
@@ -72,7 +73,7 @@ export const createInitialState = (): AppState => ({
     selected: null,
     offset: { x: 0, y: 0 },
   },
-  discover: { category: 'おすすめ', search: '', tag: '' },
+  discover: { category: 'おすすめ', search: '', tag: '', region: 'origin' },
   schoolFilters: { area: 'すべて', practice: 'すべて', budget: 'すべて', vehicle: 'すべて' },
   settings: { largeText: false, reducedMotion: false },
 })
