@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
+import { showAllRegions } from './helpers/discovery'
 
 test.beforeEach(async ({ page }) => {
   await page.clock.install({ time: new Date('2026-09-16T03:00:00Z') })
@@ -64,6 +65,7 @@ test('saved outings stay synchronized; back restores scroll; unverified SNS stay
   page,
 }) => {
   await enter(page)
+  await showAllRegions(page)
   await page.getByRole('button', { name: '湖畔のオータム花火を保存', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await page.getByRole('button', { name: /開催予定（サンプル） 湖畔のオータム花火/ }).click()

@@ -3,6 +3,7 @@ import type { AppState } from './model'
 import { conditionsError, drivingScenes } from '../domain/tripConditions'
 import type { TripConditions } from '../domain/tripConditions'
 import { validTimestamp } from '../domain/dates'
+import { prefectures } from '../data/regions'
 
 export const STORAGE_KEY = 'driveplus.mock.v1'
 export const MAX_STORAGE_LENGTH = 2 * 1024 * 1024 // UTF-16 code units, checked before JSON.parse
@@ -168,11 +169,15 @@ const schema: Record<keyof AppState, Rule> = {
     },
     { ...initial.map },
   ),
-  discover: shape({
-    category: oneOf(['おすすめ', '今週末', 'イベント', 'スポット']),
-    search: text,
-    tag: text,
-  }),
+  discover: shape(
+    {
+      category: oneOf(['おすすめ', '今週末', 'イベント', 'スポット']),
+      search: text,
+      tag: text,
+      region: oneOf(['origin', 'all', ...prefectures]),
+    },
+    { region: initial.discover.region },
+  ),
   schoolFilters: shape({ area: text, practice: text, budget: text, vehicle: text }),
   settings: shape({ largeText: bool, reducedMotion: bool }, { ...initial.settings }),
 }
