@@ -13,3 +13,7 @@ review-test-results/
 
 # Personal local-state exports must not be committed.
 driveplus-local-backup*.json
+
+# Local release copies are separate from the application and CI artifacts.
+/release-backups/
+/release-restores/

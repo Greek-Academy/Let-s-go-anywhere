@@ -47,6 +47,9 @@ jobs:
       - name: Verify static preview artifact
         run: npm run verify:preview -- --for-upload
 
+      - name: Test release backup and restore guards
+        run: npm run test:release-backup
+
       - name: Install Chromium, WebKit and browser dependencies
         run: npx playwright install --with-deps chromium webkit
 

@@ -23,7 +23,9 @@
     "build:review": "vite build --config review.vite.config.ts",
     "preview:review": "vite preview --config review.vite.config.ts",
     "test:review": "playwright test --config playwright.review.config.ts",
-    "content:check": "node scripts/check-content.mjs"
+    "content:check": "node scripts/check-content.mjs",
+    "release:backup": "node scripts/release-backup.mjs",
+    "test:release-backup": "node --test scripts/release-backup.test.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.45.0",
