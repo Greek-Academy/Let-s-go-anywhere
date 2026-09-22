@@ -1,0 +1,75 @@
+/* The iOS system supplies its status bar and home indicator. The Web mock keeps
+   its frame; the bundled app uses the actual viewport, including keyboard resize. */
+.native-app .desktop-stage {
+  height: 100%;
+  padding: 0;
+  gap: 0;
+  background: #fff;
+}
+.native-app .prototype-label,
+.native-app .prototype-caption,
+.native-app .status-bar,
+.native-app .home-indicator,
+.native-app .onboarding-indicator,
+.native-app .mobile-frame::before,
+.native-app .mobile-frame::after {
+  display: none;
+}
+.native-app .mobile-frame {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+  background: #fff;
+}
+.native-app .phone-screen {
+  border-radius: 0;
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+.native-app .bottom-nav {
+  height: calc(65px + env(safe-area-inset-bottom));
+  flex-basis: calc(65px + env(safe-area-inset-bottom));
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+}
+.native-app .onboarding-main {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.native-app .welcome-bottom {
+  padding-bottom: 16px;
+}
+.native-app .bottom-sheet {
+  max-height: calc(100% - env(safe-area-inset-top) - 12px);
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+}
+.native-app input,
+.native-app textarea,
+.native-app select {
+  font-size: max(16px, 1em);
+}
+.native-app.keyboard-open .bottom-nav {
+  display: none;
+}
+.native-app.keyboard-open .bottom-sheet,
+.native-app.keyboard-open .onboarding-main {
+  padding-bottom: 12px;
+}
+.native-saving {
+  position: absolute;
+  z-index: 20;
+  top: env(safe-area-inset-top);
+  right: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--mint);
+  font-size: 11px;
+  pointer-events: none;
+}

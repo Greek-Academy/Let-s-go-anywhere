@@ -4,6 +4,9 @@ import { createInitialState } from './model'
 import type { AppState } from './model'
 import { readStoredState, writeStoredState, STORAGE_KEY } from './storage'
 import type { StorageProblem } from './storage'
+import { stateStore } from '../platform/stateStore'
+import { isNativeApp } from '../platform/runtime'
+import { Share } from '@capacitor/share'
 export { createInitialState, STORAGE_KEY }
 export type { AppState }
 
@@ -14,7 +17,8 @@ type StateContext = {
   message: string
   toggleEvent: (id: string) => void
   toggleStation: (id: string) => void
-  reset: () => boolean
+  reset: () => Promise<boolean>
+  storagePending: boolean
   storageProblem: StorageProblem | null
   storageProtected: boolean
   retryStorage: () => void
@@ -45,14 +49,31 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     () => persistence.current.problem,
   )
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const persist = useCallback((value: AppState) => {
-    const result = writeStoredState(value, persistence.current.raw)
-    persistence.current.raw = result.raw
-    persistence.current.blocked = !!result.problem
-    persistence.current.problem = result.problem
-    if (!result.problem) persistedState.current = value
-    if (result.problem === 'changed') persistence.current.protected = true
-    setStorageProblem(result.problem)
+  const queue = useRef(Promise.resolve())
+  const pending = useRef(0)
+  const resetting = useRef(false)
+  const [storagePending, setStoragePending] = useState(false)
+  const persist = useCallback((value: AppState, retry = false) => {
+    pending.current += 1
+    setStoragePending(true)
+    // Native writes are asynchronous. Serialize them so rapid edits, StrictMode
+    // effects and reset cannot overtake each other or overwrite a failed write.
+    queue.current = queue.current.then(async () => {
+      try {
+        if (resetting.current || (persistence.current.blocked && !retry)) return
+        if (persistedState.current === value) return
+        const result = await writeStoredState(value, persistence.current.raw)
+        persistence.current.raw = result.raw
+        persistence.current.blocked = !!result.problem
+        persistence.current.problem = result.problem
+        if (!result.problem) persistedState.current = value
+        if (result.problem === 'changed') persistence.current.protected = true
+        setStorageProblem(result.problem)
+      } finally {
+        pending.current -= 1
+        setStoragePending(pending.current > 0)
+      }
+    })
   }, [])
   useEffect(() => {
     // Reading an existing record must not rewrite it or create a false conflict in another tab.
@@ -81,23 +102,37 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }))
     toast(saved ? '車候補から外しました' : '車候補に保存しました')
   }
-  const reset = () => {
-    try {
-      localStorage.removeItem(STORAGE_KEY)
-    } catch {
-      toast('保存データを削除できませんでした。ブラウザの設定を確認してください。')
-      return false
-    }
-    persistence.current = { raw: null, blocked: false, protected: false, problem: null }
-    setStorageProblem(null)
-    setState(createInitialState())
-    return true
+  const reset = async () => {
+    if (resetting.current) return false
+    resetting.current = true
+    const operation = queue.current.then(async () => {
+      try {
+        await stateStore.removeItem(STORAGE_KEY)
+        persistence.current = { raw: null, blocked: false, protected: false, problem: null }
+        persistedState.current = null
+        setStorageProblem(null)
+        setState(createInitialState())
+        return true
+      } catch {
+        toast('保存データを削除できませんでした。端末の保存領域を確認してください。')
+        return false
+      } finally {
+        resetting.current = false
+      }
+    })
+    queue.current = operation.then(() => undefined)
+    return operation
   }
-  const downloadStoredData = () => {
+  const downloadStoredData = async () => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
+      const raw = await stateStore.getItem(STORAGE_KEY)
       if (raw === null) {
         toast('ダウンロードできる保存データがありません。')
+        return
+      }
+      if (isNativeApp) {
+        // The user chooses Copy or a destination in the system sheet. No upload.
+        await Share.share({ title: 'Drive+ 保存されている元データ', text: raw })
         return
       }
       const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }))
@@ -109,7 +144,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       link.remove()
       setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch {
-      toast('保存データを取り出せませんでした。ブラウザの設定を確認してください。')
+      toast('元データの取り出しを完了しませんでした。保存データは変更していません。')
     }
   }
   return (
@@ -122,11 +157,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         toggleEvent,
         toggleStation,
         reset,
+        storagePending,
         storageError: !!storageProblem,
         storageProblem,
         storageProtected: persistence.current.protected,
         retryStorage: () => {
-          if (!persistence.current.protected) persist(state)
+          if (!persistence.current.protected) persist(state, true)
         },
         downloadStoredData,
       }}

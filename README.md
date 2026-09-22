@@ -8,6 +8,8 @@
 
 地域と候補表示の改善は[3つの確認操作と画面](docs/reviews/discovery-region/README.md)にまとめています。
 
+iPhoneアプリとして確認する場合は、[シミュレーターの起動・実機への入れ方](docs/IOS_DEVELOPMENT.md)をご覧ください。React＋Capacitorを使い、`npm run ios:sync` → `npm run ios:open` → XcodeでiPhoneシミュレーターを選んで▶︎、で起動します。Expo Go・有料会員登録は不要です。Web版とアプリ版の保存データは別々です。
+
 追加開発の操作手順・画像・本番化の残作業は [下見・お出かけ条件・SNS保存のレビュー](docs/reviews/development-batch-1/README.md) にまとめています。
 
 Node.js **24.20.0**、npm **11.19.0**で動作確認しています。Node.jsの指定は`.nvmrc`、npmの指定は`package.json`に記載しています。
@@ -111,9 +113,12 @@ src/
     types.ts                 API置き換え時にも使えるデータ型
     mockData.ts              お出かけ、拠点、設問、教材、講習会社等
     options.ts               選択肢・初期プロフィール
-  state/AppState.tsx          状態更新・localStorage・通知
+  state/AppState.tsx          状態更新・保存の順序制御・通知
+  platform/                  iPhone用レイアウト、保存先の切り替え
   screens/                   各領域の画面実装
 public/images/               同梱したイメージ写真（実行時の外部取得なし）
+ios/App/                     Xcodeプロジェクト・ネイティブ操作テスト
+capacitor.config.ts          同梱アプリID・ビルド先・キーボード設定
 tests/flows.spec.ts           操作フローのブラウザテスト
 scripts/capture-ui.mjs        デザイン確認用スクリーンショットの再生成
 docs/IMPLEMENTATION_PLAN.md  着手前の調査・画面・遷移・実装計画
@@ -121,7 +126,7 @@ docs/screenshots/            PC・スマホ表示の実際のスクリーンシ�
 docs/ASSETS.md               写真の取得元・ライセンス
 ```
 
-localStorageキーは `driveplus.mock.v1`。初回回答、お出かけ・車の保存、SNSリンク、知識回答、不安、学習済み状態、相談メモ、同意した項目のスナップショット、相談・振り返り履歴を保存します。保存領域が使えない環境では、そのタブ内のメモリに保持し、画面に通知します。
+保存キーは `driveplus.mock.v1`。WebはlocalStorage、iPhoneアプリはPreferences（UserDefaults）に、初回回答、お出かけ・車の保存、SNSリンク、知識回答、不安、学習済み状態、相談メモ、同意した項目のスナップショット、相談・振り返り履歴を保存します。相互の同期はありません。保存領域が使えない場合は起動中のメモリだけに保持し、画面に通知します。アプリの削除でiPhone側のデータは失われます。
 
 ## 試すときの補足
 
