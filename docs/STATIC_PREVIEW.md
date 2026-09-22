@@ -98,6 +98,8 @@ Direct Uploadのダッシュボードは1,000ファイル・1ファイル25MiB�
 
 ## 戻し方
 
+静的配信物を保存・照合・新しいフォルダへ復元するコマンドは[バックアップと復元の手順](RELEASE_RECOVERY.md)を参照してください。ローカルでの復旧試験を追加しました。外部サービスへの再配信と公開環境の確認は別途必要です。
+
 配信前に、直前に確認できたArtifactを14日の期限より長く必要に応じて保管します。問題があればその一式を再配信し、`release.json` のSHAと操作を再確認します。端末内の保存データは配信を戻しても自動復元されません。保存形式の変更時は移行と互換性の確認が別途必要です。
 
 CloudflareのダッシュボードのRollbackは成功済みのproduction deployment向けで、preview deploymentは対象外です。ここでいうCloudflareのproductionは配信先の区分です。アプリの `channel: preview` とは別の意味なので、上記の再配信手順を共通の戻し方にします。[公式のRollback説明](https://developers.cloudflare.com/pages/configuration/rollbacks/)
