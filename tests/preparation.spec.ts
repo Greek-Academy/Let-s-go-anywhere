@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
+import { showAllRegions } from './helpers/discovery'
 
 test.afterEach(async ({ page }, info) => {
   if (info.status === 'passed')
@@ -89,6 +90,7 @@ test('trip filters separate confirmed, unknown and conflicting candidates and re
   page,
 }, info) => {
   await enter(page)
+  await showAllRegions(page)
   const original = await state(page)
   await page.getByRole('button', { name: /今回のお出かけ条件/ }).click()
   await setConditions(page)
@@ -116,7 +118,7 @@ test('trip filters separate confirmed, unknown and conflicting candidates and re
   await page.getByRole('button', { name: '確認済みで合う 1', exact: true }).click()
   await page.locator('.location-select').click()
   await page.getByLabel('駅名・地域名').fill('東京・新宿駅周辺')
-  await page.getByRole('button', { name: 'このエリアから探す' }).click()
+  await page.getByRole('button', { name: '出発エリアを保存' }).click()
   await expect(page.locator('.event-card')).toHaveCount(0)
   await expect(page.getByRole('button', { name: '未確認 6', exact: true })).toBeVisible()
   await page.getByRole('button', { name: '未確認 6', exact: true }).click()

@@ -1,5 +1,6 @@
 import type { ListingLinks } from '../domain/externalLinks'
 import type { OutingLifecycle } from '../domain/outingLifecycle'
+import type { Prefecture } from './regions'
 
 export type Tab = 'discover' | 'saved' | 'cars' | 'learn' | 'schools'
 export type StationType = 'すべて' | 'レンタカー' | 'カーシェア'
@@ -10,6 +11,7 @@ export interface Outing {
   subtitle: string
   image: string
   area: string
+  prefecture?: Prefecture
   kind: 'event' | 'spot'
   tags: string[]
   date: string

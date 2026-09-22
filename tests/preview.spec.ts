@@ -40,17 +40,17 @@ test('built preview identifies sample content and restores saved data after a pa
     /connect-src 'none'/,
   )
   await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
-  await page.getByRole('button', { name: '湖畔のオータム花火を保存', exact: true }).click()
+  await page.getByRole('button', { name: '森の週末コーヒーマーケットを保存', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await page.reload()
   await expect(
-    page.getByRole('button', { name: /開催予定（サンプル） 湖畔のオータム花火/ }),
+    page.getByRole('button', { name: /開催予定（サンプル） 森の週末コーヒーマーケット/ }),
   ).toBeVisible()
   expect(
     await page.evaluate(
       () => JSON.parse(localStorage.getItem('driveplus.mock.v1') || '{}').savedEvents,
     ),
-  ).toContain('fireworks')
+  ).toContain('market')
   expect(external).toEqual([])
   expect(errors).toEqual([])
   await test

@@ -1688,6 +1688,73 @@ small {
   font-size: 10px;
   color: #71957e;
   min-height: 25px;
+  max-width: 100%;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.location-select svg {
+  flex-shrink: 0;
+}
+.discovery-region-button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d9e9df;
+  border-radius: 13px;
+  background: #f3f8f4;
+  color: var(--teal);
+  text-align: left;
+}
+.discovery-region-button > span:first-of-type {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+}
+.discovery-region-button small {
+  font-size: 10px;
+  color: #6a8879;
+}
+.discovery-region-button strong {
+  font-size: 13px;
+}
+.region-change {
+  font-size: 11px;
+}
+.discovery-region-caption {
+  margin: 6px 1px 13px;
+  font-size: 10px;
+  line-height: 1.7;
+  color: #708477;
+}
+.discovery-result-count {
+  margin: 9px 0 0;
+  font-size: 11px;
+  color: #547563;
+}
+.region-choices {
+  display: grid;
+  gap: 9px;
+  margin-top: 16px;
+}
+.region-select-field {
+  margin: 0 8px 4px;
+}
+.region-coverage {
+  line-height: 1.9;
+  margin: 16px 0;
+}
+.discovery-empty .empty-state {
+  padding: 18px 0 0;
+}
+.discovery-empty .empty-icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 8px;
+}
+.discovery-empty .empty-state p {
+  margin-bottom: 12px;
 }
 .discover-title {
   display: flex;
