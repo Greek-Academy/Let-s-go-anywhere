@@ -4,6 +4,7 @@ import { createServer } from 'node:http'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { extname, join, resolve, sep } from 'node:path'
+import { showAllRegions } from './helpers/discovery'
 
 test('a verified release restores the same origin after a failed deployment and keeps saved choices', async ({
   page,
@@ -75,6 +76,8 @@ test('a verified release restores the same origin after a failed deployment and 
     await page.clock.install({ time: new Date('2026-09-16T03:00:00Z') })
     await page.goto(origin + '/#/welcome')
     await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+    // The saved sample is in Yamanashi; the initial discovery scope is Tokyo.
+    await showAllRegions(page)
     await page.getByRole('button', { name: '湖畔のオータム花火を保存', exact: true }).click()
     await page
       .getByRole('navigation')
@@ -130,7 +133,8 @@ test('a verified release restores the same origin after a failed deployment and 
     expect(external).toEqual([])
     expect(errors).toEqual([])
   } finally {
-    await page.goto('about:blank')
+    // A timed-out test can already have closed the page. Still release the server and files.
+    await page.goto('about:blank').catch(() => undefined)
     server.closeAllConnections()
     await new Promise<void>((resolve) => server.close(() => resolve()))
     await rm(root, { recursive: true, force: true })
