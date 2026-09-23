@@ -11,10 +11,11 @@ export function AppPreview({
 }) {
   const frame = useRef<HTMLIFrameElement>(null)
   const [error, setError] = useState(false)
+  const [frameVersion, setFrameVersion] = useState(0)
   const [now, setNow] = useState(() => new Date())
   const apply = () => {
-    const api = (frame.current?.contentWindow as AppPreviewWindow | null)?.driveplusReviewPreview
     try {
+      const api = (frame.current?.contentWindow as AppPreviewWindow | null)?.driveplusReviewPreview
       if (!api) throw new Error('Preview not ready')
       api.present(snapshot)
       setError(false)
@@ -57,10 +58,18 @@ export function AppPreview({
       {error && (
         <p role="alert">
           確認画面を読み込めませんでした。入力に戻ってもう一度開いてください。
-          <button onClick={apply}>再試行</button>
+          <button
+            onClick={() => {
+              setError(false)
+              setFrameVersion((value) => value + 1)
+            }}
+          >
+            再試行
+          </button>
         </p>
       )}
       <iframe
+        key={frameVersion}
         ref={frame}
         src="./app.html#/discover"
         title="入力候補のスマホアプリ"

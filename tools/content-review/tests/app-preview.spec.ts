@@ -214,3 +214,24 @@ test('photo conditions and private permission notes stay separate in the full ap
     true,
   )
 })
+
+test('a failed app frame can be retried without losing the draft', async ({ page }) => {
+  await load(page)
+  await page.route('**/app.html', (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: 'text/html',
+      body: '<!doctype html><title>Test failure</title>',
+    }),
+  )
+  await open(page)
+  await expect(page.getByRole('alert')).toContainText('確認画面を読み込めませんでした')
+  await page.unroute('**/app.html')
+  await page.getByRole('button', { name: '再試行', exact: true }).click()
+  await expect(
+    app(page).getByRole('heading', { name: sampleDraft().title, exact: true }),
+  ).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await close(page)
+  await expect(page.getByLabel('名称', { exact: true })).toHaveValue(sampleDraft().title)
+})
