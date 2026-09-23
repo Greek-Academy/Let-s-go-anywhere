@@ -10,6 +10,51 @@ body {
 #review-root {
   min-height: 100dvh;
 }
+.review-app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: #eef2ed;
+}
+.review-app-header,
+.review-app-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding: 12px 20px;
+  background: white;
+  border-bottom: 1px solid var(--line);
+}
+.review-app-header strong {
+  font-size: 15px;
+}
+.review-app-header p,
+.review-app-status p {
+  font-size: 11px;
+  line-height: 1.7;
+  margin-top: 4px;
+}
+.review-app button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #cde1d5;
+  border-radius: 12px;
+  font-size: 12px;
+}
+.review-app-status {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  background: #f2f8f3;
+}
+.review-app iframe {
+  display: block;
+  border: 0;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
 .review-shell {
   max-width: 1180px;
   margin: auto;

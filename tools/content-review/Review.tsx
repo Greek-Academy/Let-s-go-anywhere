@@ -13,6 +13,9 @@ import {
 import type { Check, Confirmation, Draft, Field, Problem, Source } from './model'
 import { sampleDraft } from './sample'
 import { PreviewCard } from './PreviewCard'
+import { AppPreview } from './AppPreview'
+import { createAppPreview } from './previewProjection'
+import type { AppPreviewSnapshot } from './previewProjection'
 
 function TextField({
   id,
@@ -150,8 +153,20 @@ export function ContentReview() {
   const [replacement, setReplacement] = useState<'blank' | 'sample' | 'import' | null>(null)
   const [pendingImport, setPendingImport] = useState<Draft | null>(null)
   const [dirty, setDirty] = useState(false)
+  const [appPreview, setAppPreview] = useState<AppPreviewSnapshot | null>(null)
   const importGeneration = useRef(0)
   const problems = validateDraft(draft)
+  useEffect(() => {
+    if (!appPreview) return
+    const scroll = window.scrollY
+    window.scrollTo(0, 0)
+    return () => {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scroll)
+        document.getElementById('open-app-preview')?.focus({ preventScroll: true })
+      })
+    }
+  }, [appPreview])
   useEffect(
     () => () => {
       if (photo) URL.revokeObjectURL(photo.url)
@@ -310,6 +325,7 @@ export function ContentReview() {
       }
     })
   }
+  if (appPreview) return <AppPreview snapshot={appPreview} onClose={() => setAppPreview(null)} />
   return (
     <main className="review-shell">
       <header className="review-header">
@@ -323,7 +339,7 @@ export function ContentReview() {
       <div className="review-intro">
         <p className="review-eyebrow">掲載前に、情報をひとつずつ。</p>
         <h1>掲載情報の入力チェック</h1>
-        <p>情報源・確認日・写真の条件を整理し、カードの見え方を確認します。</p>
+        <p>情報源・確認日・写真の条件を整理し、一覧・詳細・保存まで確認します。</p>
       </div>
       <div className="review-toolbar">
         <button onClick={() => replace('blank')}>
@@ -345,9 +361,26 @@ export function ContentReview() {
           <Download size={17} />
           入力JSONを保存
         </button>
+        <button
+          id="open-app-preview"
+          onClick={() => {
+            try {
+              setAppPreview(createAppPreview(draft, photo))
+              setImportError('')
+            } catch (error) {
+              setImportError((error as Error).message)
+            }
+          }}
+        >
+          アプリで確認する
+        </button>
       </div>
       <p className="review-privacy">
         入力はこのタブのメモリ内で扱います。自動保存・送信・公開はしません。必要な下書きはJSONで保存してください。
+      </p>
+      <p className="review-hint">
+        架空の入力でお試しください。名称などを変更すると確認状態が未確認に戻り、おすすめには表示されません。
+        「情報源・確認」で記録を見直すか、確認画面の「入力候補の詳細を見る」で表示を確認できます。
       </p>
       {message && (
         <p className="review-message" role="status">

@@ -5,9 +5,19 @@ import react from '@vitejs/plugin-react'
 // Separate local tool: not an input to the app's dist/ build.
 export default defineConfig(({ command }) => ({
   root: fileURLToPath(new URL('./tools/content-review', import.meta.url)),
-  publicDir: false,
+  publicDir: '../../public',
   envPrefix: 'CONTENT_REVIEW_PUBLIC_',
-  build: { outDir: '../../review-dist', emptyOutDir: true, sourcemap: false },
+  build: {
+    outDir: '../../review-dist',
+    emptyOutDir: true,
+    sourcemap: false,
+    rolldownOptions: {
+      input: {
+        review: fileURLToPath(new URL('./tools/content-review/index.html', import.meta.url)),
+        app: fileURLToPath(new URL('./tools/content-review/app.html', import.meta.url)),
+      },
+    },
+  },
   server: {
     host: '127.0.0.1',
     port: 4180,

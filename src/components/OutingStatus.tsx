@@ -5,6 +5,13 @@ import type { Outing } from '../data/types'
 import { evaluateOuting, outingStateLabels } from '../domain/outingLifecycle'
 import { Tag } from './ui'
 
+export function OutingPhotoCredit({ outing }: { outing: Outing }) {
+  const status = evaluateOuting(outing, useContentTime())
+  return status.photoVisible && outing.imageCredit ? (
+    <small className="outing-photo-credit">{outing.imageCredit}</small>
+  ) : null
+}
+
 export function OutingImage({
   outing,
   className = '',
@@ -21,7 +28,7 @@ export function OutingImage({
       <img
         className={className}
         src={outing.image}
-        alt={decorative ? '' : `${outing.title}のイメージ`}
+        alt={decorative ? '' : (outing.imageAlt ?? `${outing.title}のイメージ`)}
         loading="lazy"
         onError={() => setFailed(outing.image)}
       />

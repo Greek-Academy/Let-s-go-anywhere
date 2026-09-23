@@ -3,6 +3,7 @@ import { sampleCatalog } from './content/sampleCatalog'
 import type { ContentCatalog } from './content/catalog'
 import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { AppStateProvider, useApp } from './state/AppState'
+import type { AppState } from './state/model'
 import { MobileFrame } from './components/MobileFrame'
 import { EmptyState, Header } from './components/ui'
 import { Onboarding, Welcome } from './screens/Onboarding'
@@ -79,10 +80,18 @@ function AppRoutes() {
     </MobileFrame>
   )
 }
-export default function App({ catalog = sampleCatalog }: { catalog?: ContentCatalog }) {
+export default function App({
+  catalog = sampleCatalog,
+  persistence = 'device',
+  initialState,
+}: {
+  catalog?: ContentCatalog
+  persistence?: 'device' | 'memory'
+  initialState?: AppState
+}) {
   return (
     <ContentProvider catalog={catalog}>
-      <AppStateProvider>
+      <AppStateProvider persistenceMode={persistence} initialState={initialState}>
         <HashRouter>
           <AppRoutes />
         </HashRouter>

@@ -26,7 +26,18 @@ export function StorageNotice() {
 }
 
 export function StorageDetails() {
-  const { storageProblem, storageProtected, retryStorage, downloadStoredData } = useApp()
+  const { storageProblem, storageProtected, retryStorage, downloadStoredData, memoryOnly } =
+    useApp()
+  if (memoryOnly)
+    return (
+      <section className="storage-details">
+        <SectionHeading title="確認画面での保存" />
+        <p className="body-copy">
+          この確認画面を開いている間だけ保持します。入力画面へ戻る・再読み込みで消えます。
+          普段のプロフィールや行きたいには反映しません。
+        </p>
+      </section>
+    )
   const description = isNativeApp
     ? !storageProblem
       ? 'このiPhoneのアプリ内に保存します。ブラウザ版・ほかの端末との同期はありません。アプリを削除するとデータも消えます。'

@@ -294,7 +294,7 @@ export function ConsultationHistory() {
   )
 }
 export function AppSettings() {
-  const { state, update, reset, toast } = useApp()
+  const { state, update, reset, toast, memoryOnly } = useApp()
   const navigate = useNavigate()
   const [resetOpen, setResetOpen] = useState(false)
   return (
@@ -367,7 +367,10 @@ export function AppSettings() {
         <div className="settings-about">
           <p>Drive+（仮） / PRD v0.2</p>
           <p>
-            データはこの端末のアプリまたはブラウザ内に保存され、相互に同期しません。ログイン、外部API、予約、決済、通知の配信はありません。
+            {memoryOnly
+              ? '入力候補の確認用です。操作内容はこの確認画面を閉じると消えます。'
+              : 'データはこの端末のアプリまたはブラウザ内に保存され、相互に同期しません。'}
+            ログイン、外部API、予約、決済、通知の配信はありません。
           </p>
         </div>
         <PrimaryButton variant="danger" icon={Trash2} onClick={() => setResetOpen(true)}>
