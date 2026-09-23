@@ -367,7 +367,7 @@ export function AppSettings() {
         <div className="settings-about">
           <p>Drive+（仮） / PRD v0.2</p>
           <p>
-            データはこのブラウザ内に保存されます。ログイン、外部API、予約、決済、通知の配信はありません。
+            データはこの端末のアプリまたはブラウザ内に保存され、相互に同期しません。ログイン、外部API、予約、決済、通知の配信はありません。
           </p>
         </div>
         <PrimaryButton variant="danger" icon={Trash2} onClick={() => setResetOpen(true)}>
@@ -377,12 +377,12 @@ export function AppSettings() {
       {resetOpen && (
         <Modal title="保存データを削除しますか？" onClose={() => setResetOpen(false)}>
           <p className="body-copy">
-            初回設定、行きたい、車候補、学習、相談、振り返りのデータをこのブラウザから削除し、最初の画面に戻ります。読み込めなかった元のデータと、このタブだけの変更も失われます。この操作は取り消せません。
+            初回設定、行きたい、車候補、学習、相談、振り返りのデータをこの保存領域から削除し、最初の画面に戻ります。読み込めなかった元のデータと、保存されていない変更も失われます。この操作は取り消せません。
           </p>
           <PrimaryButton
             variant="danger"
-            onClick={() => {
-              if (!reset()) return
+            onClick={async () => {
+              if (!(await reset())) return
               setResetOpen(false)
               navigate('/welcome', { replace: true })
             }}

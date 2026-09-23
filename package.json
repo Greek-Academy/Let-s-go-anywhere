@@ -25,15 +25,25 @@
     "test:review": "playwright test --config playwright.review.config.ts",
     "content:check": "node scripts/check-content.mjs",
     "release:backup": "node scripts/release-backup.mjs",
-    "test:release-backup": "node --test scripts/release-backup.test.mjs"
+    "test:release-backup": "node --test scripts/release-backup.test.mjs",
+    "ios:sync": "npm run build && cap sync ios",
+    "ios:open": "cap open ios",
+    "ios:run": "npm run ios:sync && cap run ios --no-sync"
   },
   "dependencies": {
+    "@capacitor/browser": "8.0.4",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/ios": "8.5.2",
+    "@capacitor/keyboard": "8.0.5",
+    "@capacitor/preferences": "8.0.1",
+    "@capacitor/share": "8.0.2",
     "lucide-react": "^1.45.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.8.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.2",
     "@playwright/test": "^1.55.0",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.12",
@@ -42,5 +52,10 @@
     "prettier": "3.9.6",
     "typescript": "~5.9.2",
     "vite": "^8.3.0"
+  },
+  "overrides": {
+    "xcode": {
+      "uuid": "11.1.1"
+    }
   }
 }

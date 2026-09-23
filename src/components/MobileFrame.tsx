@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom'
 import { useApp } from '../state/AppState'
 import { usePageNavigation } from '../hooks/usePageNavigation'
 import { BottomNavigation } from './ui'
+import { isNativeApp } from '../platform/runtime'
 
 export function MobileFrame({ children }: { children: ReactNode }) {
   const { state, message } = useApp()
@@ -18,6 +19,7 @@ export function MobileFrame({ children }: { children: ReactNode }) {
   const map = location.pathname === '/cars' && state.map.mode === 'map'
   usePageNavigation(scrollRef, location.pathname === '/cars' ? state.map.mode : '')
   useLayoutEffect(() => {
+    if (isNativeApp) return
     const stage = stageRef.current
     const frame = frameRef.current
     if (!stage || !frame) return

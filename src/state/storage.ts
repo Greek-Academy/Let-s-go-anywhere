@@ -1,4 +1,6 @@
 import { createInitialState } from './model'
+import { stateStore } from '../platform/stateStore'
+import { isNativeApp } from '../platform/runtime'
 import type { AppState } from './model'
 import { conditionsError, drivingScenes } from '../domain/tripConditions'
 import type { TripConditions } from '../domain/tripConditions'
@@ -214,7 +216,22 @@ export function decodeStoredState(raw: string | null): {
 }
 
 export type StoredSnapshot = ReturnType<typeof decodeStoredState> & { raw: string | null }
+let nativeSnapshot: StoredSnapshot | undefined
+
+/** Finish the native read before mounting React, so defaults cannot overwrite saved data. */
+export async function initializeStorage(): Promise<void> {
+  if (!isNativeApp) return
+  try {
+    const raw = await stateStore.getItem(STORAGE_KEY)
+    nativeSnapshot = { ...decodeStoredState(raw), raw }
+  } catch {
+    nativeSnapshot = { state: createInitialState(), problem: 'unavailable', raw: null }
+  }
+}
+
 export function readStoredState(): StoredSnapshot {
+  if (isNativeApp)
+    return nativeSnapshot ?? { state: createInitialState(), problem: 'unavailable', raw: null }
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     return { ...decodeStoredState(raw), raw }
@@ -223,17 +240,22 @@ export function readStoredState(): StoredSnapshot {
   }
 }
 
-export function writeStoredState(
+export async function writeStoredState(
   state: AppState,
   expected: string | null,
-): { raw: string | null; problem: StorageProblem | null } {
+): Promise<{ raw: string | null; problem: StorageProblem | null }> {
   try {
     const raw = JSON.stringify(state)
     // Apply the same boundary to writes, so data created here can be read back.
     const { problem } = decodeStoredState(raw)
     if (problem) return { raw: expected, problem: problem === 'limit' ? 'limit' : 'write-failed' }
-    if (localStorage.getItem(STORAGE_KEY) !== expected) return { raw: expected, problem: 'changed' }
-    localStorage.setItem(STORAGE_KEY, raw)
+    const current = isNativeApp
+      ? await stateStore.getItem(STORAGE_KEY)
+      : localStorage.getItem(STORAGE_KEY)
+    if (current !== expected) return { raw: expected, problem: 'changed' }
+    // Keep the browser compare/write in one synchronous task, as before.
+    if (isNativeApp) await stateStore.setItem(STORAGE_KEY, raw)
+    else localStorage.setItem(STORAGE_KEY, raw)
     return { raw, problem: null }
   } catch {
     return { raw: expected, problem: 'write-failed' }

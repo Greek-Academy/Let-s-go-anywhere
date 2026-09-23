@@ -7,6 +7,8 @@ import { japanDate } from '../domain/dates'
 import { evaluateExternalRequest, linkBlockMessages } from '../domain/externalLinks'
 import type { Destination, ExternalKind, ExternalRequest } from '../domain/externalLinks'
 import { useApp } from '../state/AppState'
+import { Browser } from '@capacitor/browser'
+import { isNativeApp } from '../platform/runtime'
 
 export function ExternalModal({
   title,
@@ -27,6 +29,7 @@ export function ExternalModal({
   const now = useContentTime()
   const [, refresh] = useState(0)
   const [help, setHelp] = useState(false)
+  const [openError, setOpenError] = useState(false)
   const { storageError } = useApp()
   const decision = evaluateExternalRequest(effectiveRequest, japanDate(now))
   const label =
@@ -43,6 +46,16 @@ export function ExternalModal({
     ) {
       event.preventDefault()
       refresh((n) => n + 1)
+      return
+    }
+    if (isNativeApp) {
+      event.preventDefault()
+      if (event.type !== 'click') return
+      setOpenError(false)
+      // Keep the bundled app in its WebView; close the system browser to return.
+      void Browser.open({ url: destination.url, toolbarColor: '#ffffff' }).catch(() => {
+        setOpenError(true)
+      })
     }
   }
   const link = (destination: Destination, text: string, sameTab = false, secondary = false) => (
@@ -92,7 +105,9 @@ export function ExternalModal({
             )}
           </div>
           <p className="body-copy">
-            別タブ、または対応するアプリで開きます。元のタブから続きに戻れます。
+            {isNativeApp
+              ? 'ブラウザ画面で開きます。ブラウザ画面を閉じると、この画面の続きに戻れます。'
+              : '別タブ、または対応するアプリで開きます。元のタブから続きに戻れます。'}
           </p>
           {decision.kind === 'map' && (
             <p className="small muted">
@@ -100,7 +115,7 @@ export function ExternalModal({
             </p>
           )}
           {link(decision.destination, label)}
-          {decision.app && (
+          {decision.app && !isNativeApp && (
             <>
               <p className="small muted external-app-host">アプリ用リンク：{decision.app.host}</p>
               {link(decision.app, '対応アプリのリンクを開く', false, true)}
@@ -118,7 +133,11 @@ export function ExternalModal({
               <p className="body-copy">
                 アプリがない場合はWebで確認してください。削除・移転・ログインが必要なページは、元のサービスで確認できます。このアプリでは接続先の応答を確認していません。
               </p>
-              {storageError ? (
+              {isNativeApp ? (
+                <p className="small muted">
+                  通信状態を確認して、もう一度お試しください。表示したURLは長押しでコピーできます。
+                </p>
+              ) : storageError ? (
                 <p className="notice">保存領域が使えないため、元のタブを残して開いてください。</p>
               ) : (
                 <>
@@ -146,6 +165,11 @@ export function ExternalModal({
           <p className="small muted">別の確認先：{decision.fallback.host}</p>
           {link(decision.fallback, '公式Webで確認する', false, true)}
         </div>
+      )}
+      {openError && (
+        <p className="notice" role="alert">
+          ブラウザ画面を開けませんでした。もう一度お試しください。
+        </p>
       )}
       <p className="small muted external-disclosure">
         リンクを開くだけでは予約・問い合わせは完了しません。料金・空き状況・利用条件は提供元で確認してください。
