@@ -1,6 +1,6 @@
 # iPhoneシミュレーターから実機へ
 
-今のReactの画面をCapacitorでiPhoneアプリに入れました。MacのXcodeに付属する「iPhoneシミュレーター」で確認し、同じプロジェクトを手元のiPhoneにも入れられます。Expo Goは使いません。
+今のReactの画面をCapacitorでiPhoneアプリに入れました。MacのXcodeに付属する「iPhoneシミュレーター」で確認し、同じプロジェクトを手元のiPhoneにも入れられます。Expo Goは使いません。iPhoneに入れるのは**Drive+ Mockそのもの**です。今回はApp Storeを経由せず、Macから自分のiPhoneへ直接インストールします。
 
 ```
 Reactの画面・サンプル → npm run ios:sync → iPhone用プロジェクト
@@ -38,6 +38,8 @@ Reactのコードを直したら **`npm run ios:sync` → Xcodeで▶︎** で�
 - `npm run ios:run`：ビルド・コピー後、選んだ実機またはシミュレーターへ起動。
 
 同じアプリIDで上書きインストールすれば通常は保存が残ります。アプリを削除・初期化したり、別のIDに変えたりすると引き継げません。更新のたびにアンインストールする必要はありません。
+
+[シミュレーターの確認画像と結果](reviews/ios-foundation/README.md)も参照できます。
 
 ## あなたに確認していただく3操作
 

@@ -79,6 +79,32 @@ final class DrivePlusUITests: XCTestCase {
         tap("希望日時を相談")
         XCTAssertTrue((memo.value as? String ?? "").contains("Simulator memo"))
         capture("07-memo-restored")
+    }
+
+    @MainActor
+    func testExternalBrowserReturn() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        func tap(_ label: String) {
+            let button = web.buttons[label].firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 10), label)
+            for _ in 0..<8 {
+                if button.isHittable { break }
+                web.swipeUp()
+            }
+            button.tap()
+        }
+        func capture(_ name: String) {
+            let shot = XCTAttachment(screenshot: app.screenshot())
+            shot.name = name
+            shot.lifetime = .keepAlways
+            add(shot)
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
         tap("行きたい")
         tap("SNSで見つけた場所を追加")
         let url = web.textFields["投稿のURL"]
@@ -88,14 +114,24 @@ final class DrivePlusUITests: XCTestCase {
         let urlDone = app.buttons["完了"].exists ? app.buttons["完了"] : app.buttons["Done"]
         urlDone.tap()
         tap("行きたいに追加")
+        if web.buttons["保存済みリンクを見る"].exists { tap("保存済みリンクを見る") }
         tap("元の投稿を確認")
         let link = web.links["元のページを開く"]
         XCTAssertTrue(link.waitForExistence(timeout: 10))
         link.tap()
-        let browserDone = app.buttons.matching(NSPredicate(format: "label IN %@", ["閉じる", "完了", "Done", "Close"])).firstMatch
+        // Wait for the native browser toolbar; the React confirmation dialog
+        // also has a Close button while the presentation is animating.
+        let browserBar = app.otherElements["TopBrowserBar"]
+        XCTAssertTrue(browserBar.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts["Example Domain"].waitForExistence(timeout: 15))
+        let browserDone = browserBar.buttons.matching(NSPredicate(format: "label IN %@", ["閉じる", "完了", "Done", "Close"])).firstMatch
         XCTAssertTrue(browserDone.waitForExistence(timeout: 10))
         capture("08-external-browser")
-        browserDone.tap()
+        // Safari is a remote view; use its screen frame for the tap coordinate.
+        let closeFrame = browserDone.frame
+        app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: closeFrame.midX, dy: closeFrame.midY)).tap()
+        XCTAssertTrue(browserBar.waitForNonExistence(timeout: 10))
         tap("アプリに戻る")
         XCTAssertTrue(web.buttons["SNSで見つけた場所を追加"].exists)
         capture("09-returned-to-app")
