@@ -1,4 +1,4 @@
-import { OutingImage, OutingStatus } from './OutingStatus'
+import { OutingImage, OutingStatus, OutingPhotoCredit } from './OutingStatus'
 import { useContentTime } from '../content/ContentProvider'
 import { evaluateOuting } from '../domain/outingLifecycle'
 import { useNavigate } from 'react-router-dom'
@@ -53,6 +53,7 @@ export function EventCard({
         <Heart size={20} fill={saved ? 'currentColor' : 'none'} strokeWidth={1.8} />
       </button>
       <div className="event-card-body">
+        <OutingPhotoCredit outing={outing} />
         <button
           className="card-title-button"
           data-focus-key={`event-title:${outing.id}`}

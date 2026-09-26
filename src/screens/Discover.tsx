@@ -1,6 +1,6 @@
 import { ExternalModal } from '../components/ExternalLinkModal'
 import { evaluateOuting, occursThisWeekend, outingStateLabels } from '../domain/outingLifecycle'
-import { OutingImage, OutingStatus } from '../components/OutingStatus'
+import { OutingImage, OutingStatus, OutingPhotoCredit } from '../components/OutingStatus'
 import { useContent, useContentTime } from '../content/ContentProvider'
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -599,6 +599,7 @@ export function EventDetail() {
         <span className="hero-label">{outing.mood}</span>
       </div>
       <div className="detail-body page-pad">
+        <OutingPhotoCredit outing={outing} />
         <div className="tags">
           {outing.tags.map((t) => (
             <Tag key={t}>{t}</Tag>

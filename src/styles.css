@@ -18,6 +18,15 @@
   --body-size: 13px;
 }
 
+.outing-photo-credit {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  margin-bottom: 8px;
+}
+
 /* Arrival previews and per-outing conditions use the existing paper/mint system. */
 .arrival-teaser {
   display: flex;

@@ -10,6 +10,8 @@ export interface Outing {
   title: string
   subtitle: string
   image: string
+  imageAlt?: string
+  imageCredit?: string
   area: string
   prefecture?: Prefecture
   kind: 'event' | 'spot'

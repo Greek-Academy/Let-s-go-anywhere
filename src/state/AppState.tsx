@@ -11,6 +11,7 @@ export { createInitialState, STORAGE_KEY }
 export type { AppState }
 
 type StateContext = {
+  memoryOnly: boolean
   state: AppState
   update: (fn: (current: AppState) => AppState) => void
   toast: (text: string) => void
@@ -26,7 +27,16 @@ type StateContext = {
   storageError: boolean
 }
 const Context = createContext<StateContext | null>(null)
-export function AppStateProvider({ children }: { children: ReactNode }) {
+export function AppStateProvider({
+  children,
+  persistenceMode = 'device',
+  initialState,
+}: {
+  children: ReactNode
+  persistenceMode?: 'device' | 'memory'
+  initialState?: AppState
+}) {
+  const memoryOnly = persistenceMode === 'memory'
   const persistence = useRef<{
     raw: string | null
     blocked: boolean
@@ -34,7 +44,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     problem: StorageProblem | null
   }>({ raw: null, blocked: false, protected: false, problem: null })
   const [state, setState] = useState<AppState>(() => {
-    const loaded = readStoredState()
+    const loaded = memoryOnly
+      ? { state: structuredClone(initialState ?? createInitialState()), raw: null, problem: null }
+      : readStoredState()
     persistence.current = {
       raw: loaded.raw,
       blocked: !!loaded.problem,
@@ -77,8 +89,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [])
   useEffect(() => {
     // Reading an existing record must not rewrite it or create a false conflict in another tab.
-    if (!persistence.current.blocked && state !== persistedState.current) persist(state)
-  }, [state, persist])
+    if (!memoryOnly && !persistence.current.blocked && state !== persistedState.current)
+      persist(state)
+  }, [state, persist, memoryOnly])
   useEffect(() => () => clearTimeout(timer.current), [])
   const toast = useCallback((text: string) => {
     clearTimeout(timer.current)
@@ -103,6 +116,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     toast(saved ? '車候補から外しました' : '車候補に保存しました')
   }
   const reset = async () => {
+    if (memoryOnly) {
+      setState(createInitialState())
+      return true
+    }
     if (resetting.current) return false
     resetting.current = true
     const operation = queue.current.then(async () => {
@@ -124,6 +141,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     return operation
   }
   const downloadStoredData = async () => {
+    if (memoryOnly) {
+      toast('確認用の操作内容は、この画面を開いている間だけ保持します。')
+      return
+    }
     try {
       const raw = await stateStore.getItem(STORAGE_KEY)
       if (raw === null) {
@@ -150,6 +171,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   return (
     <Context.Provider
       value={{
+        memoryOnly,
         state,
         update,
         message,
@@ -162,7 +184,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         storageProblem,
         storageProtected: persistence.current.protected,
         retryStorage: () => {
-          if (!persistence.current.protected) persist(state, true)
+          if (!memoryOnly && !persistence.current.protected) persist(state, true)
         },
         downloadStoredData,
       }}

@@ -1,5 +1,5 @@
 import { ExternalModal } from '../components/ExternalLinkModal'
-import { OutingImage, OutingStatus } from '../components/OutingStatus'
+import { OutingImage, OutingStatus, OutingPhotoCredit } from '../components/OutingStatus'
 import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -63,6 +63,7 @@ export function Saved() {
                       <OutingStatus outing={o} />
                       <strong>{o.title}</strong>
                       <small>{o.area}</small>
+                      <OutingPhotoCredit outing={o} />
                       {state.goals[o.id]?.when && <small>{state.goals[o.id].when}</small>}
                     </span>
                     <ChevronRight size={16} />
