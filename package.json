@@ -28,7 +28,11 @@
     "test:release-backup": "node --test scripts/release-backup.test.mjs",
     "ios:sync": "npm run build && cap sync ios",
     "ios:open": "cap open ios",
-    "ios:run": "npm run ios:sync && cap run ios --no-sync"
+    "ios:run": "npm run ios:sync && cap run ios --no-sync",
+    "research": "node tools/spot-research/server.mjs",
+    "research:demo": "node tools/spot-research/server.mjs --demo",
+    "test:research": "node --test tools/spot-research/tests/*.test.mjs",
+    "test:research:ui": "playwright test --config playwright.research.config.ts"
   },
   "dependencies": {
     "@capacitor/browser": "8.0.4",
