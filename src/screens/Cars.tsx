@@ -87,6 +87,23 @@ export function Cars() {
     setMap({ selected: station.id })
     setExpanded(true)
   }
+  const openRealSearch = () => {
+    // A newly typed map query is an explicit area handoff; otherwise retain
+    // the last real-search conditions (or the profile area on first use).
+    if (map.query.trim())
+      update((s) => ({ ...s, carSearch: { ...s.carSearch, area: map.query.trim() } }))
+    navigate('/cars/search')
+  }
+  const realSearch = (
+    <button className="car-search-entry" onClick={openRealSearch} data-focus-key="real-car-search">
+      <CarFront size={22} aria-hidden="true" />
+      <span>
+        <strong>実際の車を探す</strong>
+        <small>外部地図・公式サイトで確認</small>
+      </span>
+      <ChevronRight size={18} aria-hidden="true" />
+    </button>
+  )
   const types = (
     <div className="chips map-type-chips">
       {(['すべて', 'レンタカー', 'カーシェア'] as StationType[]).map((type) => (
@@ -231,30 +248,37 @@ export function Cars() {
                     </PrimaryButton>
                   </div>
                 )}
-                <PrimaryButton
-                  variant={expanded ? 'ghost' : 'primary'}
-                  data-focus-key="map-station-detail"
-                  onClick={() => navigate(`/stations/${preview.id}`)}
-                >
-                  拠点の詳細を見る <ChevronRight size={16} />
-                </PrimaryButton>
+                {expanded ? (
+                  <PrimaryButton
+                    variant="ghost"
+                    data-focus-key="map-station-detail"
+                    onClick={() => navigate(`/stations/${preview.id}`)}
+                  >
+                    拠点の詳細を見る <ChevronRight size={16} />
+                  </PrimaryButton>
+                ) : (
+                  realSearch
+                )}
                 <p className="map-footnote">空き状況・料金・予約は公式で確認</p>
               </>
             ) : (
-              <EmptyState
-                title="この条件の拠点はありません"
-                description="地域や事業者の条件を変えて探せます。"
-                action="渋谷のサンプルを表示"
-                onAction={() =>
-                  setMap({
-                    area: '東京・渋谷駅周辺',
-                    query: '',
-                    type: 'すべて',
-                    providers: [],
-                    selected: null,
-                  })
-                }
-              />
+              <>
+                <div>{realSearch}</div>
+                <EmptyState
+                  title="この条件の拠点はありません"
+                  description="地域や事業者の条件を変えて探せます。"
+                  action="渋谷のサンプルを表示"
+                  onAction={() =>
+                    setMap({
+                      area: '東京・渋谷駅周辺',
+                      query: '',
+                      type: 'すべて',
+                      providers: [],
+                      selected: null,
+                    })
+                  }
+                />
+              </>
             )}
           </div>
           <div className="map-legend">
@@ -274,6 +298,7 @@ export function Cars() {
             </p>
             <h1>借りる場所を探す</h1>
             <p className="body-copy">お出かけの準備は、近くの車探しから。</p>
+            {realSearch}
             {types}
             <div className="map-list-controls">
               <PrimaryButton

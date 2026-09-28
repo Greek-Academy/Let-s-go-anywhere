@@ -1,6 +1,8 @@
 # Drive+：今できることと、次に進めること
 
-更新日：2026-09-28。最新の着手状況は[全体管理Issue #1](https://github.com/Greek-Academy/Let-s-go-anywhere/issues/1)に反映します。すべてのIssueやコードを読む必要はありません。
+更新日：2026-09-29。最新の着手状況は[全体管理Issue #1](https://github.com/Greek-Academy/Let-s-go-anywhere/issues/1)に反映します。すべてのIssueやコードを読む必要はありません。
+
+**#75「車を探すから外部地図・公式検索へ進む」を実装しました（確認待ち）。** 地域・種別・事業者を入力して実際の検索へ進めます。APIキー・追加サービス費用は不要です。アプリ内の地図と拠点はサンプルのままです。[3つの確認操作と画像](reviews/car-search-links/README.md)、[処理の説明・人間のTODO](CAR_SEARCH.md)を参照してください。#21・#22・#24の本番接続は残っています。
 
 **#73「Web検索を既存の見つけるにつなぐ」を実装しました。** #71 / PR #72を土台に、地域・希望からのカード表示、出典、未確認項目、詳細、個人の「行きたい」保存まで接続しました。[操作ガイド](DISCOVERY_WEB_SEARCH.md)と[3つの確認操作・画面](reviews/discover-web-search/README.md)をご覧ください。確認場所はMacの http://127.0.0.1:5173/#/discover です。iPhone版・静的プレビューからの新規検索は未接続で、理由を表示します。2026-09-28に本人から画面への肯定とマージ承認を受けました。反映状況は[Issue #73](https://github.com/Greek-Academy/Let-s-go-anywhere/issues/73)に記録します。
 

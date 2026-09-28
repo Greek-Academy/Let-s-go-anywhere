@@ -136,4 +136,69 @@ final class DrivePlusUITests: XCTestCase {
         XCTAssertTrue(web.buttons["SNSで見つけた場所を追加"].exists)
         capture("09-returned-to-app")
     }
+
+    /// Opens a real search page, but never submits a reservation or reads live availability.
+    /// Run only on a dedicated simulator: category selection is persisted locally.
+    @MainActor
+    func testCarSearchBrowserReturn() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let exact = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            let button = exact.exists ? exact : controls.matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
+            for _ in 0..<8 {
+                if button.isHittable { break }
+                web.swipeUp()
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        func capture(_ name: String) {
+            let shot = XCTAttachment(screenshot: app.screenshot())
+            shot.name = name
+            shot.lifetime = .keepAlways
+            add(shot)
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("車を探す")
+        tap("実際の車を探す")
+        let area = web.textFields["探す駅・地域"]
+        XCTAssertTrue(area.waitForExistence(timeout: 10))
+        let originalArea = area.value as? String
+        tap("レンタカー")
+        capture("car-search-input")
+        tap("外部地図で車を探す")
+        let link = web.links["Googleマップで検索する"]
+        XCTAssertTrue(link.waitForExistence(timeout: 10))
+        for _ in 0..<5 {
+            if link.isHittable { break }
+            web.swipeUp()
+        }
+        link.tap()
+        let bar = app.otherElements["TopBrowserBar"]
+        XCTAssertTrue(bar.waitForExistence(timeout: 20))
+        capture("car-search-native-browser")
+        let close = bar.buttons.matching(NSPredicate(format: "label IN %@", ["閉じる", "完了", "Done", "Close"])).firstMatch
+        XCTAssertTrue(close.waitForExistence(timeout: 10))
+        let frame = close.frame
+        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: frame.midX, dy: frame.midY)).tap()
+        XCTAssertTrue(bar.waitForNonExistence(timeout: 10))
+        tap("アプリに戻る")
+        XCTAssertEqual(area.value as? String, originalArea)
+        capture("car-search-return")
+        app.terminate()
+        app.launch()
+        tap("車を探す")
+        tap("実際の車を探す")
+        XCTAssertTrue(area.waitForExistence(timeout: 10))
+        XCTAssertEqual(area.value as? String, originalArea)
+    }
 }

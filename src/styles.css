@@ -4207,3 +4207,168 @@ small {
   width: 100%;
   height: 100%;
 }
+
+/* Real car search is separate from the sample station map. */
+.car-search-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 14px;
+  margin: 8px 0 12px;
+  text-align: left;
+  color: #187e70;
+  background: #edf7f2;
+  border: 1px solid #d4e9df;
+  border-radius: 16px;
+}
+.car-search-entry > span {
+  flex: 1;
+  min-width: 0;
+}
+.car-search-entry strong {
+  display: block;
+  font-size: 13px;
+}
+.car-search-entry small {
+  display: block;
+  color: #688b7d;
+  font-size: 10px;
+  margin-top: 3px;
+}
+.car-search-screen h1 {
+  font-size: 25px;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+.car-search-form {
+  margin-top: 22px;
+}
+.car-area-input {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #729588;
+}
+.car-area-input input {
+  flex: 1;
+  min-width: 0;
+}
+.car-use-origin {
+  margin-top: 10px;
+  font-size: 11px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.car-provider-label {
+  margin-top: 18px;
+}
+.car-search-form select {
+  width: 100%;
+}
+.car-search-form > .button {
+  margin-top: 20px;
+}
+.car-search-form .small {
+  margin-top: 9px;
+}
+.car-official-section {
+  border-top: 1px solid #e7eee8;
+  margin-top: 26px;
+  padding-top: 23px;
+}
+.car-official-section h2 {
+  font-size: 17px;
+}
+.car-provider-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 15px;
+}
+.car-provider-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 12px;
+  border: 1px solid #e1eae4;
+  border-radius: 17px;
+  background: #fff;
+  text-align: left;
+  color: #294b42;
+  box-shadow: 0 4px 12px #24463b04;
+}
+.car-provider-symbol {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  background: #e8f4ed;
+  color: #269882;
+}
+.car-provider-symbol.rental {
+  background: #e8f1f7;
+  color: #568caf;
+}
+.car-provider-copy {
+  flex: 1;
+  min-width: 0;
+}
+.car-provider-copy strong {
+  display: block;
+  font-size: 13px;
+  margin: 5px 0;
+  overflow-wrap: anywhere;
+}
+.car-provider-copy > span:last-child {
+  font-size: 10px;
+  color: #7e978b;
+}
+.car-search-note {
+  margin: 23px 0;
+}
+.car-area-input {
+  border: 1px solid #dce7df;
+  background: #fafcf9;
+  border-radius: 13px;
+  padding: 0 13px;
+}
+.car-area-input input {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+}
+.car-search-form select {
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid #dce7df;
+  border-radius: 13px;
+  background: #fafcf9;
+  font-size: 16px;
+}
+.car-search-form .field-label {
+  margin-bottom: 8px;
+}
+.map-preview .car-search-entry {
+  margin: 3px 0;
+  padding: 8px 12px;
+}
+.map-preview .car-search-entry small {
+  margin-top: 0;
+}
+.car-search-external-symbol {
+  width: 54px;
+  height: 54px;
+  margin: 12px auto;
+}
+.car-search-url {
+  margin-top: 10px;
+}
+.car-search-url summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: #568b78;
+}

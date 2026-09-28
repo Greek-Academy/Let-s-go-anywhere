@@ -33,13 +33,17 @@ export function ExternalModal({
   const { storageError } = useApp()
   const decision = evaluateExternalRequest(effectiveRequest, japanDate(now))
   const label =
-    effectiveRequest.type === 'research'
-      ? '出典ページを開く'
-      : decision.kind === 'map'
-        ? '地図で所在地を確認'
-        : decision.kind === 'sns'
-          ? '元のページを開く'
-          : '公式Webで確認する'
+    effectiveRequest.type === 'car-search'
+      ? effectiveRequest.target === 'map'
+        ? 'Googleマップで検索する'
+        : '公式の検索ページを開く'
+      : effectiveRequest.type === 'research'
+        ? '出典ページを開く'
+        : decision.kind === 'map'
+          ? '地図で所在地を確認'
+          : decision.kind === 'sns'
+            ? '元のページを開く'
+            : '公式Webで確認する'
   const guard = (event: MouseEvent<HTMLAnchorElement>, destination: Destination) => {
     // Check again on activation; a time/focus update may not have run yet.
     const current = evaluateExternalRequest(effectiveRequest)
@@ -78,20 +82,33 @@ export function ExternalModal({
   return (
     <Modal
       title={
-        effectiveRequest.type === 'research'
-          ? '検索結果の出典を確認'
-          : decision.kind === 'map'
-            ? '外部地図へのご案内'
-            : decision.kind === 'sns'
-              ? '元の投稿へのご案内'
-              : '公式サービスへのご案内'
+        effectiveRequest.type === 'car-search'
+          ? effectiveRequest.target === 'map'
+            ? '外部地図で車を検索'
+            : '公式サイトで車を検索'
+          : effectiveRequest.type === 'research'
+            ? '検索結果の出典を確認'
+            : decision.kind === 'map'
+              ? '外部地図へのご案内'
+              : decision.kind === 'sns'
+                ? '元の投稿へのご案内'
+                : '公式サービスへのご案内'
       }
       onClose={onClose}
     >
-      <div className="external-symbol">
+      <div
+        className={`external-symbol ${effectiveRequest.type === 'car-search' ? 'car-search-external-symbol' : ''}`}
+      >
         <ArrowUpRight size={34} />
       </div>
       <h3 className="external-title">{title}</h3>
+      {effectiveRequest.type === 'car-search' && (
+        <p className="body-copy">
+          {effectiveRequest.target === 'map'
+            ? '入力した地域・種別・事業者名をGoogleマップに渡して検索します。結果の営業・空き状況は未確認です。'
+            : '事業者の公式検索ページを開きます。地域・日時は移動先で入力してください。アプリで入力した地域は自動で引き継がれません。'}
+        </p>
+      )}
       {effectiveRequest.type === 'research' && (
         <p className="body-copy">
           Web検索で参照されたページです。AIが整理した内容・現在の営業状況は未確認です。元の情報と見比べてください。
@@ -108,7 +125,14 @@ export function ExternalModal({
               <Globe size={15} aria-hidden="true" />
               {decision.destination.host}
             </strong>
-            <p>{decision.destination.url}</p>
+            {effectiveRequest.type === 'car-search' ? (
+              <details className="car-search-url">
+                <summary tabIndex={0}>URLを確認</summary>
+                <p>{decision.destination.url}</p>
+              </details>
+            ) : (
+              <p>{decision.destination.url}</p>
+            )}
             {decision.destination.checkedAt && (
               <small>リンク確認日：{decision.destination.checkedAt}</small>
             )}
@@ -118,7 +142,7 @@ export function ExternalModal({
               ? 'ブラウザ画面で開きます。ブラウザ画面を閉じると、この画面の続きに戻れます。'
               : '別タブ、または対応するアプリで開きます。元のタブから続きに戻れます。'}
           </p>
-          {decision.kind === 'map' && (
+          {decision.kind === 'map' && effectiveRequest.type !== 'car-search' && (
             <p className="small muted">
               所在地を地図に渡します。車の入口や走りやすさを保証する案内ではありません。
             </p>

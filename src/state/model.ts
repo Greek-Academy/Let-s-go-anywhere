@@ -1,6 +1,7 @@
 import { userProfile } from '../data/options'
 import type { WebSpot } from '../domain/webSearch'
 import type { DiscoveryRegion } from '../data/regions'
+import type { CarSearchConditions } from '../domain/carSearch'
 import type {
   Consultation,
   ConsultationMemo,
@@ -14,6 +15,7 @@ import { emptyConditions } from '../domain/tripConditions'
 import type { TripConditions, ConditionFilter } from '../domain/tripConditions'
 
 export interface AppState {
+  carSearch: CarSearchConditions
   searchConditions: TripConditions
   conditionFilter: ConditionFilter
   outingConditions: Record<string, TripConditions>
@@ -50,6 +52,7 @@ export interface AppState {
   settings: { largeText: boolean; reducedMotion: boolean }
 }
 export const createInitialState = (): AppState => ({
+  carSearch: { area: null, type: 'すべて', provider: null },
   searchConditions: emptyConditions(),
   conditionFilter: 'all',
   outingConditions: {},

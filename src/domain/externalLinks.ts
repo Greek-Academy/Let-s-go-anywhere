@@ -1,6 +1,8 @@
 import { evidenceState, today } from './evidence'
 import type { Evidence } from './evidence'
 import { normalizeSavedUrl } from './savedUrls'
+import { carSearchDestination } from './carSearch'
+import type { CarSearchRequest } from './carSearch'
 
 export type ExternalKind = 'official' | 'map' | 'sns'
 /** Only a trusted, approved catalog adapter may supply these records. No private notes. */
@@ -22,6 +24,7 @@ export interface ListingLinks {
   map?: { availability: 'available' | 'unavailable'; evidence: Evidence<MapPlace> }
 }
 export type ExternalRequest =
+  | CarSearchRequest
   | { type: 'personal'; url: string }
   | { type: 'research'; url: string }
   | {
@@ -157,8 +160,17 @@ function mapDestination(
 
 export function evaluateExternalRequest(request: ExternalRequest, at = today()): LinkDecision {
   const kind =
-    request.type === 'personal' ? 'sns' : request.type === 'research' ? 'official' : request.kind
+    request.type === 'car-search'
+      ? request.target === 'map'
+        ? 'map'
+        : 'official'
+      : request.type === 'personal'
+        ? 'sns'
+        : request.type === 'research'
+          ? 'official'
+          : request.kind
   try {
+    if (request.type === 'car-search') return { kind, destination: carSearchDestination(request) }
     if (request.type === 'research') {
       const url = researchSourceUrl(request.url)
       return { kind, destination: { url: url.href, host: url.hostname } }
