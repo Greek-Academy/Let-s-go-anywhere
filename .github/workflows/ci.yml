@@ -50,6 +50,9 @@ jobs:
       - name: Test release backup and restore guards
         run: npm run test:release-backup
 
+      - name: Test search pilot with fake provider only
+        run: npm run test:research
+
       - name: Install Chromium, WebKit and browser dependencies
         run: npx playwright install --with-deps chromium webkit
 
@@ -62,12 +65,24 @@ jobs:
       - name: Test local content review tool
         run: npm run test:review
 
+      - name: Test search pilot browser flows without external API calls
+        run: npm run test:research:ui
+
       - name: Upload content review report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: content-review-report
           path: review-playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload offline search pilot report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: search-pilot-report
+          path: research-playwright-report/
           if-no-files-found: ignore
           retention-days: 14
 

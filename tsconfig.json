@@ -26,6 +26,7 @@
     "build",
     "tools",
     "review.vite.config.ts",
-    "playwright.review.config.ts"
+    "playwright.review.config.ts",
+    "playwright.research.config.ts"
   ]
 }

@@ -17,3 +17,9 @@ driveplus-local-backup*.json
 # Local release copies are separate from the application and CI artifacts.
 /release-backups/
 /release-restores/
+
+# Private search-pilot usage ledger; never part of app builds or CI artifacts.
+/.local-research/
+/research-test-results/
+/research-playwright-report/
+driveplus-research-*.json

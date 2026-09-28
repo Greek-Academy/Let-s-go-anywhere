@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Drive+ お出かけ検索の小さな検証</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <p class="outside">Drive+ <span>SEARCH PILOT · 京都</span></p>
+    <main class="phone">
+      <header>
+        <a href="/" aria-label="検索画面の最初へ">Drive<span>+</span></a
+        ><span class="badge">小さな検証</span>
+      </header>
+      <div class="screen">
+        <p class="eyebrow">YOUR NEXT LITTLE ESCAPE</p>
+        <h1>今度の休日、<br />どこに行く？</h1>
+        <p class="intro">地域と、したいことから。<br />気になる休日の候補を見つけよう。</p>
+        <div id="mode" class="notice" role="status">検証の設定を読み込んでいます…</div>
+        <form id="search-form">
+          <label for="region">探す地域</label>
+          <select id="region">
+            <option>京都市</option>
+          </select>
+          <label for="theme">気になる場所や、したいこと</label>
+          <textarea
+            id="theme"
+            rows="2"
+            maxlength="80"
+            required
+            placeholder="自然を楽しんで、カフェにも寄りたい"
+          ></textarea>
+          <p class="hint">
+            初回は京都市の公式観光サイトから最大3件。個人情報は入力しないでください。
+          </p>
+          <button id="search-button" class="primary" disabled>候補を探す</button>
+        </form>
+        <p id="progress" role="status" aria-live="polite"></p>
+        <p id="error" class="notice error" role="alert" hidden></p>
+        <section id="results" aria-label="お出かけ候補" aria-busy="false"></section>
+        <button id="download" class="secondary" hidden>検証結果をファイルに保存</button>
+        <details class="diagnostics">
+          <summary>今回の検証と利用回数</summary>
+          <div id="usage"></div>
+          <p>
+            利用料はUSDでの参考計算です。実請求・税・為替・前払い入金額とは異なります。正確な金額はOpenAIのUsage画面で確認します。
+          </p>
+          <p>
+            実検索は最大3回。失敗・タイムアウトも数え、再起動で回数を戻しません。回答の正確さ、写真、営業時間、料金、駐車場は確認前です。
+          </p>
+        </details>
+        <footer>
+          「いつか」を、今度の休日に。<small
+            >ローカルの検証画面 · 通常アプリへの公開は行いません</small
+          >
+        </footer>
+      </div>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
