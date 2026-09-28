@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
+import { randomUUID } from 'node:crypto'
+import { unlink, writeFile } from 'node:fs/promises'
 import { createInitialState } from '../../../src/state/model'
 
 const name = '川辺の散歩道（架空サンプル）'
@@ -251,7 +253,17 @@ test('サンプルへ戻した後に遅延応答で画面を差し替えず、�
     data: query,
   })
   expect(rejected.status()).toBe(403)
-  const secret = await request.get('/.env.research.local')
-  expect(secret.status()).toBe(403)
+  // CI intentionally has no real key file. Probe an existing, harmless env file
+  // so a missing file's SPA fallback cannot be confused with exposure/protection.
+  const probe = `.env.discovery-check-${randomUUID()}.local`
+  const marker = 'DRIVEPLUS_TEST_ONLY=public-fixture'
+  await writeFile(probe, marker, { flag: 'wx', mode: 0o600 })
+  try {
+    const response = await request.get(`/${probe}`)
+    expect(response.status()).toBe(403)
+    expect((await response.text()).includes(marker)).toBe(false)
+  } finally {
+    await unlink(probe)
+  }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
