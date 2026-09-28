@@ -3,6 +3,8 @@ import { sampleCatalog } from './content/sampleCatalog'
 import type { ContentCatalog } from './content/catalog'
 import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { AppStateProvider, useApp } from './state/AppState'
+import { WebSearchProvider } from './state/WebSearchState'
+import { WebSpotDetail } from './screens/WebSpotDetail'
 import type { AppState } from './state/model'
 import { MobileFrame } from './components/MobileFrame'
 import { EmptyState, Header } from './components/ui'
@@ -55,6 +57,7 @@ function AppRoutes() {
         <Route path="/onboarding/:step" element={<Onboarding />} />
         <Route path="/discover" element={<Discover />} />
         <Route path="/events/:id" element={<EventDetail />} />
+        <Route path="/web-spots/:id" element={<WebSpotDetail />} />
         <Route path="/events/:id/arrival" element={<Arrival />} />
         <Route path="/saved" element={<Saved />} />
         <Route path="/cars" element={<Cars />} />
@@ -92,9 +95,11 @@ export default function App({
   return (
     <ContentProvider catalog={catalog}>
       <AppStateProvider persistenceMode={persistence} initialState={initialState}>
-        <HashRouter>
-          <AppRoutes />
-        </HashRouter>
+        <WebSearchProvider>
+          <HashRouter>
+            <AppRoutes />
+          </HashRouter>
+        </WebSearchProvider>
       </AppStateProvider>
     </ContentProvider>
   )

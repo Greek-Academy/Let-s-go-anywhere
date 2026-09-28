@@ -1,4 +1,5 @@
 import { userProfile } from '../data/options'
+import type { WebSpot } from '../domain/webSearch'
 import type { DiscoveryRegion } from '../data/regions'
 import type {
   Consultation,
@@ -19,6 +20,7 @@ export interface AppState {
   onboarded: boolean
   profile: UserProfile
   savedEvents: string[]
+  savedWebSpots: WebSpot[]
   savedStations: string[]
   hiddenEvents: string[]
   links: SavedLink[]
@@ -54,6 +56,7 @@ export const createInitialState = (): AppState => ({
   onboarded: false,
   profile: { ...userProfile, interests: [] },
   savedEvents: [],
+  savedWebSpots: [],
   savedStations: [],
   hiddenEvents: [],
   links: [],

@@ -9,10 +9,13 @@ import { useApp } from '../state/AppState'
 import { StationCard } from '../components/Cards'
 import { Chip, EmptyState, Header, IconButton, PrimaryButton, Tag } from '../components/ui'
 import { SnsSheet } from './Discover'
+import { useWebSearch } from '../state/WebSearchState'
+import { WebSpotImage, WebSpotStatus, WebSpotSource } from '../components/WebSpotCard'
 
 export function Saved() {
   const { outings, stations } = useContent()
-  const { state, update, toggleEvent, toast } = useApp()
+  const { state, update, toggleEvent, toast, storageProtected } = useApp()
+  const { toggleSaved } = useWebSearch()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const current = params.get('type') === 'cars' ? 'cars' : 'events'
@@ -40,7 +43,8 @@ export function Saved() {
             selected={current === 'events'}
             onClick={() => setParams({ type: 'events' }, { replace: true })}
           >
-            お出かけ <span>{eventList.length + state.links.length}</span>
+            お出かけ{' '}
+            <span>{eventList.length + state.links.length + state.savedWebSpots.length}</span>
           </Chip>
           <Chip
             selected={current === 'cars'}
@@ -77,6 +81,42 @@ export function Saved() {
                 </article>
               ))}
             </div>
+            {state.savedWebSpots.length > 0 && (
+              <>
+                <h2 className="saved-subheading">Webで見つけた候補</h2>
+                <p className="small muted">この端末に保存した、内容未確認の候補です。</p>
+                <div className="saved-list">
+                  {state.savedWebSpots.map((spot) => (
+                    <div key={spot.id} className="saved-web-spot">
+                      <article className="saved-outing">
+                        <button
+                          data-focus-key={`saved-web:${spot.id}`}
+                          onClick={() =>
+                            navigate(`/web-spots/${spot.id}`, { state: { tab: 'saved' } })
+                          }
+                        >
+                          <WebSpotImage />
+                          <span>
+                            <WebSpotStatus spot={spot} />
+                            <strong>{spot.name}</strong>
+                            <small>{spot.area}</small>
+                          </span>
+                          <ChevronRight size={16} />
+                        </button>
+                        <IconButton
+                          icon={Heart}
+                          label={`${spot.name}を保存解除`}
+                          disabled={storageProtected}
+                          className="heart-active"
+                          onClick={() => toggleSaved(spot)}
+                        />
+                      </article>
+                      <WebSpotSource spot={spot} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
             {state.links.length > 0 && (
               <>
                 <h2 className="saved-subheading">SNSからの「行きたい」</h2>
@@ -107,7 +147,7 @@ export function Saved() {
                 ))}
               </>
             )}
-            {eventList.length + state.links.length === 0 && (
+            {eventList.length + state.links.length + state.savedWebSpots.length === 0 && (
               <EmptyState
                 icon={Heart}
                 title="最初の「行きたい」を見つけよう"

@@ -32,7 +32,8 @@
     "research": "node tools/spot-research/server.mjs",
     "research:demo": "node tools/spot-research/server.mjs --demo",
     "test:research": "node --test tools/spot-research/tests/*.test.mjs",
-    "test:research:ui": "playwright test --config playwright.research.config.ts"
+    "test:research:ui": "playwright test --config playwright.research.config.ts",
+    "test:discovery-search": "playwright test --config playwright.discovery-search.config.ts"
   },
   "dependencies": {
     "@capacitor/browser": "8.0.4",
