@@ -27,6 +27,7 @@
     "tools",
     "review.vite.config.ts",
     "playwright.review.config.ts",
-    "playwright.research.config.ts"
+    "playwright.research.config.ts",
+    "playwright.discovery-search.config.ts"
   ]
 }

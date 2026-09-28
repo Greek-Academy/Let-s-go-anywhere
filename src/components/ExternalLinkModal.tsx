@@ -33,11 +33,13 @@ export function ExternalModal({
   const { storageError } = useApp()
   const decision = evaluateExternalRequest(effectiveRequest, japanDate(now))
   const label =
-    decision.kind === 'map'
-      ? '地図で所在地を確認'
-      : decision.kind === 'sns'
-        ? '元のページを開く'
-        : '公式Webで確認する'
+    effectiveRequest.type === 'research'
+      ? '出典ページを開く'
+      : decision.kind === 'map'
+        ? '地図で所在地を確認'
+        : decision.kind === 'sns'
+          ? '元のページを開く'
+          : '公式Webで確認する'
   const guard = (event: MouseEvent<HTMLAnchorElement>, destination: Destination) => {
     // Check again on activation; a time/focus update may not have run yet.
     const current = evaluateExternalRequest(effectiveRequest)
@@ -76,11 +78,13 @@ export function ExternalModal({
   return (
     <Modal
       title={
-        decision.kind === 'map'
-          ? '外部地図へのご案内'
-          : decision.kind === 'sns'
-            ? '元の投稿へのご案内'
-            : '公式サービスへのご案内'
+        effectiveRequest.type === 'research'
+          ? '検索結果の出典を確認'
+          : decision.kind === 'map'
+            ? '外部地図へのご案内'
+            : decision.kind === 'sns'
+              ? '元の投稿へのご案内'
+              : '公式サービスへのご案内'
       }
       onClose={onClose}
     >
@@ -88,6 +92,11 @@ export function ExternalModal({
         <ArrowUpRight size={34} />
       </div>
       <h3 className="external-title">{title}</h3>
+      {effectiveRequest.type === 'research' && (
+        <p className="body-copy">
+          Web検索で参照されたページです。AIが整理した内容・現在の営業状況は未確認です。元の情報と見比べてください。
+        </p>
+      )}
       {effectiveRequest.type === 'personal' && (
         <p className="body-copy">本人が保存したリンクです。内容・開催情報は未確認です。</p>
       )}

@@ -80,6 +80,8 @@ GitHubの「必須チェック」や承認人数はリポジトリ管理者の�
 
 地域・希望からの情報取得の最小検証は[検索検証の手順](docs/SPOT_SEARCH_PILOT.md)を参照します。`npm run research:demo` は無料の架空サンプル、`npm run research` はキー準備後に明示操作で実APIを利用する独立したローカル画面です。実APIキーはCIに登録しません。`npm run test:research` と `npm run test:research:ui` は外部APIを使わず検査します。
 
+既存の「見つける」への接続は[Web検索の操作ガイド](docs/DISCOVERY_WEB_SEARCH.md)を参照します。`npm run test:discovery-search` は5178番のアプリと4183番の無料サンプルサーバーで、保存・出典・詳細まで検査します。4181番の実検索サーバーと利用回数には触れません。レポートは `discovery-search-report/`、CI Artifactも同名です。
+
 - [Playwright：CIとHTMLレポート](https://playwright.dev/docs/ci-intro)
 - [Node.js公式の配布情報](https://nodejs.org/dist/index.json)
 - [actions/setup-node](https://github.com/actions/setup-node)

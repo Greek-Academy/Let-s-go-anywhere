@@ -23,6 +23,7 @@ export interface ListingLinks {
 }
 export type ExternalRequest =
   | { type: 'personal'; url: string }
+  | { type: 'research'; url: string }
   | {
       type: 'listing'
       catalogSource: 'sample' | 'approved'
@@ -71,6 +72,13 @@ export function outboundHttpsUrl(input: string): URL {
     throw new Error('Invalid host')
   if (['lan', 'home', 'test-local'].some((suffix) => url.hostname.endsWith('.' + suffix)))
     throw new Error('Private host')
+  return url
+}
+
+export function researchSourceUrl(input: string): URL {
+  const url = outboundHttpsUrl(input)
+  if (url.hostname !== 'kyoto.travel' && !url.hostname.endsWith('.kyoto.travel'))
+    throw new Error('検索対象外の出典です。')
   return url
 }
 
@@ -148,8 +156,13 @@ function mapDestination(
 }
 
 export function evaluateExternalRequest(request: ExternalRequest, at = today()): LinkDecision {
-  const kind = request.type === 'personal' ? 'sns' : request.kind
+  const kind =
+    request.type === 'personal' ? 'sns' : request.type === 'research' ? 'official' : request.kind
   try {
+    if (request.type === 'research') {
+      const url = researchSourceUrl(request.url)
+      return { kind, destination: { url: url.href, host: url.hostname } }
+    }
     if (request.type === 'personal') {
       // This remains a personal, unverified link. It does not become published listing data.
       const url = outboundHttpsUrl(request.url)

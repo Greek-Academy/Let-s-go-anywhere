@@ -67,7 +67,9 @@ export function Profile() {
         <div className="profile-stats">
           <button onClick={() => navigate('/saved')}>
             <Heart size={20} />
-            <strong>{state.savedEvents.length + state.links.length}</strong>
+            <strong>
+              {state.savedEvents.length + state.links.length + state.savedWebSpots.length}
+            </strong>
             <small>行きたい</small>
           </button>
           <button onClick={() => navigate('/profile/learning')}>
@@ -106,7 +108,7 @@ export function Profile() {
           <MenuRow
             icon={Heart}
             title="行きたいリスト"
-            value={`${state.savedEvents.length + state.links.length}件`}
+            value={`${state.savedEvents.length + state.links.length + state.savedWebSpots.length}件`}
             onClick={() => navigate('/saved')}
           />
           <MenuRow icon={BookOpen} title="学習履歴" onClick={() => navigate('/profile/learning')} />

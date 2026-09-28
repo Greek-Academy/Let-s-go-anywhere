@@ -39,6 +39,8 @@ import type { ConditionFilter } from '../domain/tripConditions'
 
 import { ArrivalTeaser } from './Arrival'
 import { EventCard } from '../components/Cards'
+import { useWebSearch } from '../state/WebSearchState'
+import { WebSearchResults } from '../components/WebSearchResults'
 import {
   BottomSheet,
   Chip,
@@ -161,6 +163,7 @@ export function Discover() {
   const { outings, tripFacts } = useContent()
   const now = useContentTime()
   const { state, update } = useApp()
+  const web = useWebSearch()
   const navigate = useNavigate()
   const [conditionsOpen, setConditionsOpen] = useState(false)
   const [sns, setSns] = useState(false)
@@ -254,23 +257,42 @@ export function Discover() {
               ? '地域で絞り込まずに表示します。'
               : '出発エリアとは別に、目的地の地域を指定しています。'}
         </p>
-        <div className="discover-search-row">
-          <label className="search-field">
-            <Search size={17} />
-            <input
-              aria-label="お出かけを検索"
-              value={search}
-              onChange={(e) => setFilterState({ search: e.target.value })}
-              placeholder="気になる場所や、したいこと"
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            void web.search({ region: selectedRegion, theme: search, category, tag })
+          }}
+        >
+          <div className="discover-search-row">
+            <label className="search-field">
+              <Search size={17} />
+              <input
+                aria-label="お出かけを検索"
+                value={search}
+                maxLength={80}
+                onChange={(e) => setFilterState({ search: e.target.value })}
+                placeholder="気になる場所や、したいこと"
+              />
+            </label>
+            <IconButton
+              icon={SlidersHorizontal}
+              label="お出かけの絞り込み"
+              className={`filter-button ${tag ? 'has-filter' : ''}`}
+              onClick={() => setFilter(true)}
             />
-          </label>
-          <IconButton
-            icon={SlidersHorizontal}
-            label="お出かけの絞り込み"
-            className={`filter-button ${tag ? 'has-filter' : ''}`}
-            onClick={() => setFilter(true)}
-          />
-        </div>
+          </div>
+          <PrimaryButton
+            type="submit"
+            icon={Search}
+            disabled={web.loading}
+            className="web-search-submit"
+          >
+            {web.loading ? '候補を探しています…' : 'Webで候補を探す'}
+          </PrimaryButton>
+          <p className="small muted web-search-hint">
+            京都府内のうち京都市の常設スポットが対象です。実検索ではAPIを1回利用します。
+          </p>
+        </form>
         <button
           className="condition-edit-button discovery-conditions"
           onClick={() => setConditionsOpen(true)}
@@ -284,7 +306,7 @@ export function Discover() {
           </span>
           <ChevronDown size={16} />
         </button>
-        {conditionsActive && (
+        {conditionsActive && !web.active && (
           <div className="condition-filter">
             <p className="small muted">確認状態で絞り込み（架空の条件データ）</p>
             <div className="chips wrap">
@@ -319,97 +341,108 @@ export function Discover() {
             </Chip>
           ))}
         </div>
-        <SampleNote>
-          {category === '今週末'
-            ? '今週末に期間が重なる架空のイベントです。'
-            : 'お出かけ情報はすべてサンプルです。'}
-        </SampleNote>
-        <p className="discovery-result-count" role="status">
-          {selectedRegion === null
-            ? '探す地域が未選択です'
-            : `${regionLabel}の候補：${filtered.length}件`}
-        </p>
-        {filtered.length > 0 && (
-          <SectionHeading
-            title={
-              tag
-                ? `${tag}を楽しむ休日`
-                : category === 'おすすめ'
-                  ? 'あなたへのおすすめ'
-                  : category === '今週末'
-                    ? '今週末の楽しみ'
-                    : category === 'イベント'
-                      ? '季節のイベント'
-                      : 'いつか行きたいスポット'
-            }
-            subtitle={
-              state.profile.interests.length && category === 'おすすめ'
-                ? `${state.profile.interests.slice(0, 2).join('・')}が好きなあなたへ`
-                : 'いつもの休日に、小さな冒険を。'
-            }
-          />
-        )}
-        <div className="event-list">
-          {filtered.map((o) => (
-            <div key={o.id}>
-              <EventCard outing={o} onMore={() => setReason(o)} />
-              {conditionsActive && (
-                <button className="condition-summary" onClick={() => setReason(o)}>
-                  <Tag tone={overallMatch(matchResults(o.id)) === 'mismatch' ? 'peach' : 'neutral'}>
-                    {matchLabels[overallMatch(matchResults(o.id))]}
-                  </Tag>{' '}
-                  条件の理由を見る <ArrowRight size={13} />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-        {filtered.length === 0 &&
-          (selectedRegion === null || regionalOutings.length === 0 ? (
-            <div className="discovery-empty">
-              <EmptyState
-                icon={MapPin}
+        {web.active ? (
+          <WebSearchResults region={selectedRegion} theme={search} category={category} tag={tag} />
+        ) : (
+          <>
+            <SampleNote>
+              {category === '今週末'
+                ? '今週末に期間が重なる架空のイベントです。'
+                : 'お出かけ情報はすべてサンプルです。'}
+            </SampleNote>
+            <p className="discovery-result-count" role="status">
+              {selectedRegion === null
+                ? '探す地域が未選択です'
+                : `${regionLabel}の候補：${filtered.length}件`}
+            </p>
+            {filtered.length > 0 && (
+              <SectionHeading
                 title={
-                  selectedRegion === null
-                    ? '探す地域を選んでください'
-                    : selectedRegion === 'all'
-                      ? 'いま表示できる候補がありません'
-                      : 'この地域の候補はまだありません'
+                  tag
+                    ? `${tag}を楽しむ休日`
+                    : category === 'おすすめ'
+                      ? 'あなたへのおすすめ'
+                      : category === '今週末'
+                        ? '今週末の楽しみ'
+                        : category === 'イベント'
+                          ? '季節のイベント'
+                          : 'いつか行きたいスポット'
                 }
-                description={
-                  selectedRegion === null
-                    ? '出発エリアの都道府県を判別できません。目的地の地域を選んで探せます。'
-                    : selectedRegion === 'all'
-                      ? '掲載状態や期間を確認して表示できるお出かけサンプルがありません。保存した候補は「行きたい」で確認できます。'
-                      : `${regionLabel}で、いま表示できるお出かけサンプルはありません。探す地域を変えても出発地はそのままです。`
+                subtitle={
+                  state.profile.interests.length && category === 'おすすめ'
+                    ? `${state.profile.interests.slice(0, 2).join('・')}が好きなあなたへ`
+                    : 'いつもの休日に、小さな冒険を。'
                 }
-                action="探す地域を選び直す"
-                onAction={() => setRegionOpen(true)}
               />
-              {selectedRegion !== 'all' && (
-                <PrimaryButton variant="ghost" onClick={() => setFilterState({ region: 'all' })}>
-                  すべての地域から探す
-                </PrimaryButton>
-              )}
+            )}
+            <div className="event-list">
+              {filtered.map((o) => (
+                <div key={o.id}>
+                  <EventCard outing={o} onMore={() => setReason(o)} />
+                  {conditionsActive && (
+                    <button className="condition-summary" onClick={() => setReason(o)}>
+                      <Tag
+                        tone={overallMatch(matchResults(o.id)) === 'mismatch' ? 'peach' : 'neutral'}
+                      >
+                        {matchLabels[overallMatch(matchResults(o.id))]}
+                      </Tag>{' '}
+                      条件の理由を見る <ArrowRight size={13} />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
-          ) : (
-            <EmptyState
-              title="ぴったりの候補が見つかりません"
-              description={
-                conditionsActive
-                  ? '未確認や合わない理由も確認できます。条件の見直しや、別の候補・移動方法を検討してみましょう。'
-                  : '選んだ地域で、検索語・興味・期間・非表示の条件に合う候補がありません。条件や探す地域を変えてみましょう。'
-              }
-              action={conditionsActive ? 'すべての確認状態を見る' : '条件をリセット'}
-              onAction={() =>
-                update((s) => ({
-                  ...s,
-                  discover: { ...s.discover, category: 'おすすめ', search: '', tag: '' },
-                  conditionFilter: 'all',
-                }))
-              }
-            />
-          ))}
+            {filtered.length === 0 &&
+              (selectedRegion === null || regionalOutings.length === 0 ? (
+                <div className="discovery-empty">
+                  <EmptyState
+                    icon={MapPin}
+                    title={
+                      selectedRegion === null
+                        ? '探す地域を選んでください'
+                        : selectedRegion === 'all'
+                          ? 'いま表示できる候補がありません'
+                          : 'この地域の候補はまだありません'
+                    }
+                    description={
+                      selectedRegion === null
+                        ? '出発エリアの都道府県を判別できません。目的地の地域を選んで探せます。'
+                        : selectedRegion === 'all'
+                          ? '掲載状態や期間を確認して表示できるお出かけサンプルがありません。保存した候補は「行きたい」で確認できます。'
+                          : `${regionLabel}で、いま表示できるお出かけサンプルはありません。探す地域を変えても出発地はそのままです。`
+                    }
+                    action="探す地域を選び直す"
+                    onAction={() => setRegionOpen(true)}
+                  />
+                  {selectedRegion !== 'all' && (
+                    <PrimaryButton
+                      variant="ghost"
+                      onClick={() => setFilterState({ region: 'all' })}
+                    >
+                      すべての地域から探す
+                    </PrimaryButton>
+                  )}
+                </div>
+              ) : (
+                <EmptyState
+                  title="ぴったりの候補が見つかりません"
+                  description={
+                    conditionsActive
+                      ? '未確認や合わない理由も確認できます。条件の見直しや、別の候補・移動方法を検討してみましょう。'
+                      : '選んだ地域で、検索語・興味・期間・非表示の条件に合う候補がありません。条件や探す地域を変えてみましょう。'
+                  }
+                  action={conditionsActive ? 'すべての確認状態を見る' : '条件をリセット'}
+                  onAction={() =>
+                    update((s) => ({
+                      ...s,
+                      discover: { ...s.discover, category: 'おすすめ', search: '', tag: '' },
+                      conditionFilter: 'all',
+                    }))
+                  }
+                />
+              ))}
+          </>
+        )}
         <button className="sns-banner" onClick={() => setSns(true)}>
           <span className="sns-banner-icon">
             <Link2 size={21} />

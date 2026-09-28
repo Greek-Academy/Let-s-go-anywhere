@@ -6,6 +6,7 @@ import { conditionsError, drivingScenes } from '../domain/tripConditions'
 import type { TripConditions } from '../domain/tripConditions'
 import { validTimestamp } from '../domain/dates'
 import { prefectures } from '../data/regions'
+import { decodeSavedWebSpots } from '../domain/webSearch'
 
 export const STORAGE_KEY = 'driveplus.mock.v1'
 export const MAX_STORAGE_LENGTH = 2 * 1024 * 1024 // UTF-16 code units, checked before JSON.parse
@@ -130,6 +131,7 @@ const schema: Record<keyof AppState, Rule> = {
     { ...initial.profile },
   ),
   savedEvents: list(id),
+  savedWebSpots: decodeSavedWebSpots,
   savedStations: list(id),
   hiddenEvents: list(id),
   learned: list(id),

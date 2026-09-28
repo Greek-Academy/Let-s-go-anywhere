@@ -23,3 +23,5 @@ driveplus-local-backup*.json
 /research-test-results/
 /research-playwright-report/
 driveplus-research-*.json
+discovery-search-test-results/
+discovery-search-report/
