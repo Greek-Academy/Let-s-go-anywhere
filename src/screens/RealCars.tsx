@@ -602,7 +602,7 @@ export function CarMapSources() {
             </a>
           )}
           <p>
-            <SourceLink href="https://github.com/Greek-Academy/Let-s-go-anywhere/blob/codex/issue-75-car-search-links/src/data/kyoto-basemap.geo.json">
+            <SourceLink href="https://github.com/Greek-Academy/Let-s-go-anywhere/blob/5f9cf5645344c1227fa6859a810a6251cf9ff5b3/src/data/kyoto-basemap.geo.json">
               背景地図の配布データを開く
             </SourceLink>
           </p>

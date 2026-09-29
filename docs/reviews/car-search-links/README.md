@@ -44,7 +44,7 @@ Web：`http://127.0.0.1:5173/#/cars`（`npm run dev` 起動中）。iPhoneは `n
 
 ## iPhone 17シミュレーター
 
-専用のiPhone 17 / iOS 26.5で、実地図・ピン→詳細→保存→再起動後の車候補、外部ブラウザの開閉と条件復元を確認します。拡大→範囲検索→ピン選択も含め、2件のネイティブテストが成功しています。結果とCIへのリンクは[PR #76](https://github.com/Greek-Academy/Let-s-go-anywhere/pull/76)に記録します。
+専用のiPhone 17 / iOS 26.5で、実地図・ピン→詳細→保存→再起動後の車候補、外部ブラウザの開閉と条件復元を確認します。初回実装では外部ブラウザを含む2件が成功しました。今回の地図調整後は、拡大→範囲検索→ピン選択→保存→再起動のネイティブテスト1件と、PC／スマホChromium／WebKitの関連36件を再実行して成功しています。結果とCIへのリンクは[PR #76](https://github.com/Greek-Academy/Let-s-go-anywhere/pull/76)に記録します。
 
 テスト対象は `AppUITests/DrivePlusUITests/testRealStationMap` と `testCarSearchBrowserReturn`。個人データ入りのシミュレーターにはテストを実行しません。
 
