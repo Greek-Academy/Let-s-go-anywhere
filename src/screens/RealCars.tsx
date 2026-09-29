@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   CarFront,
@@ -37,16 +37,13 @@ import {
   createRealMapState,
   filterRealStations,
   findPilotArea,
-  pilotAreas,
   realStations,
-  stationRetrievedAt,
-  stationSnapshot,
+  stationRegions,
   stationLicense,
 } from '../domain/realStations'
 import type { Bounds, RealMapState, RealStation } from '../domain/realStations'
-import datasetUrl from '../data/kyoto-car-stations.osm.json?url'
-import basemapUrl from '../data/kyoto-basemap.geo.json?url'
-import basemapMeta from '../data/kyoto-basemap.meta.json'
+import { mapTileCache } from '../domain/mapTiles'
+import vectorLicense from '../data/vector-tile-licenses.txt?raw'
 
 function SourceLink({ href, children }: { href: string; children: React.ReactNode }) {
   const { toast } = useApp()
@@ -70,11 +67,15 @@ function SourceLink({ href, children }: { href: string; children: React.ReactNod
 export function MapCredits() {
   return (
     <div className="real-map-credits">
-      地図・拠点：©{' '}
+      地図：
+      <SourceLink href="https://github.com/gsi-cyberjapan/gsimaps-vector-experiment">
+        国土地理院ベクトルタイル提供実験
+      </SourceLink>
+      （加工） · 拠点：©{' '}
       <SourceLink href="https://www.openstreetmap.org/copyright">
         OpenStreetMap contributors
       </SourceLink>{' '}
-      （ODbL） · 地図の表示を簡略化
+      （ODbL）
     </div>
   )
 }
@@ -114,7 +115,7 @@ export function RealStationCard({
     </article>
   )
 }
-function StationFacts() {
+function StationFacts({ station }: { station: RealStation }) {
   return (
     <>
       <p className="body-copy">
@@ -122,11 +123,11 @@ function StationFacts() {
       </p>
       <InfoRows
         rows={[
-          ['所在地', `京都市・公開地図上の位置（住所未確認）`],
+          ['所在地', `${station.locality}・公開地図上の位置（住所未確認）`],
           ['営業時間・入出庫', '未確認 · 公式で確認'],
           ['登録・返却・車両条件', '未確認 · 公式で確認'],
           ['空き状況・料金', '取得していません'],
-          ['データ取得日', stationRetrievedAt],
+          ['データ取得日', station.retrievedAt],
           ['運営による確認日', '未確認'],
         ]}
       />
@@ -186,7 +187,9 @@ export function RealCars() {
       <strong>
         {map.unsupported ? 'この地域はまだ収録していません' : 'この条件の掲載拠点はありません'}
       </strong>
-      <p>京都中心部の10件で試しています。周辺に拠点が存在しないという意味ではありません。</p>
+      <p>
+        京都・梅田・草津の取得済み拠点で試しています。周辺に拠点が存在しないという意味ではありません。
+      </p>
       <button
         className="text-button"
         onClick={() => {
@@ -200,9 +203,7 @@ export function RealCars() {
   )
   return (
     <div className={`real-cars-screen ${map.mode === 'list' ? 'real-cars-list' : ''}`}>
-      <h1 className="sr-only">
-        {map.mode === 'map' ? '車を探す・実地図' : '借りる場所を探す・京都'}
-      </h1>
+      <h1 className="sr-only">{map.mode === 'map' ? '車を探す・実地図' : '借りる場所を探す'}</h1>
       <div className="real-map-header">
         <form
           className="map-search"
@@ -215,7 +216,7 @@ export function RealCars() {
           <Search size={18} />
           <input
             aria-label="駅名・地域から車を探す"
-            placeholder="京都・京都駅・四条烏丸など"
+            placeholder="京都・梅田・草津など"
             value={map.query}
             maxLength={80}
             onChange={(e) => patch({ query: e.target.value })}
@@ -248,6 +249,17 @@ export function RealCars() {
               setSheet('filters')
             }}
           />
+        </div>
+        <div className="real-region-chips" aria-label="検証地域">
+          {['京都中心部', '大阪・梅田', '滋賀・草津'].map((name) => (
+            <button
+              key={name}
+              className={map.appliedArea === name ? 'active' : ''}
+              onClick={() => search(name)}
+            >
+              {name}
+            </button>
+          ))}
         </div>
         <div className="real-map-heading">
           <span>
@@ -307,7 +319,7 @@ export function RealCars() {
             >
               <Search size={13} /> {moved ? '移動したエリアで検索' : 'このエリアで検索'}
             </button>
-            <span className="real-map-pilot">京都中心部の公開データ · 現在地は取得しません</span>
+            <span className="real-map-pilot">拠点は3地域の一部のみ · 現在地は取得しません</span>
           </div>
           <MapCredits />
           <div className="real-map-preview">
@@ -359,7 +371,7 @@ export function RealCars() {
         <BottomSheet title="この拠点について" onClose={() => setSheet(null)}>
           <Tag>{selected.type}</Tag>
           <h3 className="real-station-title">{selected.name}</h3>
-          <StationFacts />
+          <StationFacts station={selected} />
           <PrimaryButton
             onClick={() => {
               setSheet(null)
@@ -372,7 +384,7 @@ export function RealCars() {
       )}
       {sheet === 'filters' && (
         <BottomSheet title="車の絞り込み" onClose={() => setSheet(null)}>
-          <p className="body-copy">京都の取得済みデータから表示します。</p>
+          <p className="body-copy">京都・梅田・草津の取得済みデータから表示します。</p>
           <h3>サービスの種類</h3>
           <div className="chips">
             {(['すべて', 'レンタカー', 'カーシェア'] as const).map((type) => (
@@ -455,7 +467,7 @@ export function RealStationDetail() {
           <CarFront size={68} strokeWidth={1.2} />
           <span>公開地図に登録された拠点</span>
         </div>
-        <StationFacts />
+        <StationFacts station={station} />
         <PrimaryButton
           icon={Heart}
           variant="secondary"
@@ -532,40 +544,45 @@ export function RealStationDetail() {
 export function CarMapSources() {
   const back = useBack('/cars')
   const navigate = useNavigate()
+  const metrics = useSyncExternalStore(mapTileCache.subscribe, mapTileCache.snapshot)
   return (
     <div className="screen">
       <Header back={back} title="地図・拠点の情報" />
       <div className="page-pad real-map-sources">
-        <p className="eyebrow teal">KYOTO · FIRST LOOK</p>
+        <p className="eyebrow teal">KYOTO · UMEDA · KUSATSU</p>
         <h1>
           場所を知って、
           <br />
           公式で確かめる。
         </h1>
         <section>
-          <h2>まずは京都の10件から</h2>
+          <h2>京都・梅田・草津の3地域で検証中</h2>
           <p>
-            京都駅・四条烏丸・烏丸御池・三条京阪周辺の公開データを試しています。全国検索や、周辺の全拠点を網羅するものではありません。
+            地図は移動できますが、拠点は取得済みの一部だけです。全国検索や全拠点の網羅、周辺に拠点が存在しないという意味ではありません。
           </p>
-          <div className="chips">
-            {pilotAreas.map((area) => (
-              <Tag key={area.name}>{area.name}</Tag>
-            ))}
-          </div>
-          <p>
-            拠点は{stationRetrievedAt}
-            取得のデータです。画面を更新しても拠点データは自動更新されません。
-          </p>
+          {stationRegions.map((region) => (
+            <p key={region.name}>
+              {region.name}：{region.snapshot.elements.length}件 · {region.retrievedAt}取得
+            </p>
+          ))}
+          <p>拠点データはアプリに同梱しており、自動更新しません。</p>
         </section>
         <section>
-          <h2>道路が見やすい京都の地図</h2>
+          <h2>道路が見やすい地図</h2>
           <p>
-            地図と拠点はOpenStreetMapの公開データです。京都周辺の道路・川・公園をアプリに同梱し、色・線の太さ・地名の表示量を調整しています。細かい建物などは省略しています。
+            国土地理院のベクトルタイルを使い、道路・川・鉄道・一部の地名を表示しています。色や線の太さを加工し、建物などは省略しています。位置の確認用で、経路案内や通行可否の判断には使えません。
           </p>
           <MapCredits />
           <p>
-            <SourceLink href={stationLicense}>拠点データのODbL 1.0</SourceLink>{' '}
-            （背景の地図データにも適用）
+            <SourceLink href="https://www.gsi.go.jp/kikakuchousei/kikakuchousei40182.html">
+              国土地理院の利用条件
+            </SourceLink>
+          </p>
+          <p>
+            背景地図は提供実験のサービスです。仕様変更や停止の可能性があり、継続提供・常時表示を保証するものではありません。
+          </p>
+          <p>
+            <SourceLink href={stationLicense}>拠点データのODbL 1.0</SourceLink>
           </p>
           <p>
             拠点データ © OpenStreetMap
@@ -576,54 +593,65 @@ export function CarMapSources() {
         <section>
           <h2>わかること・未確認のこと</h2>
           <p>
-            名称と位置は公開地図の登録情報です。営業状況、営業時間、住所、料金、空き状況、利用条件、車の入口は未確認です。公式サービスで確認してから利用を検討してください。
+            名称・位置・種別は公開地図の登録情報で、誤りや古い情報を含む場合があります。営業状況、営業時間、住所、料金、空き状況、利用条件、車の入口は未確認です。公式サービスで確認してください。
           </p>
         </section>
         <section>
           <h2>通信について</h2>
           <p>
-            地図の表示・移動・拡大縮小では、外部の地図サーバーへ通信しません。GPS現在地・プロフィール・学習回答・相談メモも送信しません。Webでは初回にこのアプリの配信元から地図データを読み込みます。
+            表示範囲・縮尺に応じて国土地理院へ地図データを要求します。区画番号・IPアドレスなどが配信元へ伝わります。GPS現在地・プロフィール・学習回答・相談メモは送信しません。
           </p>
           <p>
-            iPhoneアプリでは同梱の地図・一覧・保存を通信なしで利用できます。外部地図や公式サイトを開くときは通信が必要です。この地図は位置の確認用で、経路案内や通行可否の判断には使えません。
+            最近見た地図は一時的に再利用します。新しい場所や再起動後の背景地図には通信が必要です。通信できない場合も、取得済みの拠点一覧と保存は利用できます。
           </p>
+          <details>
+            <summary tabIndex={0}>今回の地図読み込み（検証用）</summary>
+            <p>
+              この起動中の端末内計測です。外部送信しません。画面描画時間や請求額を表す値ではありません。
+            </p>
+            <dl className="map-metrics">
+              <dt>取得開始</dt>
+              <dd data-metric="requests">{metrics.requests}回</dd>
+              <dt>取得完了</dt>
+              <dd data-metric="completed">{metrics.completed}区画</dd>
+              <dt>取得データ量</dt>
+              <dd data-metric="bytes">{metrics.bytes} bytes（PBF本文）</dd>
+              <dt>メモリから再利用</dt>
+              <dd data-metric="hits">{metrics.hits}区画</dd>
+              <dt>失敗 / 中断</dt>
+              <dd>
+                {metrics.failed} / {metrics.aborted}回
+              </dd>
+              <dt>一時保存</dt>
+              <dd>
+                {metrics.cachedTiles}区画 · {(metrics.cachedBytes / 1024 / 1024).toFixed(2)} MiB /
+                上限8 MiB
+              </dd>
+            </dl>
+            <p>
+              再利用期限は15分。ブラウザ自身のキャッシュは別です。ヘッダー・圧縮・中断分を含む実通信量とは異なります。
+            </p>
+          </details>
         </section>
         <section>
           <h2>使用データ</h2>
           <details>
-            <summary tabIndex={0}>地図表示ライブラリ（Leaflet）のライセンス</summary>
-            <pre>{leafletLicense}</pre>
+            <summary tabIndex={0}>地図表示ライブラリのライセンス</summary>
+            <pre>{leafletLicense + '\n' + vectorLicense}</pre>
           </details>
-          <p>背景地図の取得日：{basemapMeta.retrievedAt}（自動更新なし）</p>
-          <p>背景地図データの基準時刻：{basemapMeta.dataTimestamp}</p>
-          {!isNativeApp && (
-            <a className="text-button" href={basemapUrl} download="kyoto-basemap.geo.json">
-              背景地図データ（GeoJSON / ODbL）を保存
-            </a>
-          )}
-          <p>
-            <SourceLink href="https://github.com/Greek-Academy/Let-s-go-anywhere/blob/5f9cf5645344c1227fa6859a810a6251cf9ff5b3/src/data/kyoto-basemap.geo.json">
-              背景地図の配布データを開く
-            </SourceLink>
-          </p>
-          <details>
-            <summary tabIndex={0}>背景地図の取得範囲・加工内容</summary>
-            <pre>{JSON.stringify(basemapMeta, null, 2)}</pre>
-          </details>
-          <p>拠点データの基準時刻：{stationSnapshot.osm3s.timestamp_osm_base}</p>
-          {!isNativeApp && (
-            <a className="text-button" href={datasetUrl} download="kyoto-car-stations.osm.json">
-              元データ（JSON / ODbL）を保存
-            </a>
-          )}
           <details>
             <summary tabIndex={0}>元データを表示</summary>
-            <pre>{JSON.stringify(stationSnapshot, null, 2)}</pre>
+            <pre>{JSON.stringify(stationRegions, null, 2)}</pre>
           </details>
           <details>
             <summary tabIndex={0}>表示用データを表示（ODbL）</summary>
             <pre>{JSON.stringify(realStations, null, 2)}</pre>
           </details>
+          <p>
+            <SourceLink href="https://github.com/Greek-Academy/Let-s-go-anywhere/tree/codex/issue-77-vector-map-pilot/src/data">
+              拠点データの配布元
+            </SourceLink>
+          </p>
         </section>
         <PrimaryButton variant="secondary" onClick={() => navigate('/cars/search')}>
           掲載外の地域・拠点を探す

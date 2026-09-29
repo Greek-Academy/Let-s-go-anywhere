@@ -1,0 +1,324 @@
+{
+  "measuredAt": "2026-09-29T22:53:14.230Z",
+  "note": "PBF response payload, not exact network transfer or invoice. Cache-disabled browser routing; in-app memory reuse measured separately.",
+  "results": [
+    {
+      "browser": "chromium",
+      "initialMs": 1831,
+      "initial": {
+        "requests": "2回",
+        "completed": "2区画",
+        "bytes": "64445 bytes（PBF本文）",
+        "hits": "0区画"
+      },
+      "phases": [
+        {
+          "area": "京都中心部",
+          "milliseconds": 179,
+          "requests": 2,
+          "bytes": 196762,
+          "metrics": {
+            "requests": "4回",
+            "completed": "4区画",
+            "bytes": "261207 bytes（PBF本文）",
+            "hits": "2区画"
+          }
+        },
+        {
+          "area": "大阪・梅田",
+          "milliseconds": 116,
+          "requests": 2,
+          "bytes": 72439,
+          "metrics": {
+            "requests": "6回",
+            "completed": "6区画",
+            "bytes": "333646 bytes（PBF本文）",
+            "hits": "4区画"
+          }
+        },
+        {
+          "area": "滋賀・草津",
+          "milliseconds": 122,
+          "requests": 2,
+          "bytes": 122105,
+          "metrics": {
+            "requests": "8回",
+            "completed": "8区画",
+            "bytes": "455751 bytes（PBF本文）",
+            "hits": "6区画"
+          }
+        },
+        {
+          "area": "大阪・梅田",
+          "milliseconds": 72,
+          "requests": 0,
+          "bytes": 0,
+          "metrics": {
+            "requests": "8回",
+            "completed": "8区画",
+            "bytes": "455751 bytes（PBF本文）",
+            "hits": "10区画"
+          }
+        },
+        {
+          "action": "zoom",
+          "milliseconds": 1230,
+          "requests": 4,
+          "bytes": 1508555,
+          "metrics": {
+            "requests": "12回",
+            "completed": "12区画",
+            "bytes": "1964306 bytes（PBF本文）",
+            "hits": "12区画"
+          }
+        },
+        {
+          "action": "pan",
+          "milliseconds": 1392,
+          "requests": 0,
+          "bytes": 0,
+          "metrics": {
+            "requests": "12回",
+            "completed": "12区画",
+            "bytes": "1964306 bytes（PBF本文）",
+            "hits": "16区画"
+          }
+        }
+      ],
+      "requests": 12,
+      "payloadBytes": 1964306,
+      "errors": [],
+      "responses": [
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/12/3592/1622.pbf",
+          "status": 200,
+          "bytes": 32519
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/12/3593/1622.pbf",
+          "status": 200,
+          "bytes": 31926
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/11/1795/811.pbf",
+          "status": 200,
+          "bytes": 90225
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/11/1796/811.pbf",
+          "status": 200,
+          "bytes": 106537
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/12/3589/1626.pbf",
+          "status": 200,
+          "bytes": 42544
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/12/3590/1626.pbf",
+          "status": 200,
+          "bytes": 29895
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/11/1797/810.pbf",
+          "status": 200,
+          "bytes": 49456
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/11/1797/811.pbf",
+          "status": 200,
+          "bytes": 72649
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7178/3252.pbf",
+          "status": 200,
+          "bytes": 223245
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7179/3252.pbf",
+          "status": 200,
+          "bytes": 353536
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7178/3253.pbf",
+          "status": 200,
+          "bytes": 306383
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7179/3253.pbf",
+          "status": 200,
+          "bytes": 625391
+        }
+      ]
+    },
+    {
+      "browser": "webkit",
+      "initialMs": 895,
+      "initial": {
+        "requests": "2回",
+        "completed": "2区画",
+        "bytes": "64445 bytes（PBF本文）",
+        "hits": "0区画"
+      },
+      "phases": [
+        {
+          "area": "京都中心部",
+          "milliseconds": 147,
+          "requests": 2,
+          "bytes": 196762,
+          "metrics": {
+            "requests": "4回",
+            "completed": "4区画",
+            "bytes": "261207 bytes（PBF本文）",
+            "hits": "2区画"
+          }
+        },
+        {
+          "area": "大阪・梅田",
+          "milliseconds": 117,
+          "requests": 2,
+          "bytes": 72439,
+          "metrics": {
+            "requests": "6回",
+            "completed": "6区画",
+            "bytes": "333646 bytes（PBF本文）",
+            "hits": "4区画"
+          }
+        },
+        {
+          "area": "滋賀・草津",
+          "milliseconds": 85,
+          "requests": 2,
+          "bytes": 122105,
+          "metrics": {
+            "requests": "8回",
+            "completed": "8区画",
+            "bytes": "455751 bytes（PBF本文）",
+            "hits": "6区画"
+          }
+        },
+        {
+          "area": "大阪・梅田",
+          "milliseconds": 56,
+          "requests": 0,
+          "bytes": 0,
+          "metrics": {
+            "requests": "8回",
+            "completed": "8区画",
+            "bytes": "455751 bytes（PBF本文）",
+            "hits": "10区画"
+          }
+        },
+        {
+          "action": "zoom",
+          "milliseconds": 1242,
+          "requests": 4,
+          "bytes": 1508555,
+          "metrics": {
+            "requests": "12回",
+            "completed": "12区画",
+            "bytes": "1964306 bytes（PBF本文）",
+            "hits": "12区画"
+          }
+        },
+        {
+          "action": "pan",
+          "milliseconds": 1260,
+          "requests": 0,
+          "bytes": 0,
+          "metrics": {
+            "requests": "12回",
+            "completed": "12区画",
+            "bytes": "1964306 bytes（PBF本文）",
+            "hits": "16区画"
+          }
+        }
+      ],
+      "requests": 16,
+      "payloadBytes": 1997219,
+      "errors": [],
+      "responses": [
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/12/3592/1622.pbf",
+          "status": 200,
+          "bytes": 32519
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/12/3593/1622.pbf",
+          "status": 200,
+          "bytes": 31926
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/11/1795/811.pbf",
+          "status": 200,
+          "bytes": 90225
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/11/1796/811.pbf",
+          "status": 200,
+          "bytes": 106537
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/12/3589/1626.pbf",
+          "status": 200,
+          "bytes": 42544
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/12/3590/1626.pbf",
+          "status": 200,
+          "bytes": 29895
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/11/1797/810.pbf",
+          "status": 200,
+          "bytes": 49456
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/11/1797/811.pbf",
+          "status": 200,
+          "bytes": 72649
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7178/3252.pbf",
+          "status": 200,
+          "bytes": 223245
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7179/3252.pbf",
+          "status": 200,
+          "bytes": 353536
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7178/3253.pbf",
+          "status": 200,
+          "bytes": 306383
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7179/3253.pbf",
+          "status": 200,
+          "bytes": 625391
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7100/3252.pbf",
+          "status": 200,
+          "bytes": 10251
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7100/3253.pbf",
+          "status": 200,
+          "bytes": 9270
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7101/3253.pbf",
+          "status": 200,
+          "bytes": 5264
+        },
+        {
+          "url": "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7101/3252.pbf",
+          "status": 200,
+          "bytes": 8128
+        }
+      ]
+    }
+  ]
+}

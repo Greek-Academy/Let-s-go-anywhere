@@ -80,7 +80,9 @@ export async function verifyPreview(directory, { forUpload = false } = {}) {
   const robots = await readFile(resolve(root, 'robots.txt'), 'utf8')
   if (
     !headers.includes('X-Robots-Tag: noindex') ||
-    !headers.includes("connect-src 'none'") ||
+    !/connect-src (?:'none'|https:\/\/cyberjapandata\.gsi\.go\.jp\/xyz\/experimental_bvmap\/)(?:;|\s*$)/m.test(
+      headers,
+    ) ||
     !/Disallow: \/\s*$/.test(robots)
   ) {
     throw new Error('Missing preview delivery controls')

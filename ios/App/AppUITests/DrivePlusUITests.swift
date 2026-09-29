@@ -202,7 +202,7 @@ final class DrivePlusUITests: XCTestCase {
         XCTAssertTrue(area.waitForExistence(timeout: 10))
         XCTAssertEqual(area.value as? String, originalArea)
     }
-    /// Bundled Kyoto vector geometry and OSM stations in WKWebView. No GPS/API key/booking.
+    /// Live GSI vector tiles and bundled OSM stations in WKWebView. No GPS/API key/booking.
     /// This changes saved candidates; use the dedicated test simulator only.
     @MainActor
     func testRealStationMap() throws {
@@ -234,14 +234,27 @@ final class DrivePlusUITests: XCTestCase {
         }
         if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
         tap("車を探す")
-        if controls.matching(NSPredicate(format: "label == %@", "地図で見る")).firstMatch.exists { tap("地図で見る") }
+        if controls.matching(NSPredicate(format: "label == %@", "地図で見る")).firstMatch.waitForExistence(timeout: 3) { tap("地図で見る") }
         tap("すべて")
         XCTAssertTrue(web.links["OpenStreetMap contributors"].waitForExistence(timeout: 10))
+        for (label, screenshot) in [("京都中心部", "pilot-kyoto"), ("大阪・梅田", "pilot-umeda"), ("滋賀・草津", "pilot-kusatsu")] {
+            tap(label)
+            let expected = NSPredicate { _, _ in
+                !web.staticTexts["地図を読み込んでいます…"].exists && !web.staticTexts["地図を読み込めません。一覧は利用できます。"].exists
+            }
+            XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: expected, object: nil)], timeout: 20), .completed)
+            tap("一覧で見る")
+            XCTAssertTrue(web.staticTexts["借りる場所を探す"].firstMatch.waitForExistence(timeout: 10))
+            tap("地図で見る")
+            capture(screenshot)
+        }
+        tap("京都中心部")
         capture("real-map-iphone17")
         let region = web.textFields["駅名・地域から車を探す"]
         XCTAssertTrue(region.waitForExistence(timeout: 10))
         region.tap()
-        region.typeText("四条烏丸")
+        let current = region.value as? String ?? ""
+        region.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count) + "四条烏丸")
         let keyboardDone = app.buttons["完了"].exists ? app.buttons["完了"] : app.buttons["Done"]
         keyboardDone.tap()
         tap("地域を検索")
@@ -260,7 +273,7 @@ final class DrivePlusUITests: XCTestCase {
         capture("real-map-station-detail")
         tap("戻る")
         tap("一覧で見る")
-        XCTAssertTrue(web.staticTexts["借りる場所を探す・京都"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(web.staticTexts["借りる場所を探す"].firstMatch.waitForExistence(timeout: 10))
         app.terminate()
         app.launch()
         tap("行きたい")

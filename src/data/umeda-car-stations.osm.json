@@ -1,0 +1,92 @@
+{
+  "version": 0.6,
+  "generator": "OSM API map extract; amenity filter; way center = mean vertices",
+  "osm3s": {
+    "timestamp_osm_base": "Tue, 29 Sep 2026 22:36:45 GMT",
+    "copyright": "© OpenStreetMap contributors, ODbL 1.0"
+  },
+  "source": "https://api.openstreetmap.org/api/0.6/map?bbox=135.49,34.695,135.505,34.71",
+  "elements": [
+    {
+      "type": "node",
+      "id": 5291571665,
+      "tags": {
+        "amenity": "car_rental",
+        "branch": "大阪梅田店",
+        "brand": "トヨタレンタカー",
+        "brand:en": "TOYOTA Rent a Car",
+        "brand:ja": "トヨタレンタカー",
+        "brand:wikidata": "Q11321580",
+        "brand:wikipedia": "ja:トヨタレンタリース",
+        "name": "トヨタレンタカー",
+        "name:en": "Toyota Rent a Car",
+        "name:ja": "トヨタレンタカー",
+        "name:ja-Hira": "とよたれんたかー",
+        "name:ja-Latn": "Toyota Rentakā",
+        "operator": "トヨタレンタリース新大阪",
+        "phone": "06-6377-5566",
+        "source": "survey"
+      },
+      "lat": 34.7054693,
+      "lon": 135.4956849
+    },
+    {
+      "type": "node",
+      "id": 6024871612,
+      "tags": {
+        "amenity": "car_rental",
+        "level": "-1",
+        "name:en": "Orix",
+        "name:ja": "オリックス"
+      },
+      "lat": 34.705301,
+      "lon": 135.4943258
+    },
+    {
+      "type": "node",
+      "id": 6805119286,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "日産レンタカー",
+        "brand:en": "NISSAN RENT A CAR",
+        "brand:ja": "日産レンタカー",
+        "brand:wikidata": "Q11086838",
+        "brand:wikipedia": "ja:日産レンタカー",
+        "name": "日産レンタカー",
+        "name:en": "Nissan Rent a Car",
+        "name:ja": "日産レンタカー"
+      },
+      "lat": 34.7057443,
+      "lon": 135.5020424
+    },
+    {
+      "type": "node",
+      "id": 12855413574,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "Times",
+        "name": "タイムズカーシェア",
+        "name:en": "Times Car Share"
+      },
+      "lat": 34.7098462,
+      "lon": 135.502961
+    },
+    {
+      "type": "way",
+      "id": 226318115,
+      "tags": {
+        "amenity": "car_rental",
+        "building": "yes",
+        "height": "7.6",
+        "name": "ジンオート",
+        "source": "GSI/KIBAN 2500; NARO",
+        "source:height": "MLIT_PLATEAU",
+        "source_ref": "http://wiki.osm.org/wiki/GSI_KIBAN"
+      },
+      "center": {
+        "lat": 34.69721664,
+        "lon": 135.4929724
+      }
+    }
+  ]
+}

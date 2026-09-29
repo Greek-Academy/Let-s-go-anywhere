@@ -37,7 +37,7 @@ test('built preview identifies sample content and restores saved data after a pa
   await expect(page.locator('meta[name="driveplus-content"]')).toHaveAttribute('content', 'sample')
   await expect(page.locator('meta[http-equiv="Content-Security-Policy"]')).toHaveAttribute(
     'content',
-    /connect-src 'none'/,
+    /connect-src https:\/\/cyberjapandata\.gsi\.go\.jp\/xyz\/experimental_bvmap\/;/,
   )
   await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
   await page.getByRole('button', { name: '森の週末コーヒーマーケットを保存', exact: true }).click()

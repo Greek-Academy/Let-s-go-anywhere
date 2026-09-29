@@ -4423,6 +4423,49 @@ small {
   gap: 8px;
   font-size: 10px;
 }
+.real-region-chips {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+.real-region-chips button {
+  border: 1px solid #dce9e1;
+  border-radius: 12px;
+  padding: 5px 10px;
+  font-size: 10px;
+  color: #57716a;
+  background: white;
+}
+.real-region-chips button.active {
+  color: #168578;
+  background: #e7f3ed;
+  border-color: #9dcebf;
+}
+.real-map-status {
+  position: absolute;
+  z-index: 500;
+  left: 12px;
+  right: 58px;
+  top: 58px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fffffff0;
+  font-size: 11px;
+  color: #42675e;
+}
+.real-map-status .text-button {
+  display: block;
+  font-size: 11px;
+}
+.map-metrics {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  font-size: 12px;
+}
+.map-metrics dd {
+  margin: 0;
+}
 .real-map-heading > span {
   display: flex;
   align-items: center;

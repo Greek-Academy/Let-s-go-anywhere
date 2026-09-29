@@ -42,8 +42,10 @@
     "@capacitor/keyboard": "8.0.5",
     "@capacitor/preferences": "8.0.1",
     "@capacitor/share": "8.0.2",
+    "@mapbox/vector-tile": "3.0.0",
     "leaflet": "1.9.4",
     "lucide-react": "^1.45.0",
+    "pbf": "5.1.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.8.0"

@@ -1,0 +1,68 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-09-29T15:14:05Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "node",
+      "id": 5697670963,
+      "lat": 35.0223462,
+      "lon": 135.961073,
+      "tags": {
+        "amenity": "car_rental",
+        "branch": "草津駅西口店",
+        "brand": "トヨタレンタカー",
+        "brand:en": "TOYOTA Rent a Car",
+        "brand:ja": "トヨタレンタカー",
+        "brand:wikidata": "Q11321580",
+        "level": "1",
+        "name": "トヨタレンタカー",
+        "name:en": "Toyota Rent a Car",
+        "name:ja": "トヨタレンタカー",
+        "operator": "株式会社トヨタレンタリース滋賀",
+        "source": "Survey"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1030670139,
+      "center": {
+        "lat": 35.0235497,
+        "lon": 135.9580938
+      },
+      "nodes": [9500580044, 9500580045, 9500580046, 9500580047, 9500580044],
+      "tags": {
+        "amenity": "car_sharing",
+        "brand": "タイムズカー",
+        "brand:en": "Times Car",
+        "brand:ja": "タイムズカー",
+        "brand:wikidata": "Q17987881",
+        "name": "タイムズカーシェア",
+        "operator": "タイムズモビリティ",
+        "operator:en": "Times Mobility",
+        "operator:ja": "タイムズモビリティ",
+        "operator:wikidata": "Q115248773",
+        "operator:wikipedia": "ja:タイムズカー"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1256866289,
+      "center": {
+        "lat": 35.0162487,
+        "lon": 135.9515894
+      },
+      "nodes": [
+        11684680087, 11684680088, 11684680089, 11684680090, 11684680091, 11684680092, 11684680093,
+        11684680094, 11684680087
+      ],
+      "tags": {
+        "amenity": "car_rental",
+        "building": "yes"
+      }
+    }
+  ]
+}

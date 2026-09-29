@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import { createInitialState } from '../src/state/model'
