@@ -1,0 +1,20 @@
+{
+  "title": "京都中心部・道路を見やすくした地図",
+  "bounds": {
+    "south": 34.965,
+    "west": 135.72,
+    "north": 35.04,
+    "east": 135.8
+  },
+  "source": "https://overpass-api.de/api/interpreter",
+  "dataTimestamp": "2026-09-29T12:32:01Z",
+  "sourceTimestamps": ["2026-09-29T12:32:01Z", "2026-09-29T12:35:16Z", "2026-09-29T12:39:21Z"],
+  "retrievedAt": "2026-09-29",
+  "attribution": "© OpenStreetMap contributors",
+  "license": "https://opendatacommons.org/licenses/odbl/1-0/",
+  "query": "// 1. Roads\n[out:json][timeout:25];way[highway](34.965,135.72,35.04,135.80);out geom;\n// 2. Water, parks, rail and station labels (separate request)\n[out:json][timeout:25][bbox:34.965,135.72,35.04,135.80];\n(way[natural=water];way[waterway=riverbank];way[leisure=park];way[railway=rail][tunnel!=yes];node[railway=station];);\nout geom;\n\n// 3. River/canal centerlines (separate request)\n[out:json][timeout:25];way[waterway~\"^(river|canal)$\"](34.965,135.72,35.04,135.80);out geom;",
+  "rawSha256": "c5a382b3069e5ac88e398695ccf3d22ed48618cfde88f83cc2841a78f9bbde28",
+  "converter": "osmtogeojson@3.0.0-beta.5; scripts/prepare-kyoto-basemap.mjs",
+  "featureCount": 14097,
+  "changes": "Selected roads, above-ground railways, water, parks/forest and stations; retained source IDs and geometry; removed unused tags. Display is a simplified map, not navigation."
+}

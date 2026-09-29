@@ -17,4 +17,4 @@ Unsplashの無料画像として取得。利用条件は [Unsplash License](http
 
 ## 実地図・公開拠点データ（#75）
 
-新しい「車を探す」は、国土地理院の淡色地図を表示時に取得します。地図写真の同梱・一括保存はしません。京都のOpenStreetMap拠点JSONとその派生データにはODbL 1.0を適用し、アプリ内に出典・ライセンス・データ閲覧を用意しています。LeafletのBSD 2-Clauseライセンスは `src/data/leaflet-license.txt` に同梱しています。[詳細と取得クエリ](CAR_SEARCH.md)。
+新しい「車を探す」は、OpenStreetMapの京都の道路・水域・公園データを同梱し、独自の配色・線幅で描画します。地理院タイルの通信は行いません。背景GeoJSONにもODbL 1.0を適用し、出典・加工内容・配布先をアプリに表示します。京都のOpenStreetMap拠点JSONとその派生データにはODbL 1.0を適用し、アプリ内に出典・ライセンス・データ閲覧を用意しています。LeafletのBSD 2-Clauseライセンスは `src/data/leaflet-license.txt` に同梱しています。[詳細と取得クエリ](CAR_SEARCH.md)。

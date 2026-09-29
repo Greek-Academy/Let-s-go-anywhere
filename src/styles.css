@@ -4440,7 +4440,7 @@ small {
   min-height: 180px;
   position: relative;
   isolation: isolate;
-  background: #eaf1e9;
+  background: #e4ebe7;
 }
 .real-map-surface {
   z-index: 0;
@@ -4452,9 +4452,9 @@ small {
   position: absolute;
   inset: 0;
 }
-.real-map-canvas {
+.real-map-surface .real-map-canvas {
   font: inherit;
-  background: #eaf1e9;
+  background: #e4ebe7;
   z-index: 0;
 }
 .real-map-canvas .leaflet-control-zoom {
@@ -4729,24 +4729,6 @@ small {
   font-size: 11px;
   overflow-wrap: anywhere;
 }
-.real-map-error {
-  position: absolute;
-  z-index: 2;
-  bottom: 25px;
-  left: 10px;
-  right: 10px;
-  padding: 12px;
-  background: #fff9ee;
-  border: 1px solid #e5cda2;
-  border-radius: 12px;
-  font-size: 11px;
-  color: #765f3d;
-}
-.real-map-error button {
-  display: block;
-  text-decoration: underline;
-  margin-top: 6px;
-}
 .real-map-sources h1 {
   font-size: 26px;
   line-height: 1.7;
@@ -4793,4 +4775,30 @@ small {
     font-size: 11px;
     margin: 2px 0;
   }
+}
+
+/* Background labels never intercept station taps or map gestures. */
+.kyoto-label-shell {
+  pointer-events: none;
+}
+.kyoto-map-label {
+  display: block;
+  width: 90px;
+  text-align: center;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 600;
+  color: #778d83;
+  text-shadow:
+    0 1px 2px #fff,
+    1px 0 2px #fff,
+    -1px 0 2px #fff;
+}
+.kyoto-map-label.station {
+  color: #50796e;
+  font-size: 11px;
+}
+.kyoto-map-label.station::before {
+  content: '▪ ';
+  color: #4c8578;
 }

@@ -202,7 +202,7 @@ final class DrivePlusUITests: XCTestCase {
         XCTAssertTrue(area.waitForExistence(timeout: 10))
         XCTAssertEqual(area.value as? String, originalArea)
     }
-    /// Real GSI tiles and bundled OSM data in WKWebView. No GPS/API key/booking.
+    /// Bundled Kyoto vector geometry and OSM stations in WKWebView. No GPS/API key/booking.
     /// This changes saved candidates; use the dedicated test simulator only.
     @MainActor
     func testRealStationMap() throws {
@@ -236,7 +236,7 @@ final class DrivePlusUITests: XCTestCase {
         tap("車を探す")
         if controls.matching(NSPredicate(format: "label == %@", "地図で見る")).firstMatch.exists { tap("地図で見る") }
         tap("すべて")
-        XCTAssertTrue(web.links["地理院タイル"].waitForExistence(timeout: 10))
+        XCTAssertTrue(web.links["OpenStreetMap contributors"].waitForExistence(timeout: 10))
         capture("real-map-iphone17")
         let region = web.textFields["駅名・地域から車を探す"]
         XCTAssertTrue(region.waitForExistence(timeout: 10))

@@ -1,4 +1,4 @@
-import { expect, test } from './support/mapFixture'
+import { expect, test } from '@playwright/test'
 import type { Locator, Page } from '@playwright/test'
 
 async function keyboardActivate(page: Page, target: Locator) {

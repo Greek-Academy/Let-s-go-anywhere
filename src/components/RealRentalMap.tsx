@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Bounds, RealMapState, RealStation } from '../domain/realStations'
-import { pilotBounds } from '../domain/realStations'
+import { addKyotoBasemap, kyotoMapBounds } from './KyotoBasemap'
 
-export const gsiTiles = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'
 type Props = {
   stations: readonly RealStation[]
   selected: string | null
@@ -18,36 +17,24 @@ export function RealRentalMap(props: Props) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const markers = useRef<L.LayerGroup | null>(null)
-  const tiles = useRef<L.TileLayer | null>(null)
   const callbacks = useRef(props)
   callbacks.current = props
-  const [failed, setFailed] = useState(false)
   useEffect(() => {
     if (!container.current) return
     const initial = callbacks.current
     const instance = L.map(container.current, {
       center: initial.view.center,
       zoom: initial.view.zoom,
-      minZoom: 12,
+      minZoom: 13,
       maxZoom: 18,
-      maxBounds: [
-        [pilotBounds.south - 0.02, pilotBounds.west - 0.02],
-        [pilotBounds.north + 0.02, pilotBounds.east + 0.02],
-      ],
+      maxBounds: kyotoMapBounds,
       maxBoundsViscosity: 1,
       zoomControl: false,
       attributionControl: false,
       scrollWheelZoom: false, // Avoid trapping page scrolling; touch pinch and +/- remain available.
     })
     map.current = instance
-    const layer = L.tileLayer(gsiTiles, {
-      minZoom: 12,
-      maxZoom: 18,
-      updateWhenIdle: true,
-      keepBuffer: 0,
-    })
-    tiles.current = layer
-    layer.on('tileerror', () => setFailed(true)).addTo(instance)
+    const removeBasemap = addKyotoBasemap(instance)
     markers.current = L.layerGroup().addTo(instance)
     L.control
       .zoom({ position: 'topright', zoomInTitle: '地図を拡大', zoomOutTitle: '地図を縮小' })
@@ -66,14 +53,19 @@ export function RealRentalMap(props: Props) {
       )
     }
     instance.on('moveend', moved)
-    const observer = new ResizeObserver(() =>
-      instance.invalidateSize({ pan: true, animate: false }),
-    )
+    const observer = new ResizeObserver(() => {
+      instance.invalidateSize({ pan: true, animate: false })
+      // Keep the visible map within the bundled Kyoto extract, including on
+      // tall phones. The bounds also constrain drag/zoom and restored views.
+      instance.setMinZoom(Math.max(13, instance.getBoundsZoom(kyotoMapBounds, true)))
+      instance.panInsideBounds(kyotoMapBounds, { animate: false })
+    })
     observer.observe(container.current)
     // Initial bounds are reported without changing the active search range.
     moved()
     return () => {
       observer.disconnect()
+      removeBasemap()
       instance.remove()
       map.current = null
       markers.current = null
@@ -133,19 +125,6 @@ export function RealRentalMap(props: Props) {
         role="region"
         aria-label="京都の実地図。指で移動、2本指で拡大縮小"
       />
-      {failed && (
-        <div className="real-map-error" role="status">
-          <span>地図を読み込めません。一覧からも拠点を確認できます。</span>
-          <button
-            onClick={() => {
-              setFailed(false)
-              tiles.current?.redraw()
-            }}
-          >
-            再読み込み
-          </button>
-        </div>
-      )}
     </div>
   )
 }

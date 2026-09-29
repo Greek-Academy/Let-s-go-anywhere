@@ -1,4 +1,4 @@
-import { expect, test } from './support/mapFixture'
+import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import {
   createRealMapState,
@@ -11,6 +11,7 @@ import {
 import { evaluateExternalRequest } from '../src/domain/externalLinks'
 import { createInitialState } from '../src/state/model'
 import { decodeStoredState } from '../src/state/storage'
+import basemap from '../src/data/kyoto-basemap.geo.json' with { type: 'json' }
 
 async function enter(page: Page) {
   await page.goto('/#/welcome')
@@ -21,6 +22,13 @@ const state = (page: Page) =>
   page.evaluate(() => JSON.parse(localStorage.getItem('driveplus.mock.v1')!))
 
 test('snapshot is bounded, traceable, and rental/sharing filters use coordinates without inventing availability', () => {
+  expect(basemap.features.length).toBe(basemap.featureCount)
+  expect(basemap.features.length).toBeGreaterThan(1000)
+  expect(basemap.license).toBe('https://opendatacommons.org/licenses/odbl/1-0/')
+  expect(basemap.features.some((feature) => feature.properties.waterway === 'river')).toBe(true)
+  expect(basemap.features.every((feature) => /^way\/|^node\/|^relation\//.test(feature.id))).toBe(
+    true,
+  )
   expect(realStations).toHaveLength(10)
   expect(new Set(realStations.map((station) => station.id)).size).toBe(10)
   expect(stationSnapshot.osm3s.copyright).toContain('ODbL')
@@ -167,21 +175,47 @@ test('zoom and explicit viewport search persist without fetching new stations or
   await page.reload()
   await expect(page.locator('.real-map-pin')).toHaveCount(count)
   expect((await state(page)).realMap.bounds).toEqual(before.bounds)
-  expect(external.length).toBeGreaterThan(0)
-  expect(
-    external.every((url) =>
-      /^https:\/\/cyberjapandata\.gsi\.go\.jp\/xyz\/pale\/\d+\/\d+\/\d+\.png$/.test(url),
-    ),
-  ).toBe(true)
+  expect(external).toEqual([])
+  // Drag far enough to reach the extract edge, then search the visible bounds.
+  const surface = await page.locator('.real-map-canvas').boundingBox()
+  if (!surface) throw new Error('Map is missing')
+  for (let i = 0; i < 4; i++) {
+    await page.mouse.move(surface.x + 30, surface.y + surface.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(surface.x + surface.width - 30, surface.y + surface.height / 2, {
+      steps: 8,
+    })
+    await page.mouse.up()
+  }
+  await page.getByRole('button', { name: /エリアで検索$/ }).click()
+  const edge = (await state(page)).realMap.bounds
+  expect(edge.west).toBeGreaterThanOrEqual(basemap.bounds.west - 0.001)
+  expect(edge.east).toBeLessThanOrEqual(basemap.bounds.east + 0.001)
 })
 
-test('failed map tiles retain usable station list, source attribution and saved data', async ({
+test('bundled map draws real geometry without external connectivity and retains usable station list', async ({
   page,
   context,
 }) => {
-  await context.route('https://cyberjapandata.gsi.go.jp/**', (route) => route.abort())
+  await context.route('https://**', (route) => route.abort())
   await enter(page)
-  await expect(page.getByText('地図を読み込めません。一覧からも拠点を確認できます。')).toBeVisible()
+  const canvas = page.locator('.real-map-canvas canvas')
+  await expect(canvas).toBeVisible()
+  await expect
+    .poll(() =>
+      canvas.evaluate((element: HTMLCanvasElement) => {
+        const pixels = element
+          .getContext('2d')!
+          .getImageData(0, 0, element.width, element.height).data
+        const colors = new Set<string>()
+        for (let i = 0; i < pixels.length; i += 16) {
+          if (pixels[i + 3] > 0) colors.add(`${pixels[i]},${pixels[i + 1]},${pixels[i + 2]}`)
+        }
+        return colors.size
+      }),
+    )
+    .toBeGreaterThan(5)
+  await expect(page.locator('.real-map-canvas img.leaflet-tile')).toHaveCount(0)
   await page.getByRole('button', { name: '一覧で見る', exact: true }).click()
   await expect(page.locator('.real-station-card')).toHaveCount(10)
   await page.locator('.real-station-main').first().click()

@@ -1,4 +1,4 @@
-import { expect, test } from './support/mapFixture'
+import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { showAllRegions } from './helpers/discovery'
 

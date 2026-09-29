@@ -45,6 +45,8 @@ import {
 } from '../domain/realStations'
 import type { Bounds, RealMapState, RealStation } from '../domain/realStations'
 import datasetUrl from '../data/kyoto-car-stations.osm.json?url'
+import basemapUrl from '../data/kyoto-basemap.geo.json?url'
+import basemapMeta from '../data/kyoto-basemap.meta.json'
 
 function SourceLink({ href, children }: { href: string; children: React.ReactNode }) {
   const { toast } = useApp()
@@ -68,16 +70,11 @@ function SourceLink({ href, children }: { href: string; children: React.ReactNod
 export function MapCredits() {
   return (
     <div className="real-map-credits">
-      地図：
-      <SourceLink href="https://maps.gsi.go.jp/development/ichiran.html">地理院タイル</SourceLink>
-      <span>
-        {' '}
-        · 拠点：©{' '}
-        <SourceLink href="https://www.openstreetmap.org/copyright">
-          OpenStreetMap contributors
-        </SourceLink>
-        （ODbL）
-      </span>
+      地図・拠点：©{' '}
+      <SourceLink href="https://www.openstreetmap.org/copyright">
+        OpenStreetMap contributors
+      </SourceLink>{' '}
+      （ODbL） · 地図の表示を簡略化
     </div>
   )
 }
@@ -561,16 +558,14 @@ export function CarMapSources() {
           </p>
         </section>
         <section>
-          <h2>地図と拠点は別の情報源です</h2>
+          <h2>道路が見やすい京都の地図</h2>
           <p>
-            地図：国土地理院の淡色地図を、表示する範囲に合わせて読み込みます。拠点：OpenStreetMapの名称・座標を使っています。
+            地図と拠点はOpenStreetMapの公開データです。京都周辺の道路・川・公園をアプリに同梱し、色・線の太さ・地名の表示量を調整しています。細かい建物などは省略しています。
           </p>
           <MapCredits />
           <p>
-            <SourceLink href="https://www.gsi.go.jp/kikakuchousei/kikakuchousei40182.html">
-              国土地理院の利用規約
-            </SourceLink>{' '}
-            · <SourceLink href={stationLicense}>拠点データのODbL 1.0</SourceLink>
+            <SourceLink href={stationLicense}>拠点データのODbL 1.0</SourceLink>{' '}
+            （背景の地図データにも適用）
           </p>
           <p>
             拠点データ © OpenStreetMap
@@ -587,10 +582,10 @@ export function CarMapSources() {
         <section>
           <h2>通信について</h2>
           <p>
-            地図を開くと、表示範囲の地図画像を国土地理院から取得します。端末のIPアドレスなど通常の通信情報が配信先に伝わります。GPS現在地・プロフィール・学習回答・相談メモは送信しません。
+            地図の表示・移動・拡大縮小では、外部の地図サーバーへ通信しません。GPS現在地・プロフィール・学習回答・相談メモも送信しません。Webでは初回にこのアプリの配信元から地図データを読み込みます。
           </p>
           <p>
-            通信できない場合も拠点の一覧と保存は利用できます。地図の一括ダウンロードは行いません。
+            iPhoneアプリでは同梱の地図・一覧・保存を通信なしで利用できます。外部地図や公式サイトを開くときは通信が必要です。この地図は位置の確認用で、経路案内や通行可否の判断には使えません。
           </p>
         </section>
         <section>
@@ -599,7 +594,23 @@ export function CarMapSources() {
             <summary tabIndex={0}>地図表示ライブラリ（Leaflet）のライセンス</summary>
             <pre>{leafletLicense}</pre>
           </details>
-          <p>地図データの基準時刻：{stationSnapshot.osm3s.timestamp_osm_base}</p>
+          <p>背景地図の取得日：{basemapMeta.retrievedAt}（自動更新なし）</p>
+          <p>背景地図データの基準時刻：{basemapMeta.dataTimestamp}</p>
+          {!isNativeApp && (
+            <a className="text-button" href={basemapUrl} download="kyoto-basemap.geo.json">
+              背景地図データ（GeoJSON / ODbL）を保存
+            </a>
+          )}
+          <p>
+            <SourceLink href="https://github.com/Greek-Academy/Let-s-go-anywhere/blob/codex/issue-75-car-search-links/src/data/kyoto-basemap.geo.json">
+              背景地図の配布データを開く
+            </SourceLink>
+          </p>
+          <details>
+            <summary tabIndex={0}>背景地図の取得範囲・加工内容</summary>
+            <pre>{JSON.stringify(basemapMeta, null, 2)}</pre>
+          </details>
+          <p>拠点データの基準時刻：{stationSnapshot.osm3s.timestamp_osm_base}</p>
           {!isNativeApp && (
             <a className="text-button" href={datasetUrl} download="kyoto-car-stations.osm.json">
               元データ（JSON / ODbL）を保存
