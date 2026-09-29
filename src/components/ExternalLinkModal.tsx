@@ -33,17 +33,21 @@ export function ExternalModal({
   const { storageError } = useApp()
   const decision = evaluateExternalRequest(effectiveRequest, japanDate(now))
   const label =
-    effectiveRequest.type === 'car-search'
-      ? effectiveRequest.target === 'map'
-        ? 'Googleマップで検索する'
-        : '公式の検索ページを開く'
-      : effectiveRequest.type === 'research'
-        ? '出典ページを開く'
-        : decision.kind === 'map'
-          ? '地図で所在地を確認'
-          : decision.kind === 'sns'
-            ? '元のページを開く'
-            : '公式Webで確認する'
+    effectiveRequest.type === 'station-snapshot'
+      ? effectiveRequest.target === 'source'
+        ? '拠点の出典を開く'
+        : '地図で公開データの位置を確認'
+      : effectiveRequest.type === 'car-search'
+        ? effectiveRequest.target === 'map'
+          ? 'Googleマップで検索する'
+          : '公式の検索ページを開く'
+        : effectiveRequest.type === 'research'
+          ? '出典ページを開く'
+          : decision.kind === 'map'
+            ? '地図で所在地を確認'
+            : decision.kind === 'sns'
+              ? '元のページを開く'
+              : '公式Webで確認する'
   const guard = (event: MouseEvent<HTMLAnchorElement>, destination: Destination) => {
     // Check again on activation; a time/focus update may not have run yet.
     const current = evaluateExternalRequest(effectiveRequest)
@@ -82,17 +86,19 @@ export function ExternalModal({
   return (
     <Modal
       title={
-        effectiveRequest.type === 'car-search'
-          ? effectiveRequest.target === 'map'
-            ? '外部地図で車を検索'
-            : '公式サイトで車を検索'
-          : effectiveRequest.type === 'research'
-            ? '検索結果の出典を確認'
-            : decision.kind === 'map'
-              ? '外部地図へのご案内'
-              : decision.kind === 'sns'
-                ? '元の投稿へのご案内'
-                : '公式サービスへのご案内'
+        effectiveRequest.type === 'station-snapshot'
+          ? '公開地図の情報を確認'
+          : effectiveRequest.type === 'car-search'
+            ? effectiveRequest.target === 'map'
+              ? '外部地図で車を検索'
+              : '公式サイトで車を検索'
+            : effectiveRequest.type === 'research'
+              ? '検索結果の出典を確認'
+              : decision.kind === 'map'
+                ? '外部地図へのご案内'
+                : decision.kind === 'sns'
+                  ? '元の投稿へのご案内'
+                  : '公式サービスへのご案内'
       }
       onClose={onClose}
     >
@@ -107,6 +113,11 @@ export function ExternalModal({
           {effectiveRequest.target === 'map'
             ? '入力した地域・種別・事業者名をGoogleマップに渡して検索します。結果の営業・空き状況は未確認です。'
             : '事業者の公式検索ページを開きます。地域・日時は移動先で入力してください。アプリで入力した地域は自動で引き継がれません。'}
+        </p>
+      )}
+      {effectiveRequest.type === 'station-snapshot' && (
+        <p className="body-copy">
+          公開地図の登録情報です。営業状況・車の入口は未確認です。表示した位置以外の個人情報は送りません。
         </p>
       )}
       {effectiveRequest.type === 'research' && (

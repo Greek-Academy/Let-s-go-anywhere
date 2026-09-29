@@ -9,15 +9,23 @@ import { BottomNavigation } from './ui'
 import { isNativeApp } from '../platform/runtime'
 
 export function MobileFrame({ children }: { children: ReactNode }) {
-  const { state, message } = useApp()
+  const { state, message, memoryOnly } = useApp()
   const location = useLocation()
   const stageRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const welcome = location.pathname === '/welcome'
   const onboarding = welcome || location.pathname.startsWith('/onboarding')
-  const map = location.pathname === '/cars' && state.map.mode === 'map'
-  usePageNavigation(scrollRef, location.pathname === '/cars' ? state.map.mode : '')
+  const mapMode =
+    location.pathname === '/cars'
+      ? memoryOnly
+        ? state.map.mode
+        : state.realMap.mode
+      : location.pathname === '/cars/sample'
+        ? state.map.mode
+        : ''
+  const map = mapMode === 'map'
+  usePageNavigation(scrollRef, mapMode)
   useLayoutEffect(() => {
     if (isNativeApp) return
     const stage = stageRef.current

@@ -126,6 +126,23 @@ const consultation: Rule = (v) => {
   return parsed
 }
 const schema: Record<keyof AppState, Rule> = {
+  realMap: shape({
+    mode: oneOf(['map', 'list']),
+    type: oneOf(['すべて', 'レンタカー', 'カーシェア']),
+    providers: list(text),
+    query: text,
+    appliedArea: text,
+    unsupported: bool,
+    bounds: shape({
+      south: number(-90, 90),
+      west: number(-180, 180),
+      north: number(-90, 90),
+      east: number(-180, 180),
+    }),
+    center: shape({ lat: number(-90, 90), lng: number(-180, 180) }),
+    zoom: number(12, 18),
+    selected: nullable(id),
+  }),
   carSearch: shape({
     area: nullable(text),
     type: oneOf(['すべて', 'レンタカー', 'カーシェア']),

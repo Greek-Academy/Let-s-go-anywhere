@@ -1,0 +1,184 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-09-29T10:23:45Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "node",
+      "id": 3188028961,
+      "lat": 35.010531,
+      "lon": 135.758918,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "ニッポンレンタカー",
+        "brand:en": "NIPPON Rent-A-Car",
+        "brand:ja": "ニッポンレンタカー",
+        "brand:wikidata": "Q11086533",
+        "brand:wikipedia": "ja:ニッポンレンタカー",
+        "name": "ニッポンレンタカー",
+        "name:en": "Nippon Rent-A-Car",
+        "name:ja": "ニッポンレンタカー",
+        "note": "烏丸御池営業所",
+        "opening_hours": "08:00-20:00",
+        "source": "Survey "
+      }
+    },
+    {
+      "type": "node",
+      "id": 5001795324,
+      "lat": 35.0039401,
+      "lon": 135.7574949,
+      "tags": {
+        "amenity": "car_rental",
+        "branch": "京都四条烏丸店",
+        "brand": "日産レンタカー",
+        "brand:en": "NISSAN RENT A CAR",
+        "brand:ja": "日産レンタカー",
+        "brand:wikidata": "Q11086838",
+        "name": "日産レンタカー",
+        "name:en": "Nissan Rent a Car",
+        "name:fr": "Nissan rent-a-car",
+        "name:ja": "日産レンタカー",
+        "opening_hours": "Mo-Fr 08:00-20:00; PH,Sa-Su 08:00-18:00",
+        "phone": "+81 75-229-6323"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5005777322,
+      "lat": 34.9844723,
+      "lon": 135.7545051,
+      "tags": {
+        "amenity": "car_rental",
+        "check_date": "2025-02-05",
+        "contact:phone": "+81 75-6614-123",
+        "name:en": "Nissan rent-a-car Kyoto Shinkansen",
+        "name:fr": "Nissan rent-a-car Kyoto Shinkansen",
+        "name:ja": "日産レンタカー　新幹線京都駅前店",
+        "opening_hours": "08:00-22:00"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5279762881,
+      "lat": 34.982571,
+      "lon": 135.7590898,
+      "tags": {
+        "amenity": "car_rental",
+        "name": "タイムズレンタカー",
+        "name:en": "Times rent a car"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5279762882,
+      "lat": 34.9825843,
+      "lon": 135.7595904,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "トヨタレンタカー",
+        "brand:en": "TOYOTA Rent a Car",
+        "brand:ja": "トヨタレンタカー",
+        "brand:wikidata": "Q11321580",
+        "name": "トヨタレンタカー",
+        "name:en": "Toyota Rent a Car",
+        "name:ja": "トヨタレンタカー",
+        "opening_hours": "Mo-Su,PH 08:00-20:00"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5504565579,
+      "lat": 34.9841472,
+      "lon": 135.7571112,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "ニッポンレンタカー",
+        "brand:en": "NIPPON Rent-A-Car",
+        "brand:ja": "ニッポンレンタカー",
+        "brand:wikidata": "Q11086533",
+        "check_date": "2025-12-21",
+        "name": "ニッポンレンタカー",
+        "name:en": "Nippon Rent-A-Car",
+        "name:ja": "ニッポンレンタカー",
+        "opening_hours": "24/7"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12948909833,
+      "lat": 34.9862601,
+      "lon": 135.7564701,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "駅レンタカー",
+        "name": "駅レンタカー",
+        "name:en": "Eki Rent-a-car",
+        "name:ja": "駅レンタカー",
+        "name:ja-Hira": "えきれんたかー",
+        "name:ja-Latn": "Eki Rentakā"
+      }
+    },
+    {
+      "type": "way",
+      "id": 201910304,
+      "center": {
+        "lat": 34.9816073,
+        "lon": 135.7557178
+      },
+      "nodes": [2119231150, 2119231140, 2119231125, 2119231126, 2119231146, 2119231151, 2119231150],
+      "tags": {
+        "amenity": "car_rental",
+        "branch": "京都センター",
+        "brand": "ニッポンレンタカー",
+        "brand:en": "NIPPON Rent-A-Car",
+        "brand:ja": "ニッポンレンタカー",
+        "brand:wikidata": "Q11086533",
+        "check_date": "2026-01-27",
+        "name": "ニッポンレンタカー",
+        "name:en": "Nippon Rent-A-Car",
+        "name:ja": "ニッポンレンタカー",
+        "opening_hours": "24/7",
+        "source": "Bing; survey"
+      }
+    },
+    {
+      "type": "way",
+      "id": 549360245,
+      "center": {
+        "lat": 35.0079093,
+        "lon": 135.7762116
+      },
+      "nodes": [5306639675, 13159299189, 5306639674, 5306639673, 5306639672, 5306639675],
+      "tags": {
+        "amenity": "car_sharing",
+        "brand": "タイムズカー",
+        "brand:en": "Times Car",
+        "brand:ja": "タイムズカー",
+        "brand:wikidata": "Q17987881",
+        "operator": "タイムズモビリティ",
+        "operator:en": "Times Mobility",
+        "operator:ja": "タイムズモビリティ",
+        "operator:type": "private",
+        "operator:wikidata": "Q115248773"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1322869259,
+      "center": {
+        "lat": 35.005009,
+        "lon": 135.7534322
+      },
+      "nodes": [12241091783, 12241091782, 12241091781, 12241091780, 12241091783],
+      "tags": {
+        "amenity": "car_sharing",
+        "brand": "タイムズ",
+        "name": "タイムズカーシェア"
+      }
+    }
+  ]
+}

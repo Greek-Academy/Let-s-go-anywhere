@@ -1,3 +1,4 @@
+import { realStationDestination } from './realStations'
 import { evidenceState, today } from './evidence'
 import type { Evidence } from './evidence'
 import { normalizeSavedUrl } from './savedUrls'
@@ -24,6 +25,7 @@ export interface ListingLinks {
   map?: { availability: 'available' | 'unavailable'; evidence: Evidence<MapPlace> }
 }
 export type ExternalRequest =
+  | { type: 'station-snapshot'; id: string; target: 'source' | 'map' }
   | CarSearchRequest
   | { type: 'personal'; url: string }
   | { type: 'research'; url: string }
@@ -160,16 +162,22 @@ function mapDestination(
 
 export function evaluateExternalRequest(request: ExternalRequest, at = today()): LinkDecision {
   const kind =
-    request.type === 'car-search'
+    request.type === 'station-snapshot'
       ? request.target === 'map'
         ? 'map'
-        : 'official'
-      : request.type === 'personal'
-        ? 'sns'
-        : request.type === 'research'
-          ? 'official'
-          : request.kind
+        : 'sns'
+      : request.type === 'car-search'
+        ? request.target === 'map'
+          ? 'map'
+          : 'official'
+        : request.type === 'personal'
+          ? 'sns'
+          : request.type === 'research'
+            ? 'official'
+            : request.kind
   try {
+    if (request.type === 'station-snapshot')
+      return { kind, destination: realStationDestination(request.id, request.target) }
     if (request.type === 'car-search') return { kind, destination: carSearchDestination(request) }
     if (request.type === 'research') {
       const url = researchSourceUrl(request.url)

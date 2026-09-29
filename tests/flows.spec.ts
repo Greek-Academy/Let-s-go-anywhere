@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 import { showAllRegions } from './helpers/discovery'
 
@@ -162,7 +162,7 @@ test('learning has next/previous, adds consultation notes and persists completio
 test('map pins, station details, provider filters, lists and zero-result search', async ({
   page,
 }) => {
-  await enter(page, '/cars')
+  await enter(page, '/cars/sample')
   await expect(page.locator('.map-pin')).toHaveCount(6)
   await page.getByRole('button', { name: 'タイムズカー 渋谷駅前・カーシェアの詳細カード' }).click()
   await expect(page.getByRole('heading', { name: 'この拠点について' })).toBeVisible()

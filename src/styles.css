@@ -4372,3 +4372,425 @@ small {
   font-size: 11px;
   color: #568b78;
 }
+
+/* Live Kyoto map: the map is flexible, credits and the preview never cover pins. */
+.real-cars-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.real-cars-list {
+  height: auto;
+  min-height: 100%;
+}
+.real-map-header {
+  flex-shrink: 0;
+  padding: 12px 16px 9px;
+  background: #fff;
+  z-index: 2;
+}
+.real-map-header .map-search {
+  height: 46px;
+  padding: 0 5px 0 12px;
+  box-shadow: none;
+  border: 1px solid #dce9e1;
+}
+.real-map-header input {
+  min-width: 0;
+  font-size: 13px;
+}
+.real-map-header .icon-button {
+  flex-shrink: 0;
+  width: 32px;
+  height: 36px;
+}
+.real-type-chips {
+  gap: 6px;
+  margin: 10px 0 5px;
+}
+.real-type-chips .chip {
+  font-size: 11px;
+  min-height: 32px;
+}
+.real-type-chips > .icon-button {
+  margin-left: auto;
+}
+.real-map-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+}
+.real-map-heading > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 58%;
+  overflow-wrap: anywhere;
+}
+.real-map-heading .text-button {
+  font-size: 10px;
+  flex-shrink: 0;
+  min-height: 25px;
+}
+.real-map-area {
+  flex: 1;
+  min-height: 180px;
+  position: relative;
+  isolation: isolate;
+  background: #eaf1e9;
+}
+.real-map-surface {
+  z-index: 0;
+  isolation: isolate;
+  overflow: hidden;
+}
+.real-map-surface,
+.real-map-canvas {
+  position: absolute;
+  inset: 0;
+}
+.real-map-canvas {
+  font: inherit;
+  background: #eaf1e9;
+  z-index: 0;
+}
+.real-map-canvas .leaflet-control-zoom {
+  margin: 12px;
+  border: 0;
+  box-shadow: 0 2px 10px #254f4522;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.real-map-canvas .leaflet-control-zoom a {
+  color: #548578;
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+}
+.real-search-area {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  left: 50%;
+  width: 180px;
+  margin-left: -90px;
+  justify-content: center;
+  padding: 9px 14px;
+  background: white;
+  color: #278477;
+  box-shadow: 0 2px 9px #254f4522;
+  border-radius: 22px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.real-map-pilot {
+  position: absolute;
+  bottom: 6px;
+  left: 9px;
+  background: #ffffffe8;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  color: #57716a;
+  pointer-events: none;
+}
+.real-map-credits {
+  flex-shrink: 0;
+  font-size: 9px;
+  line-height: 1.6;
+  padding: 5px 12px;
+  color: #49695e;
+  background: #f3f7f4;
+  overflow-wrap: anywhere;
+}
+.real-map-credits a {
+  color: #277d71;
+  text-decoration: underline;
+}
+.real-marker-shell {
+  background: none;
+  border: none;
+}
+.real-map-pin {
+  width: 38px;
+  height: 40px;
+  border: 3px solid #fff;
+  border-radius: 16px 16px 16px 3px;
+  background: #188d7f;
+  color: white;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px #244f5550;
+}
+.real-map-pin::before {
+  content: '';
+  width: 22px;
+  height: 22px;
+  background: center / contain no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8'%3E%3Cpath d='m5 7 2-4h10l2 4M4 8h16v10H4zM5 18v3m14-3v3M7 12h2m6 0h2M4 8 2 7m18 1 2-1'/%3E%3C/svg%3E");
+}
+.real-map-pin.rental {
+  background: #568fae;
+}
+.real-map-pin.selected {
+  box-shadow:
+    0 0 0 3px #dba55a,
+    0 2px 9px #234f5550;
+}
+.real-map-pin:focus-visible {
+  outline: 3px solid #203e35;
+  outline-offset: 3px;
+}
+.real-map-preview {
+  flex-shrink: 0;
+  padding: 9px 16px 10px;
+  border-radius: 20px 20px 0 0;
+  background: white;
+  box-shadow: 0 -4px 12px #244f5509;
+}
+.real-map-preview > .sheet-handle {
+  display: block;
+  margin: 0 auto 9px;
+}
+.real-preview-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.real-preview-heading h2 {
+  font-size: 14px;
+}
+.real-preview-heading .text-button {
+  font-size: 12px;
+}
+.real-station-card {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid #e2ece5;
+  border-radius: 15px;
+  padding: 12px 8px 12px 12px;
+  background: #fff;
+}
+.real-station-main {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.real-station-main > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.real-station-main strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+.real-station-main small {
+  display: block;
+  color: #81968b;
+  font-size: 9px;
+}
+.real-station-card > .icon-button {
+  flex-shrink: 0;
+  width: 30px;
+}
+.real-station-main .tag {
+  font-size: 8px;
+}
+.real-car-icon {
+  width: 37px;
+  height: 40px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: #e2f2e9;
+  color: #278d7e;
+  border-radius: 12px;
+}
+.real-car-icon.rental {
+  background: #e9f2f7;
+  color: #518db0;
+}
+.real-map-preview .real-station-card {
+  margin-top: 8px;
+  border: 0;
+  padding: 5px 0;
+}
+.real-external-entry {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  color: #3b8073;
+  font-size: 11px;
+  padding: 10px 6px 2px;
+}
+.real-map-empty {
+  padding: 10px 0;
+  font-size: 12px;
+}
+.real-map-empty p {
+  color: #7c8f83;
+  font-size: 10px;
+  margin: 7px 0;
+}
+.real-list-content > .button {
+  margin: 12px 0;
+}
+.real-list-content .station-list {
+  margin: 16px 0;
+}
+.real-station-title {
+  font-size: 20px;
+  margin: 12px 0;
+}
+.real-filter-title {
+  margin-top: 20px;
+}
+.real-provider-options {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 20px;
+}
+.real-provider-options label {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #dbe9e0;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.real-provider-options input {
+  accent-color: var(--teal);
+  width: 18px;
+  height: 18px;
+}
+.real-station-detail h1 {
+  font-size: 23px;
+  margin: 15px 0;
+}
+.real-station-illustration {
+  height: 140px;
+  background: #f0f6f2;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #72a18e;
+  gap: 8px;
+  margin: 20px 0;
+}
+.real-station-illustration span {
+  font-size: 10px;
+}
+.real-station-detail > .button {
+  margin-top: 12px;
+}
+.real-station-detail > p.small {
+  margin: 8px 0 15px;
+}
+.real-source-card {
+  border: 1px solid #e0ebe5;
+  border-radius: 16px;
+  padding: 16px;
+  margin: 22px 0;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.real-source-card h2,
+.real-map-sources h2 {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+.real-source-card p {
+  margin: 7px 0;
+}
+.real-source-card .text-button {
+  margin-top: 12px;
+  font-size: 12px;
+}
+.real-source-card details {
+  margin: 14px 0;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.real-map-error {
+  position: absolute;
+  z-index: 2;
+  bottom: 25px;
+  left: 10px;
+  right: 10px;
+  padding: 12px;
+  background: #fff9ee;
+  border: 1px solid #e5cda2;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #765f3d;
+}
+.real-map-error button {
+  display: block;
+  text-decoration: underline;
+  margin-top: 6px;
+}
+.real-map-sources h1 {
+  font-size: 26px;
+  line-height: 1.7;
+  margin: 12px 0 24px;
+}
+.real-map-sources section {
+  margin-bottom: 24px;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.real-map-sources section p {
+  margin: 10px 0;
+}
+.real-map-sources a {
+  text-decoration: underline;
+  color: #267c70;
+}
+.real-map-sources details {
+  margin: 16px 0;
+}
+.real-map-sources pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+  background: #f4f8f5;
+  padding: 12px;
+  max-height: 300px;
+  overflow: auto;
+}
+@media (max-height: 660px) and (max-width: 480px) {
+  .real-map-header {
+    padding-top: 5px;
+  }
+  .real-map-preview {
+    padding-top: 5px;
+  }
+  .real-map-preview > .sheet-handle {
+    display: none;
+  }
+  .real-map-area {
+    min-height: 100px;
+  }
+  .real-map-preview .real-station-main strong {
+    font-size: 11px;
+    margin: 2px 0;
+  }
+}

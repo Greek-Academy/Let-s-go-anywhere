@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './support/mapFixture'
 import type { Locator, Page } from '@playwright/test'
 
 async function keyboardActivate(page: Page, target: Locator) {
@@ -106,7 +106,7 @@ test('removed return targets and missing routes fall back to a meaningful headin
 test('map and list switches announce their heading and preserve the selected station', async ({
   page,
 }) => {
-  await enter(page, '/cars')
+  await enter(page, '/cars/sample')
   await expect(page.getByRole('heading', { name: '車を探す・地図', exact: true })).toBeFocused()
   await keyboardActivate(page, page.getByRole('button', { name: '車の一覧に切り替え' }))
   await expect(page.getByRole('heading', { name: '借りる場所を探す' })).toBeFocused()

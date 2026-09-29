@@ -55,6 +55,7 @@ final class DrivePlusUITests: XCTestCase {
         XCTAssertTrue(pin.waitForExistence(timeout: 10))
         pin.tap()
         capture("04-map")
+        tap("閉じる")
         tap("講習")
         tap("詳細を見る")
         tap("希望日時を相談")
@@ -169,7 +170,7 @@ final class DrivePlusUITests: XCTestCase {
         }
         if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
         tap("車を探す")
-        tap("実際の車を探す")
+        tap("掲載外の地域・拠点を探す")
         let area = web.textFields["探す駅・地域"]
         XCTAssertTrue(area.waitForExistence(timeout: 10))
         let originalArea = area.value as? String
@@ -197,8 +198,69 @@ final class DrivePlusUITests: XCTestCase {
         app.terminate()
         app.launch()
         tap("車を探す")
-        tap("実際の車を探す")
+        tap("掲載外の地域・拠点を探す")
         XCTAssertTrue(area.waitForExistence(timeout: 10))
         XCTAssertEqual(area.value as? String, originalArea)
     }
+    /// Real GSI tiles and bundled OSM data in WKWebView. No GPS/API key/booking.
+    /// This changes saved candidates; use the dedicated test simulator only.
+    @MainActor
+    func testRealStationMap() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let exact = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            let button = exact.exists ? exact : controls.matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
+            for _ in 0..<8 {
+                if button.isHittable { break }
+                web.swipeUp()
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        func capture(_ name: String) {
+            let shot = XCTAttachment(screenshot: app.screenshot())
+            shot.name = name
+            shot.lifetime = .keepAlways
+            add(shot)
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("車を探す")
+        if controls.matching(NSPredicate(format: "label == %@", "地図で見る")).firstMatch.exists { tap("地図で見る") }
+        tap("すべて")
+        XCTAssertTrue(web.links["地理院タイル"].waitForExistence(timeout: 10))
+        capture("real-map-iphone17")
+        tap("地図を拡大")
+        tap("移動したエリアで検索")
+        tap("カーシェア")
+        let pin = controls.matching(NSPredicate(format: "label CONTAINS %@", "・カーシェアの詳細カード")).firstMatch
+        XCTAssertTrue(pin.waitForExistence(timeout: 15))
+        XCTAssertTrue(pin.isHittable)
+        pin.tap()
+        XCTAssertTrue(web.staticTexts["この拠点について"].firstMatch.waitForExistence(timeout: 10))
+        capture("real-map-station-sheet")
+        tap("拠点の詳細・保存へ")
+        if controls.matching(NSPredicate(format: "label == %@", "車候補に保存")).firstMatch.exists { tap("車候補に保存") }
+        XCTAssertTrue(controls.matching(NSPredicate(format: "label == %@", "車候補から外す")).firstMatch.waitForExistence(timeout: 10))
+        capture("real-map-station-detail")
+        tap("戻る")
+        tap("一覧で見る")
+        XCTAssertTrue(web.staticTexts["借りる場所を探す・京都"].firstMatch.waitForExistence(timeout: 10))
+        app.terminate()
+        app.launch()
+        tap("行きたい")
+        tap("車候補")
+        let saved = controls.matching(NSPredicate(format: "label CONTAINS %@", "営業状況は未確認")).firstMatch
+        XCTAssertTrue(saved.waitForExistence(timeout: 10))
+        capture("real-map-saved-after-relaunch")
+    }
+
 }

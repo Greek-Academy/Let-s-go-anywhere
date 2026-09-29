@@ -1,10 +1,10 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 
 async function enter(page: Page) {
   await page.goto('/#/welcome')
   await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
-  await page.getByRole('navigation').getByRole('button', { name: '車を探す', exact: true }).click()
+  await page.goto('/#/cars/sample')
 }
 const saved = (page: Page) =>
   page.evaluate(() => JSON.parse(localStorage.getItem('driveplus.mock.v1')!))
@@ -56,7 +56,7 @@ test('external search uses the typed area only on confirmation and retains condi
   await popup.close()
   await page.getByRole('button', { name: 'アプリに戻る', exact: true }).click()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
-  await expect(page).toHaveURL(/#\/cars$/)
+  await expect(page).toHaveURL(/#\/cars\/sample$/)
   await page.getByRole('button', { name: /実際の車を探す/ }).click()
   await page.reload()
   await expect(page.getByLabel('探す駅・地域', { exact: true })).toHaveValue('京都駅')

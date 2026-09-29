@@ -1,3 +1,5 @@
+import { realStations } from '../domain/realStations'
+import { RealStationCard } from './RealCars'
 import { ExternalModal } from '../components/ExternalLinkModal'
 import { OutingImage, OutingStatus, OutingPhotoCredit } from '../components/OutingStatus'
 import { useContent } from '../content/ContentProvider'
@@ -23,6 +25,7 @@ export function Saved() {
   const [external, setExternal] = useState<string | null>(null)
   const externalLink = state.links.find((link) => link.id === external)
   const eventList = outings.filter((o) => state.savedEvents.includes(o.id))
+  const realStationList = realStations.filter((station) => state.savedStations.includes(station.id))
   const stationList = stations.filter((s) => state.savedStations.includes(s.id))
   return (
     <div className="screen">
@@ -50,7 +53,7 @@ export function Saved() {
             selected={current === 'cars'}
             onClick={() => setParams({ type: 'cars' }, { replace: true })}
           >
-            車候補 <span>{stationList.length}</span>
+            車候補 <span>{stationList.length + realStationList.length}</span>
           </Chip>
         </div>
         {current === 'events' ? (
@@ -163,6 +166,15 @@ export function Saved() {
         ) : (
           <>
             <div className="station-list">
+              {realStationList.map((station) => (
+                <RealStationCard
+                  key={station.id}
+                  station={station}
+                  onClick={() =>
+                    navigate(`/cars/places/${station.id}`, { state: { tab: 'saved' } })
+                  }
+                />
+              ))}
               {stationList.map((s) => (
                 <StationCard
                   key={s.id}
@@ -172,7 +184,7 @@ export function Saved() {
                 />
               ))}
             </div>
-            {!stationList.length && (
+            {!stationList.length && !realStationList.length && (
               <EmptyState
                 icon={CarFront}
                 title="借りる場所も、保存できます"
