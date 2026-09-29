@@ -4799,6 +4799,11 @@ small {
   font-size: 11px;
 }
 .kyoto-map-label.station::before {
-  content: '▪ ';
-  color: #4c8578;
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 4px;
+  vertical-align: 1px;
+  background: #4c8578;
 }
