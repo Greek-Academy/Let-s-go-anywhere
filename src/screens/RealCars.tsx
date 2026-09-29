@@ -278,6 +278,10 @@ export function RealCars() {
                 view={map}
                 fit={fit}
                 onSelect={select}
+                onFitComplete={() => {
+                  setFit(null)
+                  setMoved(false)
+                }}
                 onMove={(view, bounds) => {
                   visibleBounds.current = bounds
                   if (

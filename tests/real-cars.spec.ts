@@ -142,13 +142,24 @@ test('zoom and explicit viewport search persist without fetching new stations or
     if (request.url().startsWith('https://')) external.push(request.url())
   })
   await enter(page)
+  await page.getByLabel('駅名・地域から車を探す', { exact: true }).fill('京都駅')
+  await page.getByRole('button', { name: '地域を検索', exact: true }).click()
+  await expect
+    .poll(async () => Math.abs((await state(page)).realMap.center.lat - 34.984))
+    .toBeLessThan(0.001)
+  const zoom = (await state(page)).realMap.zoom
   await page.getByRole('button', { name: '地図を拡大', exact: true }).click()
-  await expect.poll(async () => (await state(page)).realMap.zoom).toBe(14)
+  await expect.poll(async () => (await state(page)).realMap.zoom).toBe(zoom + 1)
   await page.getByRole('button', { name: '移動したエリアで検索', exact: true }).click()
   const before = (await state(page)).realMap
   expect(before.appliedArea).toBe('表示中の地図範囲')
   const count = await page.locator('.real-map-pin').count()
   expect(count).toBeLessThan(10)
+  await page.getByRole('button', { name: '一覧で見る', exact: true }).click()
+  await page.getByRole('button', { name: '地図で見る', exact: true }).click()
+  await expect(page.locator('.real-map-pin')).toHaveCount(count)
+  expect((await state(page)).realMap.zoom).toBe(before.zoom)
+  expect(Math.abs((await state(page)).realMap.center.lat - before.center.lat)).toBeLessThan(0.001)
   await page.setViewportSize({ width: 360, height: 740 })
   await expect
     .poll(async () => Math.abs((await state(page)).realMap.center.lat - before.center.lat))

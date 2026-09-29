@@ -238,6 +238,13 @@ final class DrivePlusUITests: XCTestCase {
         tap("すべて")
         XCTAssertTrue(web.links["地理院タイル"].waitForExistence(timeout: 10))
         capture("real-map-iphone17")
+        let region = web.textFields["駅名・地域から車を探す"]
+        XCTAssertTrue(region.waitForExistence(timeout: 10))
+        region.tap()
+        region.typeText("四条烏丸")
+        let keyboardDone = app.buttons["完了"].exists ? app.buttons["完了"] : app.buttons["Done"]
+        keyboardDone.tap()
+        tap("地域を検索")
         tap("地図を拡大")
         tap("移動したエリアで検索")
         tap("カーシェア")

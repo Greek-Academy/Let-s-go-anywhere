@@ -11,6 +11,7 @@ type Props = {
   view: Pick<RealMapState, 'center' | 'zoom'>
   fit: { bounds: Bounds; key: number } | null
   onSelect: (station: RealStation) => void
+  onFitComplete: () => void
   onMove: (view: Pick<RealMapState, 'center' | 'zoom'>, bounds: Bounds) => void
 }
 export function RealRentalMap(props: Props) {
@@ -110,13 +111,19 @@ export function RealRentalMap(props: Props) {
   useEffect(() => {
     if (!props.fit || !map.current) return
     const b = props.fit.bounds
-    map.current.fitBounds(
-      [
-        [b.south, b.west],
-        [b.north, b.east],
-      ],
-      { padding: [28, 30], maxZoom: 16, animate: false },
-    )
+    // Wait for the mounted map layout. Cleanup also cancels React StrictMode's
+    // trial mount, so a consumed fit cannot be followed by the initial view.
+    const frame = requestAnimationFrame(() => {
+      map.current?.fitBounds(
+        [
+          [b.south, b.west],
+          [b.north, b.east],
+        ],
+        { padding: [28, 30], maxZoom: 16, animate: false },
+      )
+      callbacks.current.onFitComplete()
+    })
+    return () => cancelAnimationFrame(frame)
   }, [props.fit])
   return (
     <div className="real-map-surface">
