@@ -1,4 +1,5 @@
 import XCTest
+import CoreLocation
 
 /// Uses the installed, bundled app and real WKWebView/Preferences plugins.
 /// Run on a dedicated simulator; this flow changes sample data.
@@ -281,6 +282,114 @@ final class DrivePlusUITests: XCTestCase {
         let saved = controls.matching(NSPredicate(format: "label CONTAINS %@", "営業状況は未確認")).firstMatch
         XCTAssertTrue(saved.waitForExistence(timeout: 10))
         capture("real-map-saved-after-relaunch")
+    }
+
+    /// Set the dedicated simulator to the public Shinjuku Station test position,
+    /// then reset location permission before running. Never run on a user's simulator.
+    @MainActor
+    func testCurrentLocation() throws {
+        continueAfterFailure = false
+        guard #available(iOS 16.4, *) else { throw XCTSkip("Location simulation requires iOS 16.4") }
+        // XCTest may override a simctl location with its own default (outside Japan).
+        XCUIDevice.shared.location = XCUILocation(location: CLLocation(
+            coordinate: CLLocationCoordinate2D(latitude: 35.690921, longitude: 139.700258),
+            altitude: 0, horizontalAccuracy: 10, verticalAccuracy: 10, timestamp: Date()))
+        defer { XCUIDevice.shared.location = nil }
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let button = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
+            for _ in 0..<8 {
+                if button.isHittable { break }
+                if label == "戻る" { web.swipeDown() } else { web.swipeUp() }
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        func capture(_ name: String) {
+            let shot = XCTAttachment(screenshot: app.screenshot())
+            shot.name = name
+            shot.lifetime = .keepAlways
+            add(shot)
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("車を探す")
+        if controls.matching(NSPredicate(format: "label == %@", "地図で見る")).firstMatch.waitForExistence(timeout: 3) { tap("地図で見る") }
+        tap("京都中心部")
+        tap("すべて")
+        tap("現在地から探す")
+        tap("現在地を取得")
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let allow = springboard.buttons.matching(NSPredicate(
+            format: "label == %@ OR label == %@", "アプリの使用中は許可", "Allow While Using App")).firstMatch
+        if allow.waitForExistence(timeout: 10) {
+            capture("location-permission-shinjuku-station")
+            allow.tap()
+        }
+        let point = web.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "取得した現在地")).firstMatch
+        XCTAssertTrue(point.waitForExistence(timeout: 30))
+        let ready = NSPredicate { _, _ in !web.staticTexts["地図を読み込んでいます…"].exists }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: ready, object: nil)], timeout: 20), .completed)
+        capture("location-shinjuku-station-map")
+        let pin = controls.matching(NSPredicate(format: "label CONTAINS %@", "の詳細カード")).firstMatch
+        XCTAssertTrue(pin.waitForExistence(timeout: 15))
+        pin.tap()
+        tap("拠点の詳細・保存へ")
+        if controls.matching(NSPredicate(format: "label == %@", "車候補に保存")).firstMatch.waitForExistence(timeout: 3) { tap("車候補に保存") }
+        XCTAssertTrue(controls.matching(NSPredicate(format: "label == %@", "車候補から外す")).firstMatch.waitForExistence(timeout: 10))
+        tap("戻る")
+        XCTAssertTrue(point.waitForExistence(timeout: 10))
+        tap("一覧で見る")
+        XCTAssertTrue(web.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "約2km以内・直線距離順")).firstMatch.waitForExistence(timeout: 10))
+        capture("location-shinjuku-station-list")
+        tap("地図で見る")
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        let cleared = NSPredicate { _, _ in !point.exists }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: cleared, object: nil)], timeout: 10), .completed)
+        app.terminate()
+        app.launch()
+        tap("車を探す")
+        XCTAssertTrue(controls.matching(NSPredicate(format: "label == %@", "現在地から探す")).firstMatch.waitForExistence(timeout: 10))
+        XCTAssertFalse(point.exists)
+        capture("location-cleared-after-relaunch")
+    }
+
+    /// Run separately after `simctl privacy ... revoke location ...` on the test device.
+    @MainActor
+    func testDeniedCurrentLocation() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        func tap(_ label: String) {
+            let button = web.buttons[label].firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
+            button.tap()
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("車を探す")
+        tap("現在地から探す")
+        tap("現在地を取得")
+        XCTAssertTrue(web.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "位置情報が許可されていません")).firstMatch.waitForExistence(timeout: 15))
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "location-denied"
+        shot.lifetime = .keepAlways
+        add(shot)
+        tap("地域名から探す")
+        let point = web.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "取得した現在地")).firstMatch
+        XCTAssertFalse(point.exists)
+        tap("一覧で見る")
+        XCTAssertTrue(web.staticTexts["借りる場所を探す"].firstMatch.waitForExistence(timeout: 10))
     }
 
 }

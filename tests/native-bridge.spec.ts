@@ -15,6 +15,7 @@ async function bridge(page: Page, initial: string | null = null, readFailure = f
         failOpen: false,
         opens: [] as string[],
         copies: [] as string[],
+        pause: null as (() => void) | null,
       }
       Object.assign(window, {
         nativeTest: control,
@@ -27,6 +28,14 @@ async function bridge(page: Page, initial: string | null = null, readFailure = f
             },
             { name: 'Browser', methods: [{ name: 'open', rtype: 'promise' }] },
             { name: 'Share', methods: [{ name: 'share', rtype: 'promise' }] },
+            { name: 'Geolocation', methods: [{ name: 'getCurrentPosition', rtype: 'promise' }] },
+            {
+              name: 'App',
+              methods: [
+                { name: 'addListener', rtype: 'callback' },
+                { name: 'removeListener', rtype: 'promise' },
+              ],
+            },
             {
               name: 'Keyboard',
               methods: [
@@ -36,7 +45,16 @@ async function bridge(page: Page, initial: string | null = null, readFailure = f
               ],
             },
           ],
-          nativeCallback: () => 'test-listener',
+          nativeCallback: (
+            plugin: string,
+            method: string,
+            options: { eventName?: string },
+            callback: () => void,
+          ) => {
+            if (plugin === 'App' && method === 'addListener' && options.eventName === 'pause')
+              control.pause = callback
+            return 'test-listener'
+          },
           nativePromise: async (
             plugin: string,
             method: string,
@@ -57,6 +75,11 @@ async function bridge(page: Page, initial: string | null = null, readFailure = f
               control.opens.push(options.url)
             }
             if (plugin === 'Share') control.copies.push(options.text)
+            if (plugin === 'Geolocation' && method === 'getCurrentPosition')
+              return {
+                timestamp: Date.now(),
+                coords: { latitude: 35.690921, longitude: 139.700258, accuracy: 10 },
+              }
             return {}
           },
         },
@@ -68,6 +91,27 @@ async function bridge(page: Page, initial: string | null = null, readFailure = f
 
 const nativeRaw = (page: Page) =>
   page.evaluate(() => localStorage.getItem('test.native.preferences'))
+
+test('native pause clears the GPS session without putting its position in Preferences', async ({
+  page,
+}) => {
+  const state = { ...createInitialState(), onboarded: true }
+  await bridge(page, JSON.stringify(state))
+  await page.goto('/#/cars')
+  await page.getByRole('button', { name: '現在地から探す', exact: true }).click()
+  await page.getByRole('button', { name: '現在地を取得', exact: true }).click()
+  await expect(page.getByRole('img', { name: '取得した現在地' })).toBeVisible()
+  await expect(page.locator('.real-map-pin')).toHaveCount(16)
+  await page.evaluate(() =>
+    (window as unknown as { nativeTest: { pause: () => void } }).nativeTest.pause(),
+  )
+  await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
+  await expect(page.locator('.real-map-pin')).toHaveCount(10)
+  const saved = JSON.parse((await nativeRaw(page))!)
+  expect(saved.realMap.center.lat).toBeCloseTo(35, 3)
+  expect(saved.realMap.bounds).toEqual(state.realMap.bounds)
+  expect(await nativeRaw(page)).not.toContain('35.690921')
+})
 
 test('native startup waits for saved data, serializes rapid edits, survives reload and resets only on confirmation', async ({
   page,

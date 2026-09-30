@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   CarFront,
@@ -7,6 +7,7 @@ import {
   Heart,
   Info,
   List,
+  LocateFixed,
   Map,
   MapPin,
   Search,
@@ -44,6 +45,9 @@ import {
 import type { Bounds, RealMapState, RealStation } from '../domain/realStations'
 import { mapTileCache } from '../domain/mapTiles'
 import vectorLicense from '../data/vector-tile-licenses.txt?raw'
+import { useLocationSearch } from '../state/LocationSearchState'
+import { distanceMetres, nearbyStations } from '../domain/nearbyStations'
+import type { LocationFix } from '../domain/nearbyStations'
 
 function SourceLink({ href, children }: { href: string; children: React.ReactNode }) {
   const { toast } = useApp()
@@ -82,9 +86,11 @@ export function MapCredits() {
 export function RealStationCard({
   station,
   onClick,
+  origin,
 }: {
   station: RealStation
   onClick: () => void
+  origin?: LocationFix
 }) {
   const { state, toggleStation, storageProtected } = useApp()
   const saved = state.savedStations.includes(station.id)
@@ -102,6 +108,15 @@ export function RealStationCard({
           <Tag>{station.type}</Tag>
           <strong>{station.name}</strong>
           <small>OSM掲載情報 · 営業状況は未確認</small>
+          {origin && (
+            <small>
+              取得した位置から直線約
+              {(
+                distanceMetres(origin, { lat: station.latitude, lng: station.longitude }) / 1000
+              ).toFixed(1)}
+              km
+            </small>
+          )}
         </span>
         <ChevronRight size={16} />
       </button>
@@ -135,16 +150,19 @@ function StationFacts({ station }: { station: RealStation }) {
   )
 }
 export function RealCars() {
-  const { state, update } = useApp()
+  const { update } = useApp()
   const navigate = useNavigate()
-  const map = state.realMap
-  const patch = (values: Partial<RealMapState>) =>
-    update((s) => ({ ...s, realMap: { ...s.realMap, ...values } }))
-  const filtered = useMemo(() => filterRealStations(map), [map])
+  const location = useLocationSearch()
+  const { map, patch, session, cancel } = location
+  const filtered = useMemo(
+    () => (session?.nearby ? nearbyStations(map, session.point) : filterRealStations(map)),
+    [map, session],
+  )
+  useEffect(() => () => cancel(), [cancel])
   const [fit, setFit] = useState<{ bounds: Bounds; key: number } | null>(null)
   const visibleBounds = useRef<Bounds>(map.bounds)
   const [moved, setMoved] = useState(false)
-  const [sheet, setSheet] = useState<'filters' | 'station' | null>(null)
+  const [sheet, setSheet] = useState<'filters' | 'station' | 'location' | null>(null)
   const [draftProviders, setDraftProviders] = useState(map.providers)
   const [draftType, setDraftType] = useState(map.type)
   const selected = filtered.find((station) => station.id === map.selected)
@@ -155,12 +173,15 @@ export function RealCars() {
     setSheet('station')
   }
   const search = (query = map.query) => {
+    location.reset()
+    const manualPatch = (values: Partial<RealMapState>) =>
+      update((s) => ({ ...s, realMap: { ...s.realMap, ...values } }))
     const area = findPilotArea(query || '京都中心部')
     if (!area) {
-      patch({ unsupported: true, appliedArea: query.trim(), selected: null })
+      manualPatch({ query, unsupported: true, appliedArea: query.trim(), selected: null })
       return
     }
-    patch({
+    manualPatch({
       query: area.name,
       appliedArea: area.name,
       unsupported: false,
@@ -175,7 +196,7 @@ export function RealCars() {
       ...s,
       carSearch: {
         ...s.carSearch,
-        area: map.query.trim() || map.appliedArea,
+        area: session ? '' : map.query.trim() || map.appliedArea,
         type: map.type,
         provider: null,
       },
@@ -188,12 +209,13 @@ export function RealCars() {
         {map.unsupported ? 'この地域はまだ収録していません' : 'この条件の掲載拠点はありません'}
       </strong>
       <p>
-        京都・梅田・草津の取得済み拠点で試しています。周辺に拠点が存在しないという意味ではありません。
+        新宿・中野、京都、梅田、草津の取得済み拠点で試しています。周辺に拠点が存在しないという意味ではありません。
       </p>
       <button
         className="text-button"
         onClick={() => {
-          patch({ ...createRealMapState(), mode: map.mode })
+          location.reset()
+          update((s) => ({ ...s, realMap: { ...createRealMapState(), mode: map.mode } }))
           setFit({ bounds: createRealMapState().bounds, key: Date.now() })
         }}
       >
@@ -216,7 +238,7 @@ export function RealCars() {
           <Search size={18} />
           <input
             aria-label="駅名・地域から車を探す"
-            placeholder="京都・梅田・草津など"
+            placeholder="新宿・京都・梅田・草津など"
             value={map.query}
             maxLength={80}
             onChange={(e) => patch({ query: e.target.value })}
@@ -251,7 +273,7 @@ export function RealCars() {
           />
         </div>
         <div className="real-region-chips" aria-label="検証地域">
-          {['京都中心部', '大阪・梅田', '滋賀・草津'].map((name) => (
+          {['京都中心部', '大阪・梅田', '滋賀・草津', '新宿・中野'].map((name) => (
             <button
               key={name}
               className={map.appliedArea === name ? 'active' : ''}
@@ -282,6 +304,8 @@ export function RealCars() {
               }
             >
               <RealRentalMap
+                key={session?.key ?? 'manual'}
+                location={session?.point}
                 stations={filtered}
                 selected={map.selected}
                 view={map}
@@ -307,6 +331,7 @@ export function RealCars() {
             <button
               className="real-search-area"
               onClick={() => {
+                location.useViewport()
                 patch({
                   bounds: visibleBounds.current,
                   query: '',
@@ -319,19 +344,34 @@ export function RealCars() {
             >
               <Search size={13} /> {moved ? '移動したエリアで検索' : 'このエリアで検索'}
             </button>
-            <span className="real-map-pilot">拠点は3地域の一部のみ · 現在地は取得しません</span>
+            <button
+              className="real-locate"
+              aria-label="現在地から探す"
+              onClick={() => setSheet('location')}
+            >
+              <LocateFixed size={22} />
+            </button>
+            <span className="real-map-pilot">
+              {session
+                ? `取得時の位置 · 誤差の目安${Math.ceil(session.point.accuracy)}m`
+                : '拠点は4地域の一部のみ · 営業状況は未確認'}
+            </span>
           </div>
           <MapCredits />
           <div className="real-map-preview">
             <span className="sheet-handle" />
             <div className="real-preview-heading">
-              <h2>借りる場所の候補</h2>
+              <h2>{session?.nearby ? '近くの候補・直線距離順' : '借りる場所の候補'}</h2>
               <button className="text-button" onClick={() => patch({ mode: 'list' })}>
                 <List size={16} /> 一覧で見る
               </button>
             </div>
             {preview ? (
-              <RealStationCard station={preview} onClick={() => select(preview)} />
+              <RealStationCard
+                station={preview}
+                origin={session?.point}
+                onClick={() => select(preview)}
+              />
             ) : (
               empty
             )}
@@ -345,6 +385,16 @@ export function RealCars() {
           <PrimaryButton variant="secondary" icon={Map} onClick={() => patch({ mode: 'map' })}>
             地図で見る
           </PrimaryButton>
+          <button className="text-button location-list-button" onClick={() => setSheet('location')}>
+            <LocateFixed size={17} />
+            現在地から探す
+          </button>
+          {session && (
+            <p className="small muted">
+              取得時の位置から{session.nearby ? '約2km以内・直線距離順。' : 'の直線距離です。'}{' '}
+              誤差の目安{Math.ceil(session.point.accuracy)}m。移動後は再取得してください。
+            </p>
+          )}
           <p className="small muted">
             名称・位置は公開データです。空き状況・料金・営業状況は公式で確認してください。
           </p>
@@ -353,6 +403,7 @@ export function RealCars() {
               <RealStationCard
                 key={station.id}
                 station={station}
+                origin={session?.point}
                 onClick={() => {
                   patch({ selected: station.id })
                   navigate(`/cars/places/${station.id}`)
@@ -366,6 +417,54 @@ export function RealCars() {
           </PrimaryButton>
           <MapCredits />
         </div>
+      )}
+      {sheet === 'location' && (
+        <BottomSheet
+          title="現在地から周辺を探す"
+          onClose={() => {
+            cancel()
+            setSheet(null)
+          }}
+        >
+          <p className="body-copy">
+            許可したときだけ一度取得し、約2km以内の掲載拠点を探します。新宿・中野など4地域の一部で検証中です。
+          </p>
+          <p className="small muted">
+            現在地は保存・共有せず、移動を追跡しません。地図の配信元には表示する区画とIPアドレス等が伝わり、閲覧地域を推測できます。
+          </p>
+          {location.error && (
+            <p className="location-error" role="alert">
+              {location.error}
+            </p>
+          )}
+          {location.loading && <p role="status">位置情報を取得しています…</p>}
+          <PrimaryButton
+            icon={LocateFixed}
+            disabled={location.loading}
+            onClick={async () => {
+              setFit(null)
+              if (await location.locate()) {
+                setMoved(false)
+                setSheet(null)
+              }
+            }}
+          >
+            {location.loading ? '取得中…' : '現在地を取得'}
+          </PrimaryButton>
+          <PrimaryButton
+            variant="secondary"
+            onClick={() => {
+              location.reset()
+              setSheet(null)
+              setFit(null)
+            }}
+          >
+            地域名から探す
+          </PrimaryButton>
+          <p className="small muted">
+            アプリを閉じる・再起動する・10分経過すると位置表示を終了します。近さは直線距離の目安で、営業状況や空き状況は未確認です。
+          </p>
+        </BottomSheet>
       )}
       {sheet === 'station' && selected && (
         <BottomSheet title="この拠点について" onClose={() => setSheet(null)}>
@@ -549,14 +648,14 @@ export function CarMapSources() {
     <div className="screen">
       <Header back={back} title="地図・拠点の情報" />
       <div className="page-pad real-map-sources">
-        <p className="eyebrow teal">KYOTO · UMEDA · KUSATSU</p>
+        <p className="eyebrow teal">KYOTO · UMEDA · KUSATSU · SHINJUKU</p>
         <h1>
           場所を知って、
           <br />
           公式で確かめる。
         </h1>
         <section>
-          <h2>京都・梅田・草津の3地域で検証中</h2>
+          <h2>新宿・中野を含む4地域で検証中</h2>
           <p>
             地図は移動できますが、拠点は取得済みの一部だけです。全国検索や全拠点の網羅、周辺に拠点が存在しないという意味ではありません。
           </p>
@@ -599,7 +698,10 @@ export function CarMapSources() {
         <section>
           <h2>通信について</h2>
           <p>
-            表示範囲・縮尺に応じて国土地理院へ地図データを要求します。区画番号・IPアドレスなどが配信元へ伝わります。GPS現在地・プロフィール・学習回答・相談メモは送信しません。
+            表示範囲・縮尺に応じて国土地理院へ地図データを要求します。区画番号・IPアドレスなどが配信元へ伝わり、閲覧地域を推測できます。GPS座標そのもの・プロフィール・学習回答・相談メモはアプリから送信しません。
+          </p>
+          <p>
+            現在地は明示的に操作・許可したときだけ一度取得します。周辺の掲載拠点は端末内で絞り込みます。現在地やその表示範囲は永続保存せず、再起動・非表示・10分経過で消去します。端末の測位自体はOSの位置情報サービスを使用します。
           </p>
           <p>
             最近見た地図は一時的に再利用します。新しい場所や再起動後の背景地図には通信が必要です。通信できない場合も、取得済みの拠点一覧と保存は利用できます。
@@ -648,7 +750,7 @@ export function CarMapSources() {
             <pre>{JSON.stringify(realStations, null, 2)}</pre>
           </details>
           <p>
-            <SourceLink href="https://github.com/Greek-Academy/Let-s-go-anywhere/tree/codex/issue-77-vector-map-pilot/src/data">
+            <SourceLink href="https://github.com/Greek-Academy/Let-s-go-anywhere/tree/codex/issue-79-location-pilot/src/data">
               拠点データの配布元
             </SourceLink>
           </p>
