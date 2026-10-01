@@ -30,6 +30,18 @@ npm run ios:open
 
 ターミナルで機種を選んで起動する場合は `npm run ios:run` も使えます。シミュレーターが未導入ならXcodeのSettings → ComponentsでiOSを追加します。シミュレーターのHardware Keyboardが接続扱いだと画面内キーボードが出ないため、I/O → Keyboard → Toggle Software Keyboardで表示します。
 
+## シミュレーターで下にスクロールする
+
+画面の内容を**クリックしたまま、下から上へドラッグ**します。指でスワイプする操作の代わりです。文字を長押ししてから動かすと文字の選択になることがあるので、クリックしたらすぐに動かしてください。トラックパッドも押し込んだままドラッグできます。ホイール・2本指スクロールで動かない場合はこの方法で確認します。
+
+- 「見つける」やコラム詳細：画面の本文・カードの上をドラッグ。
+- 下から開く画面：白い本文部分をドラッグ。上端の短い横線は閉じる操作用です。
+- 「車を探す」の地図：地図上のドラッグは地図の移動です。店舗を縦に読みたい場合は「一覧で見る」へ進みます。
+
+[AppleのSimulatorのジェスチャー説明](https://developer.apple.com/library/archive/documentation/IDEs/Conceptual/iOS_Simulator_Guide/InteractingwithiOSandwatchOS/InteractingwithiOSandwatchOS.html#//apple_ref/doc/uid/TP40012848-CH3-SW6)も参照できます。実機では通常どおり指で操作します。
+
+現在地については [位置が取得できない場合の手順](LOCATION_SEARCH.md#古い位置情報と表示されたとき) を参照してください。
+
 ## 変更を反映する
 
 Reactのコードを直したら **`npm run ios:sync` → Xcodeで▶︎** です。Web版のホットリロードと違い、ビルドした画面を再びアプリにコピーします。

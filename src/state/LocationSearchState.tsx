@@ -30,8 +30,11 @@ export function LocationSearchProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState('')
   const sequence = useRef(0)
   const running = useRef(false)
+  const controller = useRef<AbortController | null>(null)
   const cancel = useCallback(() => {
     sequence.current++
+    controller.current?.abort()
+    controller.current = null
     running.current = false
     setLoading(false)
   }, [])
@@ -62,6 +65,7 @@ export function LocationSearchProvider({ children }: { children: ReactNode }) {
       document.removeEventListener('visibilitychange', hide)
       void nativeListener?.then((handle) => handle.remove()).catch(() => {})
       sequence.current++
+      controller.current?.abort()
     }
   }, [reset])
   useEffect(() => {
@@ -92,11 +96,13 @@ export function LocationSearchProvider({ children }: { children: ReactNode }) {
     if (running.current) return false
     running.current = true
     const request = ++sequence.current
+    const activeController = new AbortController()
+    controller.current = activeController
     setLoading(true)
     setError('')
     setSession(null)
     try {
-      const point = await locateOnce()
+      const point = await locateOnce(activeController.signal)
       if (sequence.current !== request || document.hidden) return false
       setSession({
         key: request,
@@ -115,11 +121,13 @@ export function LocationSearchProvider({ children }: { children: ReactNode }) {
       })
       return true
     } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return false
       if (sequence.current === request)
         setError(e instanceof Error ? e.message : '現在地を取得できませんでした。')
       return false
     } finally {
       if (sequence.current === request) {
+        controller.current = null
         running.current = false
         setLoading(false)
       }

@@ -527,15 +527,30 @@ export function RealCars() {
           }}
         >
           <p className="body-copy">
-            許可したときだけ一度取得し、約2km以内の掲載拠点を探します。全国の公開地図の登録情報を使います。未登録の拠点もあり、すべての店舗を網羅していません。
+            許可して操作したときだけ現在地を取得し、約2km以内の掲載拠点を探します。全国の公開地図の登録情報を使います。未登録の拠点もあり、すべての店舗を網羅していません。
           </p>
           <p className="small muted">
             現在地は保存・共有せず、移動を追跡しません。地図の配信元には表示する区画とIPアドレス等が伝わり、閲覧地域を推測できます。
           </p>
           {location.error && (
-            <p className="location-error" role="alert">
-              {location.error}
-            </p>
+            <>
+              <p className="location-error" role="alert">
+                {location.error}
+              </p>
+              <details className="location-help">
+                <summary>現在地を取得できないとき</summary>
+                <p className="small muted">
+                  位置情報の許可・端末の日時設定を確認してください。古い位置が返った場合は、一度だけ取り直しています。地域名からも探せます。
+                </p>
+                {isNativeApp && (
+                  <p className="small muted">
+                    Macのシミュレーターは実際のGPSを使いません。SimulatorのFeatures → Location →
+                    Custom
+                    Locationでテスト位置を設定し直し、「現在地を取得」を押してください。Xcode側で位置をシミュレーションしている場合は、その設定も確認してください。
+                  </p>
+                )}
+              </details>
+            </>
           )}
           {location.loading && <p role="status">位置情報を取得しています…</p>}
           <PrimaryButton

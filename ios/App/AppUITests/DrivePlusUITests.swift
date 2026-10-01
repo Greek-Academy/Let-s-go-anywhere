@@ -5,6 +5,103 @@ import CoreLocation
 /// Run on a dedicated simulator; this flow changes sample data.
 final class DrivePlusUITests: XCTestCase {
 
+    /// A real touch gesture, without tapping an off-screen element (which can auto-scroll).
+    @MainActor
+    func testHomeTouchScroll() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let exact = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            let button = exact.exists ? exact : controls.matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 10), label)
+            for _ in 0..<12 {
+                if button.isHittable { break }
+                web.swipeUp()
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("見つける")
+        let title = web.staticTexts["今度の休日、どこに行く？"].firstMatch
+        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        let before = title.frame.minY
+        web.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.75))
+            .press(forDuration: 0.05, thenDragTo: web.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.25)))
+        XCTAssertLessThan(title.frame.minY, before - 80, "Touch drag must move the page content")
+        let bottom = controls.matching(NSPredicate(format: "label CONTAINS %@", "SNSで見つけた")).firstMatch
+        for _ in 0..<10 {
+            if bottom.isHittable { break }
+            web.swipeUp()
+        }
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "touch-scroll-home-bottom"
+        shot.lifetime = .keepAlways
+        add(shot)
+        XCTAssertTrue(bottom.isHittable, "The bottom of the home screen must be reachable")
+        tap("学ぶ")
+    }
+
+    /// Change an unsupported simulator position to a public Japanese station.
+    /// XCTest refreshes timestamps itself; stale timestamps are injected in the bridge tests.
+    @MainActor
+    func testSimulatorLocationRecovery() throws {
+        continueAfterFailure = false
+        guard #available(iOS 16.4, *) else { throw XCTSkip("Requires location simulation") }
+        func setPosition(inJapan: Bool) {
+            XCUIDevice.shared.location = XCUILocation(location: CLLocation(
+                coordinate: CLLocationCoordinate2D(latitude: inJapan ? 35.6554 : 37.33, longitude: inJapan ? 139.7571 : -122.03),
+                altitude: 0, horizontalAccuracy: 10, verticalAccuracy: 10,
+                timestamp: Date()))
+        }
+        setPosition(inJapan: false)
+        defer { XCUIDevice.shared.location = nil }
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let button = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 10), label)
+            for _ in 0..<10 {
+                if button.isHittable { break }
+                web.swipeUp()
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("車を探す")
+        tap("現在地から探す")
+        tap("現在地を取得")
+        let unavailable = web.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "国内の地図表示範囲外")).firstMatch
+        XCTAssertTrue(unavailable.waitForExistence(timeout: 35))
+        let point = web.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "取得した現在地")).firstMatch
+        XCTAssertFalse(point.exists)
+        let before = XCTAttachment(screenshot: app.screenshot())
+        before.name = "location-unsupported-simulator"
+        before.lifetime = .keepAlways
+        add(before)
+        setPosition(inJapan: true)
+        tap("現在地を取得")
+        XCTAssertTrue(point.waitForExistence(timeout: 35))
+        let after = XCTAttachment(screenshot: app.screenshot())
+        after.name = "location-refreshed-simulator"
+        after.lifetime = .keepAlways
+        add(after)
+    }
+
     @MainActor
     func testNationwideStations() throws {
         continueAfterFailure = false
@@ -458,9 +555,12 @@ final class DrivePlusUITests: XCTestCase {
         let ready = NSPredicate { _, _ in !web.staticTexts["地図を読み込んでいます…"].exists }
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: ready, object: nil)], timeout: 20), .completed)
         capture("location-shinjuku-station-map")
-        let pin = controls.matching(NSPredicate(format: "label CONTAINS %@", "の詳細カード")).firstMatch
-        XCTAssertTrue(pin.waitForExistence(timeout: 15))
-        pin.tap()
+        // Nationwide maps can cluster nearby pins. The nearest-station card
+        // remains available regardless of the current map zoom level.
+        let nearbyStation = controls.matching(NSPredicate(format: "label CONTAINS %@", "取得した位置から直線約")).firstMatch
+        XCTAssertTrue(nearbyStation.waitForExistence(timeout: 15))
+        XCTAssertTrue(nearbyStation.isHittable)
+        nearbyStation.tap()
         tap("拠点の詳細・保存へ")
         if controls.matching(NSPredicate(format: "label == %@", "車候補に保存")).firstMatch.waitForExistence(timeout: 3) { tap("車候補に保存") }
         XCTAssertTrue(controls.matching(NSPredicate(format: "label == %@", "車候補から外す")).firstMatch.waitForExistence(timeout: 10))
