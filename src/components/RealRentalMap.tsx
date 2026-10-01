@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Bounds, RealMapState, RealStation } from '../domain/realStations'
-import { addKyotoBasemap, kyotoMapBounds } from './KyotoBasemap'
+import { addVectorBasemap, type MapLoadState } from './VectorBasemap'
 
 type Props = {
   stations: readonly RealStation[]
@@ -14,6 +14,8 @@ type Props = {
   onMove: (view: Pick<RealMapState, 'center' | 'zoom'>, bounds: Bounds) => void
 }
 export function RealRentalMap(props: Props) {
+  const [loadState, setLoadState] = useState<MapLoadState>('loading')
+  const basemap = useRef<ReturnType<typeof addVectorBasemap> | null>(null)
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const markers = useRef<L.LayerGroup | null>(null)
@@ -25,16 +27,19 @@ export function RealRentalMap(props: Props) {
     const instance = L.map(container.current, {
       center: initial.view.center,
       zoom: initial.view.zoom,
-      minZoom: 13,
+      minZoom: 12,
       maxZoom: 18,
-      maxBounds: kyotoMapBounds,
+      maxBounds: [
+        [20, 122],
+        [46, 154],
+      ],
       maxBoundsViscosity: 1,
       zoomControl: false,
       attributionControl: false,
       scrollWheelZoom: false, // Avoid trapping page scrolling; touch pinch and +/- remain available.
     })
     map.current = instance
-    const removeBasemap = addKyotoBasemap(instance)
+    basemap.current = addVectorBasemap(instance, setLoadState)
     markers.current = L.layerGroup().addTo(instance)
     L.control
       .zoom({ position: 'topright', zoomInTitle: '地図を拡大', zoomOutTitle: '地図を縮小' })
@@ -55,17 +60,14 @@ export function RealRentalMap(props: Props) {
     instance.on('moveend', moved)
     const observer = new ResizeObserver(() => {
       instance.invalidateSize({ pan: true, animate: false })
-      // Keep the visible map within the bundled Kyoto extract, including on
-      // tall phones. The bounds also constrain drag/zoom and restored views.
-      instance.setMinZoom(Math.max(13, instance.getBoundsZoom(kyotoMapBounds, true)))
-      instance.panInsideBounds(kyotoMapBounds, { animate: false })
     })
     observer.observe(container.current)
     // Initial bounds are reported without changing the active search range.
     moved()
     return () => {
       observer.disconnect()
-      removeBasemap()
+      basemap.current?.remove()
+      basemap.current = null
       instance.remove()
       map.current = null
       markers.current = null
@@ -123,8 +125,22 @@ export function RealRentalMap(props: Props) {
         ref={container}
         className="real-map-canvas"
         role="region"
-        aria-label="京都の実地図。指で移動、2本指で拡大縮小"
+        aria-label="実地図。指で移動、2本指で拡大縮小"
       />
+      {loadState !== 'ready' && (
+        <div className="real-map-status" role="status">
+          {loadState === 'loading' ? (
+            '地図を読み込んでいます…'
+          ) : (
+            <>
+              <span>地図を読み込めません。一覧は利用できます。</span>
+              <button className="text-button" onClick={() => basemap.current?.retry()}>
+                地図を再読み込み
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }

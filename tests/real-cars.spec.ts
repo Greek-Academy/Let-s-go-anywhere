@@ -1,17 +1,18 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 import {
   createRealMapState,
   filterRealStations,
   findPilotArea,
-  pilotBounds,
+  insideBounds,
+  stationRegions,
   realStations,
   stationSnapshot,
 } from '../src/domain/realStations'
 import { evaluateExternalRequest } from '../src/domain/externalLinks'
 import { createInitialState } from '../src/state/model'
 import { decodeStoredState } from '../src/state/storage'
-import basemap from '../src/data/kyoto-basemap.geo.json' with { type: 'json' }
+import { mapPattern, mapFixture } from './support/mapFixture'
 
 async function enter(page: Page) {
   await page.goto('/#/welcome')
@@ -22,30 +23,24 @@ const state = (page: Page) =>
   page.evaluate(() => JSON.parse(localStorage.getItem('driveplus.mock.v1')!))
 
 test('snapshot is bounded, traceable, and rental/sharing filters use coordinates without inventing availability', () => {
-  expect(basemap.features.length).toBe(basemap.featureCount)
-  expect(basemap.features.length).toBeGreaterThan(1000)
-  expect(basemap.license).toBe('https://opendatacommons.org/licenses/odbl/1-0/')
-  expect(basemap.features.some((feature) => feature.properties.waterway === 'river')).toBe(true)
-  expect(basemap.features.every((feature) => /^way\/|^node\/|^relation\//.test(feature.id))).toBe(
-    true,
-  )
-  expect(realStations).toHaveLength(10)
-  expect(new Set(realStations.map((station) => station.id)).size).toBe(10)
+  expect(realStations).toHaveLength(18)
+  expect(new Set(realStations.map((station) => station.id)).size).toBe(18)
   expect(stationSnapshot.osm3s.copyright).toContain('ODbL')
-  for (const station of realStations) {
-    expect(station.sourceUrl).toMatch(/^https:\/\/www\.openstreetmap\.org\/(node|way)\/\d+$/)
-    expect(station.latitude).toBeGreaterThanOrEqual(pilotBounds.south)
-    expect(station.latitude).toBeLessThanOrEqual(pilotBounds.north)
-    expect(station.longitude).toBeGreaterThanOrEqual(pilotBounds.west)
-    expect(station.longitude).toBeLessThanOrEqual(pilotBounds.east)
-    expect(station).not.toHaveProperty('available')
+  for (const region of stationRegions) {
+    const stations = realStations.filter((station) => station.region === region.name)
+    expect(stations).toHaveLength(region.snapshot.elements.length)
+    for (const station of stations) {
+      expect(station.sourceUrl).toMatch(/^https:\/\/www\.openstreetmap\.org\/(node|way)\/\d+$/)
+      expect(insideBounds(station, findPilotArea(region.name)!.bounds)).toBe(true)
+      expect(station).not.toHaveProperty('available')
+    }
   }
   const map = createRealMapState()
   expect(filterRealStations({ ...map, type: 'カーシェア' })).toHaveLength(2)
   expect(filterRealStations({ ...map, providers: ['トヨタレンタカー'] })).toHaveLength(1)
   expect(filterRealStations({ ...map, unsupported: true })).toHaveLength(0)
   expect(filterRealStations({ ...map, bounds: findPilotArea('京都駅')!.bounds })).toHaveLength(6)
-  expect(findPilotArea('大阪')).toBeUndefined()
+  expect(findPilotArea('東京')).toBeUndefined()
 })
 
 test('legacy data survives the map upgrade; invalid coordinates and unknown outbound station IDs fail closed', () => {
@@ -80,6 +75,7 @@ test('real map pins open a sheet, then detail, save, persist, and return to map 
   page,
 }) => {
   await enter(page)
+  await page.getByRole('button', { name: '京都中心部', exact: true }).click()
   await expect(page.locator('.real-map-pin')).toHaveCount(10)
   await expect(page.locator('.real-map-credits')).toContainText('OpenStreetMap contributors')
   await page.getByRole('button', { name: '車の事業者フィルター' }).click()
@@ -131,14 +127,14 @@ test('area, type and provider filters apply equally to map and list; unknown are
   await page.getByRole('button', { name: '戻る', exact: true }).click()
   await expect(page.locator('.real-station-main')).toBeFocused()
   await page.getByRole('button', { name: '地図で見る', exact: true }).click()
-  await page.getByLabel('駅名・地域から車を探す', { exact: true }).fill('大阪')
+  await page.getByLabel('駅名・地域から車を探す', { exact: true }).fill('東京')
   await page.getByRole('button', { name: '地域を検索', exact: true }).click()
   await expect(page.locator('.real-map-pin')).toHaveCount(0)
   await expect(
     page.getByRole('status').filter({ hasText: 'この地域はまだ収録していません' }),
   ).toBeVisible()
   await page.getByRole('button', { name: '掲載外の地域・拠点を探す', exact: true }).click()
-  await expect(page.getByLabel('探す駅・地域', { exact: true })).toHaveValue('大阪')
+  await expect(page.getByLabel('探す駅・地域', { exact: true })).toHaveValue('東京')
 })
 
 test('zoom and explicit viewport search persist without fetching new stations or leaking private data', async ({
@@ -175,47 +171,26 @@ test('zoom and explicit viewport search persist without fetching new stations or
   await page.reload()
   await expect(page.locator('.real-map-pin')).toHaveCount(count)
   expect((await state(page)).realMap.bounds).toEqual(before.bounds)
-  expect(external).toEqual([])
-  // Drag far enough to reach the extract edge, then search the visible bounds.
-  const surface = await page.locator('.real-map-canvas').boundingBox()
-  if (!surface) throw new Error('Map is missing')
-  for (let i = 0; i < 4; i++) {
-    await page.mouse.move(surface.x + 30, surface.y + surface.height / 2)
-    await page.mouse.down()
-    await page.mouse.move(surface.x + surface.width - 30, surface.y + surface.height / 2, {
-      steps: 8,
-    })
-    await page.mouse.up()
-  }
-  await page.getByRole('button', { name: /エリアで検索$/ }).click()
-  const edge = (await state(page)).realMap.bounds
-  expect(edge.west).toBeGreaterThanOrEqual(basemap.bounds.west - 0.001)
-  expect(edge.east).toBeLessThanOrEqual(basemap.bounds.east + 0.001)
+  expect(external.length).toBeGreaterThan(0)
+  expect(
+    external.every((url) =>
+      /^https:\/\/cyberjapandata\.gsi\.go\.jp\/xyz\/experimental_bvmap\/\d+\/\d+\/\d+\.pbf$/.test(
+        url,
+      ),
+    ),
+  ).toBe(true)
 })
 
-test('bundled map draws real geometry without external connectivity and retains usable station list', async ({
-  page,
-  context,
-}) => {
-  await context.route('https://**', (route) => route.abort())
+test('tile failure offers retry and retains usable station list', async ({ page, context }) => {
+  await context.route(mapPattern, (route) => route.abort())
   await enter(page)
-  const canvas = page.locator('.real-map-canvas canvas')
-  await expect(canvas).toBeVisible()
-  await expect
-    .poll(() =>
-      canvas.evaluate((element: HTMLCanvasElement) => {
-        const pixels = element
-          .getContext('2d')!
-          .getImageData(0, 0, element.width, element.height).data
-        const colors = new Set<string>()
-        for (let i = 0; i < pixels.length; i += 16) {
-          if (pixels[i + 3] > 0) colors.add(`${pixels[i]},${pixels[i + 1]},${pixels[i + 2]}`)
-        }
-        return colors.size
-      }),
-    )
-    .toBeGreaterThan(5)
-  await expect(page.locator('.real-map-canvas img.leaflet-tile')).toHaveCount(0)
+  await expect(page.locator('.real-map-status')).toContainText('地図を読み込めません')
+  await context.route(mapPattern, (route) =>
+    route.fulfill({ body: mapFixture, contentType: 'application/vnd.mapbox-vector-tile' }),
+  )
+  await page.getByRole('button', { name: '地図を再読み込み' }).click()
+  await expect(page.locator('[data-map-ready="true"]').first()).toBeVisible()
+  await expect(page.locator('.real-map-status')).toHaveCount(0)
   await page.getByRole('button', { name: '一覧で見る', exact: true }).click()
   await expect(page.locator('.real-station-card')).toHaveCount(10)
   await page.locator('.real-station-main').first().click()
@@ -243,7 +218,7 @@ test('small screens, attribution, filters and map source data remain accessible'
   await expect(page.getByRole('button', { name: '車の事業者フィルター' })).toBeFocused()
   await expect(page.locator('.real-map-pin')).toHaveCount(10)
   await page.getByRole('button', { name: '出典・掲載範囲', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'まずは京都の10件から' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '京都・梅田・草津の3地域で検証中' })).toBeVisible()
   await page.getByText('元データを表示', { exact: true }).click()
   await expect(page.locator('details[open] pre')).toContainText('timestamp_osm_base')
   await expect(page.getByRole('link', { name: '拠点データのODbL 1.0' })).toHaveAttribute(

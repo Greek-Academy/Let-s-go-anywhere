@@ -4,7 +4,7 @@ export interface PreviewConfig {
 }
 
 export const previewCsp =
-  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'"
+  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/; object-src 'none'; base-uri 'self'; form-action 'none'"
 
 export function resolvePreviewConfig(env: Record<string, string | undefined>): PreviewConfig {
   const channel = env.DRIVEPLUS_RELEASE_CHANNEL ?? 'preview'
