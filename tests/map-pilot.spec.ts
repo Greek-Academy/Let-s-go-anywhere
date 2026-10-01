@@ -1,5 +1,22 @@
+import { expectMapStationCount } from './support/mapFixture'
 import { test, expect, mapFixture, mapPattern } from './support/mapFixture'
-import { TileCache, tileUrl } from '../src/domain/mapTiles'
+import { TileCache, tileUrl, MissingTileError } from '../src/domain/mapTiles'
+
+test('unavailable background tiles are distinguished from network failures', async ({
+  page,
+  context,
+}) => {
+  const cache = new TileCache(async () => new Response('', { status: 404 }))
+  await expect(cache.acquire(tileUrl(13, 5, 5)).promise).rejects.toBeInstanceOf(MissingTileError)
+  expect(cache.snapshot().missing).toBe(1)
+  expect(cache.snapshot().failed).toBe(0)
+  await context.route(mapPattern, (route) => route.fulfill({ status: 404, body: '' }))
+  await page.goto('/#/welcome')
+  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await page.getByRole('navigation').getByRole('button', { name: '車を探す', exact: true }).click()
+  await expect(page.locator('.real-map-status')).toContainText('背景地図データがありません')
+  await expectMapStationCount(page, 10)
+})
 
 test('tile cache bounds memory, expires, deduplicates, and does not cache failed requests', async () => {
   let calls = 0
@@ -74,12 +91,12 @@ test('three regions retain map/list selection, use only tile requests and reuse 
   await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '車を探す', exact: true }).click()
   for (const [name, count] of [
-    ['大阪・梅田', 5],
+    ['大阪・梅田', 6],
     ['滋賀・草津', 3],
     ['京都中心部', 10],
   ] as const) {
     await page.getByRole('button', { name, exact: true }).click()
-    await expect(page.locator('.real-map-pin')).toHaveCount(count)
+    await expectMapStationCount(page, count)
     await expect(page.locator('.real-map-status')).toHaveCount(0)
     await expect(page.locator('[data-map-ready="true"]').first()).toBeVisible()
     await page.getByRole('button', { name: '一覧で見る', exact: true }).click()
@@ -112,7 +129,7 @@ test('malformed tiles show failure and can be retried without affecting stations
   await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '車を探す', exact: true }).click()
   await expect(page.locator('.real-map-status')).toContainText('地図を読み込めません')
-  await expect(page.locator('.real-map-pin')).toHaveCount(10)
+  await expectMapStationCount(page, 10)
   await context.route(mapPattern, (route) => route.fulfill({ body: mapFixture }))
   await page.getByRole('button', { name: '地図を再読み込み' }).click()
   await expect(page.locator('.real-map-status')).toHaveCount(0)

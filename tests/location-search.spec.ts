@@ -1,3 +1,4 @@
+import { expectMapStationCount } from './support/mapFixture'
 import { test, expect, mapPattern } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 import { createRealMapState } from '../src/domain/realStations'
@@ -14,7 +15,7 @@ async function enter(page: Page) {
   await page.goto('/#/welcome')
   await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '車を探す', exact: true }).click()
-  await expect(page.locator('.real-map-pin')).toHaveCount(10)
+  await expectMapStationCount(page, 10)
 }
 async function mockLocation(
   page: Page,
@@ -125,7 +126,7 @@ test('explicit location finds nearby real stations, retains detail/list navigati
   const before = (await persisted(page)).realMap
   await request(page)
   await expect(page.getByRole('img', { name: '取得した現在地' })).toBeVisible()
-  await expect(page.locator('.real-map-pin')).toHaveCount(expected.length)
+  await expectMapStationCount(page, expected.length)
   await expect(page.locator('.real-map-preview')).toContainText('直線距離順')
   // WebKit can round the previous manual view by a fraction of a CSS pixel
   // during its initial ResizeObserver pass, before the GPS view mounts.
@@ -134,9 +135,8 @@ test('explicit location finds nearby real stations, retains detail/list navigati
   expect(manual.center.lat).toBeCloseTo(before.center.lat, 3)
   expect(manual.center.lng).toBeCloseTo(before.center.lng, 3)
   const first = expected[0]
-  await page
-    .getByRole('button', { name: `${first.name}・${first.type}の詳細カード`, exact: true })
-    .click()
+  // Dense pins may be grouped; the nearest candidate also opens from the bottom card.
+  await page.locator('.real-map-preview .real-station-main').click()
   await page.getByRole('button', { name: '拠点の詳細・保存へ', exact: true }).click()
   await page.getByRole('button', { name: '車候補に保存', exact: true }).click()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
@@ -159,7 +159,7 @@ test('explicit location finds nearby real stations, retains detail/list navigati
   expect(external.length).toBeGreaterThan(0)
   expect(external.every((url) => url.startsWith(mapPattern.slice(0, -2)))).toBe(true)
   await page.reload()
-  await expect(page.locator('.real-map-pin')).toHaveCount(10)
+  await expectMapStationCount(page, 10)
   await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
   expect((await persisted(page)).savedStations).toContain(first.id)
 })
@@ -183,7 +183,7 @@ for (const [name, options, message] of [
     await page.getByRole('button', { name: '地域名から探す', exact: true }).click()
     await page.getByLabel('駅名・地域から車を探す', { exact: true }).fill('新宿')
     await page.getByRole('button', { name: '地域を検索', exact: true }).click()
-    await expect(page.locator('.real-map-pin')).toHaveCount(27)
+    await expectMapStationCount(page, 27)
     await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
   })
 }
@@ -196,25 +196,25 @@ test('cancel ignores a late result; a second explicit request can succeed', asyn
   await page.getByRole('button', { name: '地域名から探す', exact: true }).click()
   await page.getByRole('button', { name: '滋賀・草津', exact: true }).click()
   await page.evaluate(() => (window as unknown as { deliver: () => void }).deliver())
-  await expect(page.locator('.real-map-pin')).toHaveCount(3)
+  await expectMapStationCount(page, 3)
   await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
   await request(page)
   await expect
     .poll(() => page.evaluate(() => (window as unknown as { calls: number }).calls))
     .toBe(2)
   await page.evaluate(() => (window as unknown as { deliver: () => void }).deliver())
-  await expect(page.locator('.real-map-pin')).toHaveCount(expected.length)
+  await expectMapStationCount(page, expected.length)
 })
 
 test('location outside station coverage explains the limit and offers manual search', async ({
   page,
 }) => {
-  await mockLocation(page, { lat: 43.0687, lng: 141.3508 }) // Sapporo Station
+  await mockLocation(page, { lat: 30, lng: 140 }) // Sea: no registered stations within 2 km
   await enter(page)
   await request(page)
   await expect(page.getByRole('img', { name: '取得した現在地' })).toBeVisible()
-  await expect(page.locator('.real-map-pin')).toHaveCount(0)
-  await expect(page.locator('.real-map-empty')).toContainText('存在しないという意味ではありません')
+  await expectMapStationCount(page, 0)
+  await expect(page.locator('.real-map-empty')).toContainText('店舗がないという意味ではありません')
   await page.getByRole('button', { name: '掲載外の地域・拠点を探す', exact: true }).click()
   await expect(page.getByLabel('探す駅・地域', { exact: true })).toHaveValue('')
 })
@@ -229,12 +229,12 @@ test('location expires after ten minutes and manual search clears the transient 
   await expect(page.getByRole('img', { name: '取得した現在地' })).toBeVisible()
   await page.clock.fastForward(601000)
   await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
-  await expect(page.locator('.real-map-pin')).toHaveCount(10)
+  await expectMapStationCount(page, 10)
   await request(page)
   await expect(page.getByRole('img', { name: '取得した現在地' })).toBeVisible()
   await page.getByRole('button', { name: '大阪・梅田', exact: true }).click()
   await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
-  await expect(page.locator('.real-map-pin')).toHaveCount(5)
+  await expectMapStationCount(page, 6)
 })
 
 test('unresponsive location calls time out and backgrounding clears a successful position', async ({

@@ -26,6 +26,9 @@ export function Saved() {
   const externalLink = state.links.find((link) => link.id === external)
   const eventList = outings.filter((o) => state.savedEvents.includes(o.id))
   const realStationList = realStations.filter((station) => state.savedStations.includes(station.id))
+  const missingStations = state.savedStations.filter(
+    (id) => id.startsWith('osm-') && !realStations.some((station) => station.id === id),
+  )
   const stationList = stations.filter((s) => state.savedStations.includes(s.id))
   return (
     <div className="screen">
@@ -53,7 +56,8 @@ export function Saved() {
             selected={current === 'cars'}
             onClick={() => setParams({ type: 'cars' }, { replace: true })}
           >
-            車候補 <span>{stationList.length + realStationList.length}</span>
+            車候補{' '}
+            <span>{stationList.length + realStationList.length + missingStations.length}</span>
           </Chip>
         </div>
         {current === 'events' ? (
@@ -175,6 +179,26 @@ export function Saved() {
                   }
                 />
               ))}
+              {missingStations.map((id) => (
+                <article className="real-source-card" key={id}>
+                  <h3>保存した拠点の情報を確認できません</h3>
+                  <p className="small muted">
+                    現在の掲載データに見つかりません。閉店を意味するものではありません。保存記録は残っています。
+                  </p>
+                  <button
+                    className="text-button"
+                    disabled={storageProtected}
+                    onClick={() =>
+                      update((s) => ({
+                        ...s,
+                        savedStations: s.savedStations.filter((savedId) => savedId !== id),
+                      }))
+                    }
+                  >
+                    この車候補の保存を解除
+                  </button>
+                </article>
+              ))}
               {stationList.map((s) => (
                 <StationCard
                   key={s.id}
@@ -184,7 +208,7 @@ export function Saved() {
                 />
               ))}
             </div>
-            {!stationList.length && !realStationList.length && (
+            {!stationList.length && !realStationList.length && !missingStations.length && (
               <EmptyState
                 icon={CarFront}
                 title="借りる場所も、保存できます"

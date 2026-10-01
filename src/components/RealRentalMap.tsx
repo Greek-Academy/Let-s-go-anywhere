@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
+import { groupStations } from '../domain/stationClusters'
 import 'leaflet/dist/leaflet.css'
 import type { Bounds, RealMapState, RealStation } from '../domain/realStations'
 import { addVectorBasemap, type MapLoadState } from './VectorBasemap'
@@ -11,11 +12,13 @@ type Props = {
   view: Pick<RealMapState, 'center' | 'zoom'>
   fit: { bounds: Bounds; key: number } | null
   location?: LocationFix
+  onCluster: (stations: RealStation[]) => void
   onSelect: (station: RealStation) => void
   onFitComplete: () => void
   onMove: (view: Pick<RealMapState, 'center' | 'zoom'>, bounds: Bounds) => void
 }
 export function RealRentalMap(props: Props) {
+  const [viewport, setViewport] = useState<{ bounds: Bounds; zoom: number } | null>(null)
   const [loadState, setLoadState] = useState<MapLoadState>('loading')
   const basemap = useRef<ReturnType<typeof addVectorBasemap> | null>(null)
   const container = useRef<HTMLDivElement>(null)
@@ -30,7 +33,7 @@ export function RealRentalMap(props: Props) {
     const instance = L.map(container.current, {
       center: initial.view.center,
       zoom: initial.view.zoom,
-      minZoom: 12,
+      minZoom: 3,
       maxZoom: 18,
       maxBounds: [
         [20, 122],
@@ -51,6 +54,15 @@ export function RealRentalMap(props: Props) {
     const moved = () => {
       const center = instance.getCenter(),
         bounds = instance.getBounds()
+      setViewport({
+        zoom: instance.getZoom(),
+        bounds: {
+          south: bounds.getSouth(),
+          west: bounds.getWest(),
+          north: bounds.getNorth(),
+          east: bounds.getEast(),
+        },
+      })
       callbacks.current.onMove(
         { center: { lat: center.lat, lng: center.lng }, zoom: instance.getZoom() },
         {
@@ -110,14 +122,45 @@ export function RealRentalMap(props: Props) {
   }, [props.location])
   useEffect(() => {
     const group = markers.current
-    if (!group) return
+    if (!group || !viewport) return
     group.clearLayers()
-    for (const station of props.stations) {
+    for (const item of groupStations(props.stations, viewport.zoom, viewport.bounds)) {
+      if (item.stations.length > 1) {
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'real-map-cluster'
+        button.textContent = String(item.stations.length)
+        button.dataset.stationCount = String(item.stations.length)
+        button.setAttribute(
+          'aria-label',
+          `${item.stations.length}件の拠点を${viewport.zoom >= 18 ? '一覧で見る' : '拡大して見る'}`,
+        )
+        L.DomEvent.disableClickPropagation(button)
+        button.addEventListener('click', () => {
+          if (viewport.zoom >= 18) callbacks.current.onCluster(item.stations)
+          else
+            map.current?.setView([item.latitude, item.longitude], Math.min(18, viewport.zoom + 2), {
+              animate: false,
+            })
+        })
+        L.marker([item.latitude, item.longitude], {
+          keyboard: false,
+          icon: L.divIcon({
+            html: button,
+            className: 'real-cluster-shell',
+            iconSize: [44, 44],
+            iconAnchor: [22, 22],
+          }),
+        }).addTo(group)
+        continue
+      }
+      const station = item.stations[0]
       const button = document.createElement('button')
       button.className = `real-map-pin ${station.type === 'カーシェア' ? 'sharing' : 'rental'} ${props.selected === station.id ? 'selected' : ''}`
       button.type = 'button'
       button.setAttribute('aria-label', `${station.name}・${station.type}の詳細カード`)
       button.setAttribute('aria-pressed', String(props.selected === station.id))
+      button.dataset.stationCount = '1'
       button.dataset.stationId = station.id
       button.dataset.focusKey = `real-pin:${station.id}`
       // The icon is a CSS background, keeping native WebKit's accessibility
@@ -136,7 +179,7 @@ export function RealRentalMap(props: Props) {
       })
       marker.addTo(group)
     }
-  }, [props.stations, props.selected])
+  }, [props.stations, props.selected, viewport])
   useEffect(() => {
     if (!props.fit || !map.current) return
     const b = props.fit.bounds
@@ -162,10 +205,15 @@ export function RealRentalMap(props: Props) {
         role="region"
         aria-label="実地図。指で移動、2本指で拡大縮小"
       />
-      {loadState !== 'ready' && (
+      {loadState === 'partial' && (
+        <span className="real-map-partial">背景地図がない区画を含みます</span>
+      )}
+      {loadState !== 'ready' && loadState !== 'partial' && (
         <div className="real-map-status" role="status">
           {loadState === 'loading' ? (
             '地図を読み込んでいます…'
+          ) : loadState === 'missing' ? (
+            'この範囲の背景地図データがありません。拠点の一覧は利用できます。'
           ) : (
             <>
               <span>地図を読み込めません。一覧は利用できます。</span>

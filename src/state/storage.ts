@@ -140,7 +140,7 @@ const schema: Record<keyof AppState, Rule> = {
       east: number(-180, 180),
     }),
     center: shape({ lat: number(-90, 90), lng: number(-180, 180) }),
-    zoom: number(12, 18),
+    zoom: number(3, 18),
     selected: nullable(id),
   }),
   carSearch: shape({

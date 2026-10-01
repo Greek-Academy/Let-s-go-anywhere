@@ -63,3 +63,19 @@ export const test = base.extend<{ mockMap: void }>({
   ],
 })
 export { expect }
+
+// Clusters and single pins together represent the registered candidates in this search.
+export async function expectMapStationCount(page: import('@playwright/test').Page, count: number) {
+  await expect
+    .poll(() =>
+      page
+        .locator('.real-map-pin, .real-map-cluster')
+        .evaluateAll((nodes) =>
+          nodes.reduce(
+            (sum, node) => sum + Number((node as HTMLElement).dataset.stationCount || 0),
+            0,
+          ),
+        ),
+    )
+    .toBe(count)
+}
