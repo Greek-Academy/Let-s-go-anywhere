@@ -4427,14 +4427,58 @@ small {
   display: flex;
   gap: 6px;
   margin-bottom: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 .real-region-chips button {
+  flex-shrink: 0;
   border: 1px solid #dce9e1;
   border-radius: 12px;
   padding: 5px 10px;
   font-size: 10px;
   color: #57716a;
   background: white;
+}
+.real-locate {
+  position: absolute;
+  right: 12px;
+  bottom: 36px;
+  z-index: 500;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dce9e1;
+  border-radius: 50%;
+  background: #fff;
+  color: #168578;
+  box-shadow: 0 3px 12px #21453a22;
+}
+.real-current-location {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #2886e6;
+  box-shadow:
+    0 0 0 2px #2886e655,
+    0 2px 6px #183b6555;
+}
+.real-location-shell {
+  pointer-events: none;
+}
+.location-list-button {
+  margin: 12px 0;
+  min-height: 36px;
+}
+.location-error {
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff4e8;
+  color: #865321;
+  font-size: 13px;
+  line-height: 1.7;
 }
 .real-region-chips button.active {
   color: #168578;
@@ -4591,7 +4635,9 @@ small {
   outline-offset: 3px;
 }
 .real-map-preview {
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-height: 100px;
+  overflow-y: auto;
   padding: 9px 16px 10px;
   border-radius: 20px 20px 0 0;
   background: white;
@@ -4671,6 +4717,11 @@ small {
   margin-top: 8px;
   border: 0;
   padding: 5px 0;
+}
+.real-map-preview .real-station-main strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .real-external-entry {
   display: flex;
@@ -4802,6 +4853,10 @@ small {
   overflow: auto;
 }
 @media (max-height: 660px) and (max-width: 480px) {
+  .real-locate {
+    right: auto;
+    left: 12px;
+  }
   .real-map-header {
     padding-top: 5px;
   }

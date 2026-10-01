@@ -3,12 +3,14 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Bounds, RealMapState, RealStation } from '../domain/realStations'
 import { addVectorBasemap, type MapLoadState } from './VectorBasemap'
+import type { LocationFix } from '../domain/nearbyStations'
 
 type Props = {
   stations: readonly RealStation[]
   selected: string | null
   view: Pick<RealMapState, 'center' | 'zoom'>
   fit: { bounds: Bounds; key: number } | null
+  location?: LocationFix
   onSelect: (station: RealStation) => void
   onFitComplete: () => void
   onMove: (view: Pick<RealMapState, 'center' | 'zoom'>, bounds: Bounds) => void
@@ -19,6 +21,7 @@ export function RealRentalMap(props: Props) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const markers = useRef<L.LayerGroup | null>(null)
+  const positionLayer = useRef<L.LayerGroup | null>(null)
   const callbacks = useRef(props)
   callbacks.current = props
   useEffect(() => {
@@ -41,6 +44,7 @@ export function RealRentalMap(props: Props) {
     map.current = instance
     basemap.current = addVectorBasemap(instance, setLoadState)
     markers.current = L.layerGroup().addTo(instance)
+    positionLayer.current = L.layerGroup().addTo(instance)
     L.control
       .zoom({ position: 'topright', zoomInTitle: '地図を拡大', zoomOutTitle: '地図を縮小' })
       .addTo(instance)
@@ -71,8 +75,39 @@ export function RealRentalMap(props: Props) {
       instance.remove()
       map.current = null
       markers.current = null
+      positionLayer.current = null
     }
   }, [])
+  useEffect(() => {
+    const layer = positionLayer.current
+    if (!layer) return
+    layer.clearLayers()
+    if (!props.location) return
+    const { lat, lng, accuracy } = props.location
+    L.circle([lat, lng], {
+      radius: accuracy,
+      color: '#3785da',
+      weight: 1,
+      fillColor: '#6daafa',
+      fillOpacity: 0.14,
+      interactive: false,
+    }).addTo(layer)
+    const dot = document.createElement('span')
+    dot.className = 'real-current-location'
+    dot.setAttribute('role', 'img')
+    dot.setAttribute('aria-label', '取得した現在地')
+    L.marker([lat, lng], {
+      keyboard: false,
+      interactive: false,
+      zIndexOffset: 1500,
+      icon: L.divIcon({
+        html: dot,
+        className: 'real-location-shell',
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+      }),
+    }).addTo(layer)
+  }, [props.location])
   useEffect(() => {
     const group = markers.current
     if (!group) return

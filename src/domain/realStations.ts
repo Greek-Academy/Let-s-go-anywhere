@@ -1,6 +1,7 @@
 import snapshot from '../data/kyoto-car-stations.osm.json' with { type: 'json' }
 import umeda from '../data/umeda-car-stations.osm.json' with { type: 'json' }
 import kusatsu from '../data/kusatsu-car-stations.osm.json' with { type: 'json' }
+import shinjuku from '../data/shinjuku-car-stations.osm.json' with { type: 'json' }
 import type { StationType } from '../data/types'
 import type { CarProviderId } from '../data/carProviders'
 
@@ -9,11 +10,22 @@ export const stationRegions = [
   { name: '京都中心部', locality: '京都市', retrievedAt: '2026-09-29', snapshot },
   { name: '大阪・梅田', locality: '大阪市北区', retrievedAt: '2026-09-30', snapshot: umeda },
   { name: '滋賀・草津', locality: '滋賀県草津市', retrievedAt: '2026-09-30', snapshot: kusatsu },
+  {
+    name: '新宿・中野',
+    locality: '東京都新宿区・中野区など',
+    retrievedAt: '2026-09-30',
+    snapshot: shinjuku,
+  },
 ]
 export const stationLicense = 'https://opendatacommons.org/licenses/odbl/1-0/'
 export type Bounds = { south: number; west: number; north: number; east: number }
 export const pilotBounds: Bounds = { south: 34.974, west: 135.738, north: 35.025, east: 135.781 }
 export const pilotAreas = [
+  {
+    name: '新宿・中野',
+    aliases: ['新宿', '新宿駅', '新宿区', '中野', '中野区', '東中野', '大久保', '西新宿'],
+    bounds: { south: 35.685, west: 139.665, north: 35.72, east: 139.715 },
+  },
   {
     name: '大阪・梅田',
     aliases: ['大阪', '梅田', '大阪駅', '大阪梅田', '梅田駅'],

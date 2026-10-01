@@ -23,8 +23,8 @@ const state = (page: Page) =>
   page.evaluate(() => JSON.parse(localStorage.getItem('driveplus.mock.v1')!))
 
 test('snapshot is bounded, traceable, and rental/sharing filters use coordinates without inventing availability', () => {
-  expect(realStations).toHaveLength(18)
-  expect(new Set(realStations.map((station) => station.id)).size).toBe(18)
+  expect(realStations).toHaveLength(45)
+  expect(new Set(realStations.map((station) => station.id)).size).toBe(45)
   expect(stationSnapshot.osm3s.copyright).toContain('ODbL')
   for (const region of stationRegions) {
     const stations = realStations.filter((station) => station.region === region.name)
@@ -218,7 +218,7 @@ test('small screens, attribution, filters and map source data remain accessible'
   await expect(page.getByRole('button', { name: '車の事業者フィルター' })).toBeFocused()
   await expect(page.locator('.real-map-pin')).toHaveCount(10)
   await page.getByRole('button', { name: '出典・掲載範囲', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '京都・梅田・草津の3地域で検証中' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '新宿・中野を含む4地域で検証中' })).toBeVisible()
   await page.getByText('元データを表示', { exact: true }).click()
   await expect(page.locator('details[open] pre')).toContainText('timestamp_osm_base')
   await expect(page.getByRole('link', { name: '拠点データのODbL 1.0' })).toHaveAttribute(

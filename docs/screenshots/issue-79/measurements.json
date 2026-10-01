@@ -1,0 +1,26 @@
+{
+  "measuredAt": "2026-09-30T13:16:44.896Z",
+  "note": "Fixed public Shinjuku Station position; simulated permission/position, real GSI tiles. PBF response payload is not an invoice or exact transfer size. Counts include unverified OSM listings.",
+  "results": [
+    {
+      "browser": "chromium",
+      "count": 16,
+      "locationRequests": 2,
+      "locationBytes": 543613,
+      "milliseconds": 188,
+      "requests": 4,
+      "responseBytes": 575539,
+      "errors": []
+    },
+    {
+      "browser": "webkit",
+      "count": 16,
+      "locationRequests": 2,
+      "locationBytes": 1096133,
+      "milliseconds": 485,
+      "requests": 4,
+      "responseBytes": 1128059,
+      "errors": []
+    }
+  ]
+}

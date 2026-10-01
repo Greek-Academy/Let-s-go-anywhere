@@ -1,0 +1,364 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-09-30T12:54:41Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "node",
+      "id": 1115444547,
+      "lat": 35.7100472,
+      "lon": 139.7093638,
+      "tags": {
+        "amenity": "car_rental",
+        "name": "マツダレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1919728900,
+      "lat": 35.7049506,
+      "lon": 139.6703925,
+      "tags": {
+        "amenity": "car_rental",
+        "branch": "中野駅前店",
+        "brand": "トヨタレンタカー",
+        "brand:wikidata": "Q11321580",
+        "name": "トヨタレンタカー",
+        "name:ja": "トヨタレンタカー",
+        "opening_hours": "07:00-22:00"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2132103628,
+      "lat": 35.687104,
+      "lon": 139.695748,
+      "tags": {
+        "amenity": "car_rental",
+        "branch": "新宿南口営業所",
+        "brand": "ニッポンレンタカー",
+        "brand:wikidata": "Q11086533",
+        "name": "ニッポンレンタカー",
+        "name:ja": "ニッポンレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2393811156,
+      "lat": 35.688432,
+      "lon": 139.683023,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "日産レンタカー",
+        "brand:wikidata": "Q11086838",
+        "name": "日産レンタカー",
+        "name:ja": "日産レンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2588633886,
+      "lat": 35.688994,
+      "lon": 139.6735701,
+      "tags": {
+        "amenity": "car_rental",
+        "name": "タイムズプラス"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3461232293,
+      "lat": 35.696243,
+      "lon": 139.685277,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "トヨタレンタカー",
+        "brand:wikidata": "Q11321580",
+        "name": "トヨタレンタカー",
+        "name:ja": "トヨタレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4584818895,
+      "lat": 35.7118767,
+      "lon": 139.7088647,
+      "tags": {
+        "amenity": "car_rental",
+        "name": "トヨタレンタカー・リース"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4611592292,
+      "lat": 35.6893936,
+      "lon": 139.6816386,
+      "tags": {
+        "amenity": "car_rental"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4935430876,
+      "lat": 35.6969329,
+      "lon": 139.681518,
+      "tags": {
+        "amenity": "car_rental",
+        "name": "ニコニコレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4999024582,
+      "lat": 35.6982634,
+      "lon": 139.7016863,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "ニッポンレンタカー",
+        "brand:wikidata": "Q11086533",
+        "name": "ニッポンレンタカー",
+        "name:ja": "ニッポンレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5038403320,
+      "lat": 35.6918513,
+      "lon": 139.7096701,
+      "tags": {
+        "amenity": "car_rental",
+        "branch": "新宿東靖国通り営業所",
+        "brand": "ニッポンレンタカー",
+        "brand:wikidata": "Q11086533",
+        "name": "ニッポンレンタカー",
+        "name:ja": "ニッポンレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5108768963,
+      "lat": 35.7017456,
+      "lon": 139.6664192,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "ニッポンレンタカー",
+        "brand:wikidata": "Q11086533",
+        "name": "ニッポンレンタカー",
+        "name:ja": "ニッポンレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5495343788,
+      "lat": 35.6937325,
+      "lon": 139.6896296,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "ニッポンレンタカー",
+        "brand:wikidata": "Q11086533",
+        "name": "ニッポンレンタカー",
+        "name:ja": "ニッポンレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6131957286,
+      "lat": 35.7026753,
+      "lon": 139.6701568,
+      "tags": {
+        "amenity": "car_sharing",
+        "branch": "中野第10ステーション",
+        "name": "タイムズカープラス",
+        "name:ja": "タイムズカープラス",
+        "operator": "パーク24"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6362704177,
+      "lat": 35.7136177,
+      "lon": 139.7030213,
+      "tags": {
+        "amenity": "car_rental",
+        "branch": "高田馬場駅前",
+        "brand": "ニッポンレンタカー",
+        "brand:wikidata": "Q11086533",
+        "name": "ニッポンレンタカー",
+        "name:ja": "ニッポンレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6367056258,
+      "lat": 35.7009213,
+      "lon": 139.6825247,
+      "tags": {
+        "amenity": "car_sharing",
+        "opening_hours": "24/7"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7281649986,
+      "lat": 35.6889065,
+      "lon": 139.7029206,
+      "tags": {
+        "amenity": "car_rental",
+        "branch": "新宿三丁目駅前店駐車場",
+        "brand": "トヨタレンタカー",
+        "brand:wikidata": "Q11321580",
+        "name": "トヨタレンタカー",
+        "name:ja": "トヨタレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7281650086,
+      "lat": 35.6988854,
+      "lon": 139.7068056,
+      "tags": {
+        "amenity": "car_rental",
+        "branch": "東新宿店",
+        "brand": "トヨタレンタカー",
+        "brand:wikidata": "Q11321580",
+        "name": "トヨタレンタカー",
+        "name:ja": "トヨタレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7281651185,
+      "lat": 35.6889891,
+      "lon": 139.7033056,
+      "tags": {
+        "amenity": "car_rental",
+        "branch": "新宿三丁目駅前店",
+        "brand": "トヨタレンタカー",
+        "brand:wikidata": "Q11321580",
+        "name": "トヨタレンタカー",
+        "name:ja": "トヨタレンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7943582248,
+      "lat": 35.6910859,
+      "lon": 139.6843165,
+      "tags": {
+        "amenity": "car_rental",
+        "name": "ニコニコレンタカー渋谷本町店"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10857174700,
+      "lat": 35.7024291,
+      "lon": 139.7007966,
+      "tags": {
+        "amenity": "car_sharing",
+        "brand": "タイムズカー",
+        "brand:wikidata": "Q17987881",
+        "name": "Timesカーシェアステーション",
+        "operator": "タイムズモビリティ"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12305485007,
+      "lat": 35.712445,
+      "lon": 139.7041197,
+      "tags": {
+        "amenity": "car_rental",
+        "brand": "日産レンタカー",
+        "brand:wikidata": "Q11086838",
+        "name": "日産レンタカー",
+        "name:ja": "日産レンタカー"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12533790743,
+      "lat": 35.7050246,
+      "lon": 139.6689549,
+      "tags": {
+        "amenity": "car_sharing",
+        "branch": "タイムズ中野第11",
+        "brand": "タイムズカー",
+        "brand:wikidata": "Q17987881",
+        "check_date": "2025-01-26",
+        "name": "タイムズカー",
+        "name:ja": "タイムズカー",
+        "operator": "タイムズモビリティ"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12533790744,
+      "lat": 35.7051893,
+      "lon": 139.6678297,
+      "tags": {
+        "amenity": "car_sharing",
+        "branch": "千光前ハイム",
+        "brand": "タイムズカー",
+        "brand:wikidata": "Q17987881",
+        "check_date": "2025-01-26",
+        "name": "タイムズカー",
+        "name:ja": "タイムズカー",
+        "operator": "タイムズモビリティ"
+      }
+    },
+    {
+      "type": "way",
+      "id": 851700117,
+      "center": {
+        "lat": 35.6919478,
+        "lon": 139.687904
+      },
+      "nodes": [7943618771, 7943618772, 7943618773, 7943618774, 7943618771],
+      "tags": {
+        "amenity": "car_sharing",
+        "brand": "タイムズカーシェア",
+        "brand:wikidata": "Q17987881",
+        "name": "タイムズカーシェア 西新宿６丁目TUD",
+        "name:ja": "タイムズカーシェア"
+      }
+    },
+    {
+      "type": "way",
+      "id": 851741285,
+      "center": {
+        "lat": 35.6920749,
+        "lon": 139.6830243
+      },
+      "nodes": [7944214108, 7944214109, 7944214110, 7944214111, 7944214112, 7944214108],
+      "tags": {
+        "amenity": "car_sharing",
+        "brand": "タイムズカーシェア",
+        "brand:wikidata": "Q17987881",
+        "name": "タイムズカーシェア ブランシェ西新宿ステーション",
+        "name:ja": "タイムズカーシェア"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1354382222,
+      "center": {
+        "lat": 35.7047792,
+        "lon": 139.6683273
+      },
+      "nodes": [12533809772, 12533809771, 12533809773, 12533809774, 12533809772],
+      "tags": {
+        "amenity": "car_sharing",
+        "branch": "中野2丁目12",
+        "brand": "タイムズカー",
+        "brand:wikidata": "Q17987881",
+        "name": "タイムズカー",
+        "name:ja": "タイムズカー",
+        "operator": "タイムズモビリティ"
+      }
+    }
+  ]
+}

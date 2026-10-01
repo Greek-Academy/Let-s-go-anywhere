@@ -36,8 +36,10 @@
     "test:discovery-search": "playwright test --config playwright.discovery-search.config.ts"
   },
   "dependencies": {
+    "@capacitor/app": "8.1.1",
     "@capacitor/browser": "8.0.4",
     "@capacitor/core": "8.5.2",
+    "@capacitor/geolocation": "8.2.2",
     "@capacitor/ios": "8.5.2",
     "@capacitor/keyboard": "8.0.5",
     "@capacitor/preferences": "8.0.1",
