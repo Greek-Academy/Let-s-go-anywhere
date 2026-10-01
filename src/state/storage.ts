@@ -7,6 +7,7 @@ import type { TripConditions } from '../domain/tripConditions'
 import { validTimestamp } from '../domain/dates'
 import { prefectures } from '../data/regions'
 import { decodeSavedWebSpots } from '../domain/webSearch'
+import { carProviders } from '../data/carProviders'
 
 export const STORAGE_KEY = 'driveplus.mock.v1'
 export const MAX_STORAGE_LENGTH = 2 * 1024 * 1024 // UTF-16 code units, checked before JSON.parse
@@ -125,6 +126,28 @@ const consultation: Rule = (v) => {
   return parsed
 }
 const schema: Record<keyof AppState, Rule> = {
+  realMap: shape({
+    mode: oneOf(['map', 'list']),
+    type: oneOf(['すべて', 'レンタカー', 'カーシェア']),
+    providers: list(text),
+    query: text,
+    appliedArea: text,
+    unsupported: bool,
+    bounds: shape({
+      south: number(-90, 90),
+      west: number(-180, 180),
+      north: number(-90, 90),
+      east: number(-180, 180),
+    }),
+    center: shape({ lat: number(-90, 90), lng: number(-180, 180) }),
+    zoom: number(12, 18),
+    selected: nullable(id),
+  }),
+  carSearch: shape({
+    area: nullable(text),
+    type: oneOf(['すべて', 'レンタカー', 'カーシェア']),
+    provider: nullable(oneOf(carProviders.map((provider) => provider.id))),
+  }),
   onboarded: bool,
   profile: shape(
     { name: text, area: text, companion: text, interests: list(text) },

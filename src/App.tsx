@@ -12,7 +12,9 @@ import { Onboarding, Welcome } from './screens/Onboarding'
 import { Discover, EventDetail } from './screens/Discover'
 import { Arrival } from './screens/Arrival'
 import { Saved } from './screens/Saved'
+import { RealCars, RealStationDetail, CarMapSources } from './screens/RealCars'
 import { Cars, StationDetail } from './screens/Cars'
+import { CarSearch } from './screens/CarSearch'
 import { CheckSetup, Learn, LearningDetail, Quiz, Results } from './screens/Learning'
 import {
   ConsultationMemo,
@@ -49,6 +51,7 @@ function NotFound() {
   )
 }
 function AppRoutes() {
+  const { memoryOnly } = useApp()
   return (
     <MobileFrame>
       <Routes>
@@ -60,7 +63,11 @@ function AppRoutes() {
         <Route path="/web-spots/:id" element={<WebSpotDetail />} />
         <Route path="/events/:id/arrival" element={<Arrival />} />
         <Route path="/saved" element={<Saved />} />
-        <Route path="/cars" element={<Cars />} />
+        <Route path="/cars" element={memoryOnly ? <Cars /> : <RealCars />} />
+        <Route path="/cars/sample" element={<Cars />} />
+        <Route path="/cars/places/:id" element={<RealStationDetail />} />
+        <Route path="/cars/sources" element={<CarMapSources />} />
+        <Route path="/cars/search" element={<CarSearch />} />
         <Route path="/stations/:id" element={<StationDetail />} />
         <Route path="/check" element={<CheckSetup />} />
         <Route path="/quiz/:index" element={<Quiz />} />

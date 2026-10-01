@@ -185,3 +185,44 @@ test('native external browser failures retain the app and retry only the confirm
   await page.getByRole('button', { name: 'アプリに戻る', exact: true }).click()
   expect(JSON.parse((await nativeRaw(page))!).consultations).toEqual([])
 })
+
+test('native car search opens the checked URL and recovers from browser failure without losing conditions', async ({
+  page,
+}) => {
+  const state = createInitialState()
+  state.onboarded = true
+  state.savedStations = ['times-shibuya']
+  await bridge(page, JSON.stringify(state))
+  await page.goto('/#/cars/search')
+  await page.getByLabel('探す駅・地域', { exact: true }).fill('京都駅')
+  await page.getByRole('button', { name: 'カーシェア', exact: true }).click()
+  await page.getByLabel('事業者', { exact: true }).selectOption('times')
+  await page.getByRole('button', { name: '外部地図で車を探す', exact: true }).click()
+  await page.evaluate(() => {
+    ;(window as unknown as { nativeTest: { failOpen: boolean } }).nativeTest.failOpen = true
+  })
+  await page.getByRole('link', { name: 'Googleマップで検索する', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('ブラウザ画面を開けませんでした')
+  await page.evaluate(() => {
+    ;(window as unknown as { nativeTest: { failOpen: boolean } }).nativeTest.failOpen = false
+  })
+  await page.getByRole('link', { name: 'Googleマップで検索する', exact: true }).click()
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window as unknown as { nativeTest: { opens: string[] } }).nativeTest.opens,
+      ),
+    )
+    .toEqual([
+      'https://www.google.com/maps/search/?api=1&query=' +
+        encodeURIComponent('京都駅') +
+        '+' +
+        encodeURIComponent('タイムズカー'),
+    ])
+  await expect(page).toHaveURL(/#\/cars\/search$/)
+  await page.getByRole('button', { name: 'アプリに戻る', exact: true }).click()
+  await page.reload()
+  await expect(page.getByLabel('探す駅・地域', { exact: true })).toHaveValue('京都駅')
+  expect(JSON.parse((await nativeRaw(page))!).savedStations).toEqual(['times-shibuya'])
+  expect(JSON.parse((await nativeRaw(page))!).consultations).toEqual([])
+})
