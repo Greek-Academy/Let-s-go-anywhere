@@ -17,6 +17,7 @@ import { RealCars, RealStationDetail, CarMapSources } from './screens/RealCars'
 import { Cars, StationDetail } from './screens/Cars'
 import { CarSearch } from './screens/CarSearch'
 import { CheckSetup, Learn, LearningDetail, Quiz, Results } from './screens/Learning'
+import { LearningColumnDetail } from './screens/LearningColumns'
 import {
   ConsultationMemo,
   ConsultationStatus,
@@ -74,6 +75,7 @@ function AppRoutes() {
         <Route path="/quiz/:index" element={<Quiz />} />
         <Route path="/results" element={<Results />} />
         <Route path="/learn" element={<Learn />} />
+        <Route path="/learn/columns/:id" element={<LearningColumnDetail />} />
         <Route path="/learn/:id" element={<LearningDetail />} />
         <Route path="/schools" element={<Schools />} />
         <Route path="/schools/:id" element={<SchoolDetail />} />

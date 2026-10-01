@@ -4,6 +4,57 @@ import CoreLocation
 /// Uses the installed, bundled app and real WKWebView/Preferences plugins.
 /// Run on a dedicated simulator; this flow changes sample data.
 final class DrivePlusUITests: XCTestCase {
+
+    @MainActor
+    func testLearningColumns() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let button = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
+            for _ in 0..<16 {
+                if button.isHittable { break }
+                if label == "戻る" { web.swipeDown() } else { web.swipeUp() }
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        func capture(_ name: String) {
+            let shot = XCTAttachment(screenshot: app.screenshot())
+            shot.name = name
+            shot.lifetime = .keepAlways
+            add(shot)
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("学ぶ")
+        tap("道中の判断")
+        let routeColumn = "曲がり損ねたら、予定を直せばいいを読む"
+        XCTAssertTrue(controls.matching(NSPredicate(format: "label == %@", routeColumn)).firstMatch.waitForExistence(timeout: 10))
+        XCTAssertFalse(controls.matching(NSPredicate(format: "label == %@", "借りた車、走り出す前にどこを見る？を読む")).firstMatch.exists)
+        capture("columns-01-filter")
+        tap(routeColumn)
+        XCTAssertTrue(web.staticTexts["こんな場面、ありませんか？"].firstMatch.waitForExistence(timeout: 10))
+        capture("columns-02-detail")
+        tap("コラム一覧へ戻る")
+        XCTAssertTrue(controls.matching(NSPredicate(format: "label == %@", routeColumn)).firstMatch.waitForExistence(timeout: 10))
+        tap("同乗者との過ごし方")
+        let focusColumn = "「いま集中するね」を、ふたりの合図にを読む"
+        tap(focusColumn)
+        XCTAssertTrue(web.staticTexts["気づきコラム"].firstMatch.waitForExistence(timeout: 10))
+        capture("columns-03-companions")
+        tap("戻る")
+        XCTAssertTrue(controls.matching(NSPredicate(format: "label == %@", focusColumn)).firstMatch.waitForExistence(timeout: 10))
+        XCTAssertFalse(controls.matching(NSPredicate(format: "label == %@", routeColumn)).firstMatch.exists)
+        capture("columns-04-back")
+    }
+
     @MainActor
     func testBundledApp() throws {
         continueAfterFailure = false

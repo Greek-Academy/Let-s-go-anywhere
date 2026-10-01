@@ -19,6 +19,7 @@ import { useApp } from '../state/AppState'
 import type { AppState } from '../state/AppState'
 import { LessonCard } from '../components/Cards'
 import { RoadScene } from '../components/RoadScene'
+import { LearningColumns } from './LearningColumns'
 import {
   BottomSheet,
   Chip,
@@ -380,6 +381,11 @@ export function Learn() {
           小さな準備を。
         </h1>
         <p className="body-copy">知ることから、次の一歩が始まります。</p>
+        <LearningColumns />
+        <SectionHeading
+          title="知識を確かめる・復習する"
+          subtitle="いつもの教材とチェックは、こちらから。"
+        />
         <div className="learning-summary">
           <div className="learning-summary-icon">
             <BookOpen size={31} strokeWidth={1.5} />
