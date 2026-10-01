@@ -1,5 +1,7 @@
 # 現在地から近くの車を探す
 
+> 2026-10-01追記：#83で全国の登録2,927件へ拡張しました。最新の掲載範囲・確認方法は [全国の拠点検索](NATIONAL_STATIONS.md) を参照してください。以下の4地域・45件の範囲は初回検証時の記録です。現在地の許可・一時利用・消去の仕組みは継続します。
+
 2026-09-30 / [Issue #79](https://github.com/Greek-Academy/Let-s-go-anywhere/issues/79)。全国対応前の小規模検証です。[確認画像・結果](reviews/location-pilot/README.md)。
 
 ## iPhoneで確認する3つの操作

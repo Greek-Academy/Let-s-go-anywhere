@@ -50,6 +50,9 @@ jobs:
       - name: Test release backup and restore guards
         run: npm run test:release-backup
 
+      - name: Validate national station import guards (offline)
+        run: node --test scripts/import-stations.test.mjs
+
       - name: Test search pilot with fake provider only
         run: npm run test:research
 

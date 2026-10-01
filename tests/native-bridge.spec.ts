@@ -1,6 +1,8 @@
+import { expectMapStationCount } from './support/mapFixture'
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 import { createInitialState } from '../src/state/model'
+import { nearbyStations } from '../src/domain/nearbyStations'
 
 // These tests fake the plugin boundary to inject delays and failures. They do
 // not replace the XCTest run against the installed iOS app.
@@ -101,12 +103,16 @@ test('native pause clears the GPS session without putting its position in Prefer
   await page.getByRole('button', { name: '現在地から探す', exact: true }).click()
   await page.getByRole('button', { name: '現在地を取得', exact: true }).click()
   await expect(page.getByRole('img', { name: '取得した現在地' })).toBeVisible()
-  await expect(page.locator('.real-map-pin')).toHaveCount(16)
+  await expectMapStationCount(
+    page,
+    nearbyStations(state.realMap, { lat: 35.690921, lng: 139.700258, accuracy: 10, timestamp: 1 })
+      .length,
+  )
   await page.evaluate(() =>
     (window as unknown as { nativeTest: { pause: () => void } }).nativeTest.pause(),
   )
   await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
-  await expect(page.locator('.real-map-pin')).toHaveCount(10)
+  await expectMapStationCount(page, 10)
   const saved = JSON.parse((await nativeRaw(page))!)
   expect(saved.realMap.center.lat).toBeCloseTo(35, 3)
   expect(saved.realMap.bounds).toEqual(state.realMap.bounds)

@@ -1,7 +1,7 @@
 import L from 'leaflet'
 import { VectorTile, type VectorTileFeature } from '@mapbox/vector-tile'
 import { PbfReader } from 'pbf'
-import { mapTileCache, tileUrl } from '../domain/mapTiles'
+import { mapTileCache, tileUrl, MissingTileError } from '../domain/mapTiles'
 
 /** Only roads, water, railway and a small selection of names. This is not routing data. */
 export function drawVectorTile(canvas: HTMLCanvasElement, data: ArrayBuffer, zoom: number) {
@@ -33,6 +33,12 @@ export function drawVectorTile(canvas: HTMLCanvasElement, data: ArrayBuffer, zoo
     path(feature)
     ctx.fillStyle = '#add2dd'
     ctx.fill('evenodd')
+  }
+  for (const feature of features('coastline')) {
+    path(feature)
+    ctx.strokeStyle = '#8fb4b3'
+    ctx.lineWidth = zoom < 9 ? 2 : 1.2
+    ctx.stroke()
   }
   for (const feature of features('river')) {
     path(feature)
@@ -103,10 +109,14 @@ export function drawVectorTile(canvas: HTMLCanvasElement, data: ArrayBuffer, zoo
   }
 }
 
-export type MapLoadState = 'loading' | 'ready' | 'error'
+export type MapLoadState = 'loading' | 'ready' | 'error' | 'partial' | 'missing'
 export function addVectorBasemap(map: L.Map, onState: (state: MapLoadState) => void) {
   const releases = new Map<HTMLElement, () => void>()
   const failed = new Set<HTMLElement>()
+  const missing = new Set<HTMLElement>()
+  const ready = new Set<HTMLElement>()
+  const report = () =>
+    onState(failed.size ? 'error' : missing.size ? (ready.size ? 'partial' : 'missing') : 'ready')
   let disposed = false
   class VectorLayer extends L.GridLayer {
     override createTile(coords: L.Coords, done: L.DoneCallback) {
@@ -128,11 +138,18 @@ export function addVectorBasemap(map: L.Map, onState: (state: MapLoadState) => v
             mapTileCache.invalidate(url)
             throw error
           }
+          ready.add(canvas)
           canvas.dataset.mapReady = 'true'
           done(undefined, canvas)
         })
         .catch((error: unknown) => {
           if (!active || disposed) return
+          if (error instanceof MissingTileError) {
+            missing.add(canvas)
+            canvas.dataset.mapMissing = 'true'
+            done(undefined, canvas)
+            return
+          }
           failed.add(canvas)
           onState('error')
           done(error instanceof Error ? error : new Error('Map unavailable'), canvas)
@@ -142,7 +159,12 @@ export function addVectorBasemap(map: L.Map, onState: (state: MapLoadState) => v
   }
   const layer = new VectorLayer({
     tileSize: 512,
-    minZoom: 5,
+    minZoom: 3,
+    bounds: [
+      [20, 122],
+      [46, 154],
+    ],
+    minNativeZoom: 5,
     maxNativeZoom: 17,
     maxZoom: 18,
     noWrap: true,
@@ -151,16 +173,20 @@ export function addVectorBasemap(map: L.Map, onState: (state: MapLoadState) => v
     keepBuffer: 0,
   })
   layer.on('loading', () => onState('loading'))
-  layer.on('load', () => onState(failed.size ? 'error' : 'ready'))
+  layer.on('load', report)
   layer.on('tileunload', (event: L.TileEvent) => {
     releases.get(event.tile)?.()
     releases.delete(event.tile)
     failed.delete(event.tile)
+    missing.delete(event.tile)
+    ready.delete(event.tile)
   })
   layer.addTo(map)
   return {
     retry() {
       failed.clear()
+      missing.clear()
+      ready.clear()
       onState('loading')
       layer.redraw()
     },

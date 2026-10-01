@@ -14,12 +14,14 @@ export function tileUrl(x: number, y: number, leafletZoom: number) {
     throw new Error('Invalid tile coordinates')
   return `${tileBase}${z}/${x}/${y}.pbf`
 }
+export class MissingTileError extends Error {}
 export type TileMetrics = {
   requests: number
   completed: number
   bytes: number
   hits: number
   shared: number
+  missing: number
   failed: number
   aborted: number
   cachedBytes: number
@@ -32,6 +34,7 @@ const emptyMetrics = (): TileMetrics => ({
   bytes: 0,
   hits: 0,
   shared: 0,
+  missing: 0,
   failed: 0,
   aborted: 0,
   cachedBytes: 0,
@@ -96,6 +99,8 @@ export class TileCache {
         referrerPolicy: 'no-referrer',
       })
         .then(async (response) => {
+          if (response.status === 404)
+            throw new MissingTileError('No background data for this tile')
           if (!response.ok) throw new Error(`Map HTTP ${response.status}`)
           // Read with a size cap, even when Content-Length is absent.
           const reader = response.body?.getReader()
@@ -138,7 +143,8 @@ export class TileCache {
           return data.buffer
         })
         .catch((error: unknown) => {
-          if (error instanceof DOMException && error.name === 'AbortError')
+          if (error instanceof MissingTileError) this.publish({ missing: this.metrics.missing + 1 })
+          else if (error instanceof DOMException && error.name === 'AbortError')
             this.publish({ aborted: this.metrics.aborted + 1 })
           else this.publish({ failed: this.metrics.failed + 1 })
           throw error

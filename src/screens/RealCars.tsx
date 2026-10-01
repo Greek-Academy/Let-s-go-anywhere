@@ -37,7 +37,9 @@ import type { ExternalRequest } from '../domain/externalLinks'
 import {
   createRealMapState,
   filterRealStations,
-  findPilotArea,
+  searchStationArea,
+  nationalBounds,
+  stationSnapshot,
   realStations,
   stationRegions,
   stationLicense,
@@ -46,7 +48,7 @@ import type { Bounds, RealMapState, RealStation } from '../domain/realStations'
 import { mapTileCache } from '../domain/mapTiles'
 import vectorLicense from '../data/vector-tile-licenses.txt?raw'
 import { useLocationSearch } from '../state/LocationSearchState'
-import { distanceMetres, nearbyStations } from '../domain/nearbyStations'
+import { distanceMetres, nearbyStations, nearbyBounds } from '../domain/nearbyStations'
 import type { LocationFix } from '../domain/nearbyStations'
 
 function SourceLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -160,14 +162,52 @@ export function RealCars() {
   )
   useEffect(() => () => cancel(), [cancel])
   const [fit, setFit] = useState<{ bounds: Bounds; key: number } | null>(null)
+  // Fit the 2 km area only after a new fix, not when returning from detail.
+  const lastLocationKey = useRef(session?.key)
+  useEffect(() => {
+    if (session?.key !== lastLocationKey.current) {
+      lastLocationKey.current = session?.key
+      if (session) setFit({ bounds: nearbyBounds(session.point), key: session.key })
+    }
+  }, [session])
   const visibleBounds = useRef<Bounds>(map.bounds)
   const [moved, setMoved] = useState(false)
   const [sheet, setSheet] = useState<'filters' | 'station' | 'location' | null>(null)
   const [draftProviders, setDraftProviders] = useState(map.providers)
   const [draftType, setDraftType] = useState(map.type)
+  const [providerQuery, setProviderQuery] = useState('')
+  const [providerLimit, setProviderLimit] = useState(40)
+  const [listLimit, setListLimit] = useState(50)
+  const [cluster, setCluster] = useState<RealStation[] | null>(null)
+  useEffect(() => {
+    setListLimit(50)
+  }, [filtered])
   const selected = filtered.find((station) => station.id === map.selected)
   const preview = selected || filtered[0]
-  const providers = [...new Set(realStations.map((station) => station.provider))]
+  const providers = [
+    ...new Set([
+      ...(session?.nearby
+        ? nearbyStations({ ...map, providers: [], type: 'すべて' }, session.point)
+        : filterRealStations({ ...map, providers: [], type: 'すべて' })
+      ).map((station) => station.provider),
+      ...map.providers,
+    ]),
+  ].sort((a, b) => {
+    const common = [
+      'タイムズカー',
+      'トヨタレンタカー',
+      'ニッポンレンタカー',
+      'オリックスレンタカー',
+      '日産レンタカー',
+    ]
+    return (
+      (common.includes(a) ? common.indexOf(a) : 99) -
+        (common.includes(b) ? common.indexOf(b) : 99) || a.localeCompare(b, 'ja')
+    )
+  })
+  const visibleProviders = providers.filter((name) =>
+    name.toLowerCase().includes(providerQuery.toLowerCase()),
+  )
   const select = (station: RealStation) => {
     patch({ selected: station.id })
     setSheet('station')
@@ -176,7 +216,7 @@ export function RealCars() {
     location.reset()
     const manualPatch = (values: Partial<RealMapState>) =>
       update((s) => ({ ...s, realMap: { ...s.realMap, ...values } }))
-    const area = findPilotArea(query || '京都中心部')
+    const area = searchStationArea(query || '全国')
     if (!area) {
       manualPatch({ query, unsupported: true, appliedArea: query.trim(), selected: null })
       return
@@ -206,20 +246,31 @@ export function RealCars() {
   const empty = (
     <div className="real-map-empty" role="status">
       <strong>
-        {map.unsupported ? 'この地域はまだ収録していません' : 'この条件の掲載拠点はありません'}
+        {map.unsupported
+          ? 'この地名・拠点名は見つかりませんでした'
+          : 'この条件の掲載拠点はありません'}
       </strong>
       <p>
-        新宿・中野、京都、梅田、草津の取得済み拠点で試しています。周辺に拠点が存在しないという意味ではありません。
+        公開地図には未登録・情報が古い拠点もあります。周辺に店舗がないという意味ではありません。地名が見つからない場合は、現在地または地図を動かして探せます。
       </p>
       <button
         className="text-button"
         onClick={() => {
           location.reset()
-          update((s) => ({ ...s, realMap: { ...createRealMapState(), mode: map.mode } }))
-          setFit({ bounds: createRealMapState().bounds, key: Date.now() })
+          update((s) => ({
+            ...s,
+            realMap: {
+              ...createRealMapState(),
+              mode: map.mode,
+              bounds: nationalBounds,
+              query: '全国',
+              appliedArea: '全国',
+            },
+          }))
+          setFit({ bounds: nationalBounds, key: Date.now() })
         }}
       >
-        京都の全掲載拠点を表示
+        全国の掲載拠点を表示
       </button>
     </div>
   )
@@ -238,7 +289,7 @@ export function RealCars() {
           <Search size={18} />
           <input
             aria-label="駅名・地域から車を探す"
-            placeholder="新宿・京都・梅田・草津など"
+            placeholder="浜松町・札幌・拠点名など"
             value={map.query}
             maxLength={80}
             onChange={(e) => patch({ query: e.target.value })}
@@ -266,14 +317,29 @@ export function RealCars() {
             label="車の事業者フィルター"
             className={map.providers.length ? 'has-filter' : ''}
             onClick={() => {
+              setProviderQuery('')
+              setProviderLimit(40)
               setDraftProviders(map.providers)
               setDraftType(map.type)
               setSheet('filters')
             }}
           />
         </div>
-        <div className="real-region-chips" aria-label="検証地域">
-          {['京都中心部', '大阪・梅田', '滋賀・草津', '新宿・中野'].map((name) => (
+        <div className="real-region-chips" aria-label="地域のショートカット">
+          {[
+            '浜松町',
+            '全国',
+            '京都中心部',
+            '新宿・中野',
+            '大阪・梅田',
+            '滋賀・草津',
+            '札幌',
+            '仙台',
+            '名古屋',
+            '広島',
+            '福岡・博多',
+            '那覇',
+          ].map((name) => (
             <button
               key={name}
               className={map.appliedArea === name ? 'active' : ''}
@@ -311,6 +377,10 @@ export function RealCars() {
                 view={map}
                 fit={fit}
                 onSelect={select}
+                onCluster={(stations) => {
+                  setListLimit(50)
+                  setCluster(stations)
+                }}
                 onFitComplete={() => {
                   setFit(null)
                   setMoved(false)
@@ -354,7 +424,7 @@ export function RealCars() {
             <span className="real-map-pilot">
               {session
                 ? `取得時の位置 · 誤差の目安${Math.ceil(session.point.accuracy)}m`
-                : '拠点は4地域の一部のみ · 営業状況は未確認'}
+                : '全国のOSM登録拠点 · 未登録・営業状況は未確認'}
             </span>
           </div>
           <MapCredits />
@@ -398,8 +468,11 @@ export function RealCars() {
           <p className="small muted">
             名称・位置は公開データです。空き状況・料金・営業状況は公式で確認してください。
           </p>
+          <p className="small muted" role="status">
+            {filtered.length}件中 {Math.min(listLimit, filtered.length)}件を表示
+          </p>
           <div className="station-list">
-            {filtered.map((station) => (
+            {filtered.slice(0, listLimit).map((station) => (
               <RealStationCard
                 key={station.id}
                 station={station}
@@ -411,12 +484,39 @@ export function RealCars() {
               />
             ))}
           </div>
+          {filtered.length > listLimit && (
+            <PrimaryButton variant="secondary" onClick={() => setListLimit((count) => count + 50)}>
+              さらに50件を表示
+            </PrimaryButton>
+          )}
           {!filtered.length && empty}
           <PrimaryButton variant="secondary" icon={ExternalLink} onClick={externalSearch}>
             掲載外の地域・拠点を探す
           </PrimaryButton>
           <MapCredits />
         </div>
+      )}
+      {cluster && (
+        <BottomSheet title="重なっている拠点" onClose={() => setCluster(null)}>
+          <p className="small muted">
+            {cluster.length}件。公開地図で同じ場所に登録されている場合もあります。
+          </p>
+          {cluster.slice(0, listLimit).map((station) => (
+            <RealStationCard
+              key={station.id}
+              station={station}
+              onClick={() => {
+                setCluster(null)
+                navigate(`/cars/places/${station.id}`)
+              }}
+            />
+          ))}
+          {cluster.length > listLimit && (
+            <PrimaryButton variant="secondary" onClick={() => setListLimit((count) => count + 50)}>
+              さらに50件を表示
+            </PrimaryButton>
+          )}
+        </BottomSheet>
       )}
       {sheet === 'location' && (
         <BottomSheet
@@ -427,7 +527,7 @@ export function RealCars() {
           }}
         >
           <p className="body-copy">
-            許可したときだけ一度取得し、約2km以内の掲載拠点を探します。新宿・中野など4地域の一部で検証中です。
+            許可したときだけ一度取得し、約2km以内の掲載拠点を探します。全国の公開地図の登録情報を使います。未登録の拠点もあり、すべての店舗を網羅していません。
           </p>
           <p className="small muted">
             現在地は保存・共有せず、移動を追跡しません。地図の配信元には表示する区画とIPアドレス等が伝わり、閲覧地域を推測できます。
@@ -483,7 +583,9 @@ export function RealCars() {
       )}
       {sheet === 'filters' && (
         <BottomSheet title="車の絞り込み" onClose={() => setSheet(null)}>
-          <p className="body-copy">京都・梅田・草津の取得済みデータから表示します。</p>
+          <p className="body-copy">
+            全国の取得済みデータから、地図の検索範囲にある拠点を表示します。
+          </p>
           <h3>サービスの種類</h3>
           <div className="chips">
             {(['すべて', 'レンタカー', 'カーシェア'] as const).map((type) => (
@@ -493,8 +595,24 @@ export function RealCars() {
             ))}
           </div>
           <h3 className="real-filter-title">事業者</h3>
+          <label className="real-provider-search">
+            事業者名で絞る
+            <input
+              value={providerQuery}
+              onChange={(e) => {
+                setProviderQuery(e.target.value)
+                setProviderLimit(40)
+              }}
+              placeholder="例：トヨタ"
+            />
+          </label>
+          <p className="small muted">
+            {draftProviders.length
+              ? `${draftProviders.length}事業者を選択中`
+              : '指定なし（すべて）'}
+          </p>
           <div className="real-provider-options">
-            {providers.map((provider) => (
+            {visibleProviders.slice(0, providerLimit).map((provider) => (
               <label key={provider}>
                 <input
                   type="checkbox"
@@ -511,6 +629,14 @@ export function RealCars() {
               </label>
             ))}
           </div>
+          {visibleProviders.length > providerLimit && (
+            <button className="text-button" onClick={() => setProviderLimit((count) => count + 40)}>
+              事業者をさらに表示
+            </button>
+          )}
+          {!visibleProviders.length && (
+            <p className="small muted">該当する事業者名はありません。</p>
+          )}
           <PrimaryButton
             onClick={() => {
               patch({ type: draftType, providers: draftProviders, selected: null })
@@ -643,21 +769,23 @@ export function RealStationDetail() {
 export function CarMapSources() {
   const back = useBack('/cars')
   const navigate = useNavigate()
+  const [rawOpen, setRawOpen] = useState(false)
+  const [derivedOpen, setDerivedOpen] = useState(false)
   const metrics = useSyncExternalStore(mapTileCache.subscribe, mapTileCache.snapshot)
   return (
     <div className="screen">
       <Header back={back} title="地図・拠点の情報" />
       <div className="page-pad real-map-sources">
-        <p className="eyebrow teal">KYOTO · UMEDA · KUSATSU · SHINJUKU</p>
+        <p className="eyebrow teal">JAPAN · OPEN MAP DATA</p>
         <h1>
           場所を知って、
           <br />
           公式で確かめる。
         </h1>
         <section>
-          <h2>新宿・中野を含む4地域で検証中</h2>
+          <h2>全国の公開地図に登録された拠点</h2>
           <p>
-            地図は移動できますが、拠点は取得済みの一部だけです。全国検索や全拠点の網羅、周辺に拠点が存在しないという意味ではありません。
+            全国のOpenStreetMap登録から取得した拠点を表示しています。すべての事業者・店舗の網羅や、現在の営業を保証しません。表示がない地域でも店舗が存在する場合があります。地名検索は主要地域と登録済みの名称・住所が対象です。
           </p>
           {stationRegions.map((region) => (
             <p key={region.name}>
@@ -720,6 +848,8 @@ export function CarMapSources() {
               <dd data-metric="bytes">{metrics.bytes} bytes（PBF本文）</dd>
               <dt>メモリから再利用</dt>
               <dd data-metric="hits">{metrics.hits}区画</dd>
+              <dt>背景地図がない区画</dt>
+              <dd>{metrics.missing}回</dd>
               <dt>失敗 / 中断</dt>
               <dd>
                 {metrics.failed} / {metrics.aborted}回
@@ -741,16 +871,25 @@ export function CarMapSources() {
             <summary tabIndex={0}>地図表示ライブラリのライセンス</summary>
             <pre>{leafletLicense + '\n' + vectorLicense}</pre>
           </details>
-          <details>
+          <p>データは先頭20件を表示します。全件は下の配布元から確認できます。</p>
+          <details onToggle={(e) => setRawOpen(e.currentTarget.open)}>
             <summary tabIndex={0}>元データを表示</summary>
-            <pre>{JSON.stringify(stationRegions, null, 2)}</pre>
+            {rawOpen && (
+              <pre>
+                {JSON.stringify(
+                  { ...stationSnapshot, elements: stationSnapshot.elements.slice(0, 20) },
+                  null,
+                  2,
+                )}
+              </pre>
+            )}
           </details>
-          <details>
+          <details onToggle={(e) => setDerivedOpen(e.currentTarget.open)}>
             <summary tabIndex={0}>表示用データを表示（ODbL）</summary>
-            <pre>{JSON.stringify(realStations, null, 2)}</pre>
+            {derivedOpen && <pre>{JSON.stringify(realStations.slice(0, 20), null, 2)}</pre>}
           </details>
           <p>
-            <SourceLink href="https://github.com/Greek-Academy/Let-s-go-anywhere/tree/codex/issue-79-location-pilot/src/data">
+            <SourceLink href="https://github.com/Greek-Academy/Let-s-go-anywhere/tree/codex/issue-83-national-stations/src/data">
               拠点データの配布元
             </SourceLink>
           </p>

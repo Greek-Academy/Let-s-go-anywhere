@@ -1,3 +1,4 @@
+import { expectMapStationCount } from './support/mapFixture'
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 import {
@@ -23,14 +24,16 @@ const state = (page: Page) =>
   page.evaluate(() => JSON.parse(localStorage.getItem('driveplus.mock.v1')!))
 
 test('snapshot is bounded, traceable, and rental/sharing filters use coordinates without inventing availability', () => {
-  expect(realStations).toHaveLength(45)
-  expect(new Set(realStations.map((station) => station.id)).size).toBe(45)
+  expect(realStations).toHaveLength(2927)
+  expect(new Set(realStations.map((station) => station.id)).size).toBe(2927)
   expect(stationSnapshot.osm3s.copyright).toContain('ODbL')
   for (const region of stationRegions) {
     const stations = realStations.filter((station) => station.region === region.name)
     expect(stations).toHaveLength(region.snapshot.elements.length)
     for (const station of stations) {
-      expect(station.sourceUrl).toMatch(/^https:\/\/www\.openstreetmap\.org\/(node|way)\/\d+$/)
+      expect(station.sourceUrl).toMatch(
+        /^https:\/\/www\.openstreetmap\.org\/(node|way|relation)\/\d+$/,
+      )
       expect(insideBounds(station, findPilotArea(region.name)!.bounds)).toBe(true)
       expect(station).not.toHaveProperty('available')
     }
@@ -40,7 +43,7 @@ test('snapshot is bounded, traceable, and rental/sharing filters use coordinates
   expect(filterRealStations({ ...map, providers: ['トヨタレンタカー'] })).toHaveLength(1)
   expect(filterRealStations({ ...map, unsupported: true })).toHaveLength(0)
   expect(filterRealStations({ ...map, bounds: findPilotArea('京都駅')!.bounds })).toHaveLength(6)
-  expect(findPilotArea('東京')).toBeUndefined()
+  expect(findPilotArea('東京')?.name).toBe('東京駅')
 })
 
 test('legacy data survives the map upgrade; invalid coordinates and unknown outbound station IDs fail closed', () => {
@@ -62,7 +65,7 @@ test('legacy data survives the map upgrade; invalid coordinates and unknown outb
   ).toBe('invalid')
   const decision = evaluateExternalRequest({
     type: 'station-snapshot',
-    id: realStations[0].id,
+    id: 'osm-node-3188028961',
     target: 'map',
   })
   expect(new URL(decision.destination!.url).searchParams.get('query')).toBe('35.010531,135.758918')
@@ -76,7 +79,7 @@ test('real map pins open a sheet, then detail, save, persist, and return to map 
 }) => {
   await enter(page)
   await page.getByRole('button', { name: '京都中心部', exact: true }).click()
-  await expect(page.locator('.real-map-pin')).toHaveCount(10)
+  await expectMapStationCount(page, 10)
   await expect(page.locator('.real-map-credits')).toContainText('OpenStreetMap contributors')
   await page.getByRole('button', { name: '車の事業者フィルター' }).click()
   await page.getByRole('checkbox', { name: 'トヨタレンタカー', exact: true }).check()
@@ -113,28 +116,29 @@ test('area, type and provider filters apply equally to map and list; unknown are
   await enter(page)
   await page.getByLabel('駅名・地域から車を探す', { exact: true }).fill('京都駅')
   await page.getByRole('button', { name: '地域を検索', exact: true }).click()
-  await expect(page.locator('.real-map-pin')).toHaveCount(6)
+  await expectMapStationCount(page, 6)
   await page.getByRole('button', { name: 'カーシェア', exact: true }).click()
-  await expect(page.locator('.real-map-pin')).toHaveCount(0)
-  await page.getByRole('button', { name: '京都の全掲載拠点を表示', exact: true }).click()
+  await expectMapStationCount(page, 0)
+  await page.getByRole('button', { name: '全国の掲載拠点を表示', exact: true }).click()
+  await page.getByRole('button', { name: '京都中心部', exact: true }).click()
   await page.getByRole('button', { name: '車の事業者フィルター' }).click()
   await page.getByRole('checkbox', { name: 'トヨタレンタカー', exact: true }).check()
   await page.getByRole('button', { name: 'この条件で表示', exact: true }).click()
-  await expect(page.locator('.real-map-pin')).toHaveCount(1)
+  await expectMapStationCount(page, 1)
   await page.getByRole('button', { name: '一覧で見る', exact: true }).click()
   await expect(page.locator('.real-station-card')).toHaveCount(1)
   await page.locator('.real-station-main').click()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
   await expect(page.locator('.real-station-main')).toBeFocused()
   await page.getByRole('button', { name: '地図で見る', exact: true }).click()
-  await page.getByLabel('駅名・地域から車を探す', { exact: true }).fill('東京')
+  await page.getByLabel('駅名・地域から車を探す', { exact: true }).fill('未登録の地名テスト')
   await page.getByRole('button', { name: '地域を検索', exact: true }).click()
-  await expect(page.locator('.real-map-pin')).toHaveCount(0)
+  await expectMapStationCount(page, 0)
   await expect(
-    page.getByRole('status').filter({ hasText: 'この地域はまだ収録していません' }),
+    page.getByRole('status').filter({ hasText: 'この地名・拠点名は見つかりませんでした' }),
   ).toBeVisible()
   await page.getByRole('button', { name: '掲載外の地域・拠点を探す', exact: true }).click()
-  await expect(page.getByLabel('探す駅・地域', { exact: true })).toHaveValue('東京')
+  await expect(page.getByLabel('探す駅・地域', { exact: true })).toHaveValue('未登録の地名テスト')
 })
 
 test('zoom and explicit viewport search persist without fetching new stations or leaking private data', async ({
@@ -157,11 +161,11 @@ test('zoom and explicit viewport search persist without fetching new stations or
   await page.getByRole('button', { name: '移動したエリアで検索', exact: true }).click()
   const before = (await state(page)).realMap
   expect(before.appliedArea).toBe('表示中の地図範囲')
-  const count = await page.locator('.real-map-pin').count()
+  const count = filterRealStations(before).length
   expect(count).toBeLessThan(10)
   await page.getByRole('button', { name: '一覧で見る', exact: true }).click()
   await page.getByRole('button', { name: '地図で見る', exact: true }).click()
-  await expect(page.locator('.real-map-pin')).toHaveCount(count)
+  await expectMapStationCount(page, count)
   expect((await state(page)).realMap.zoom).toBe(before.zoom)
   expect(Math.abs((await state(page)).realMap.center.lat - before.center.lat)).toBeLessThan(0.001)
   await page.setViewportSize({ width: 360, height: 740 })
@@ -169,7 +173,7 @@ test('zoom and explicit viewport search persist without fetching new stations or
     .poll(async () => Math.abs((await state(page)).realMap.center.lat - before.center.lat))
     .toBeLessThan(0.001)
   await page.reload()
-  await expect(page.locator('.real-map-pin')).toHaveCount(count)
+  await expectMapStationCount(page, count)
   expect((await state(page)).realMap.bounds).toEqual(before.bounds)
   expect(external.length).toBeGreaterThan(0)
   expect(
@@ -198,7 +202,7 @@ test('tile failure offers retry and retains usable station list', async ({ page,
   await expect(page.getByRole('dialog')).toContainText('公開地図の登録情報')
   await expect(page.getByRole('link', { name: '拠点の出典を開く', exact: true })).toHaveAttribute(
     'href',
-    realStations[0].sourceUrl,
+    filterRealStations(createRealMapState())[0].sourceUrl,
   )
 })
 
@@ -216,9 +220,9 @@ test('small screens, attribution, filters and map source data remain accessible'
   await page.getByRole('checkbox', { name: 'タイムズカー', exact: true }).check()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('button', { name: '車の事業者フィルター' })).toBeFocused()
-  await expect(page.locator('.real-map-pin')).toHaveCount(10)
+  await expectMapStationCount(page, 10)
   await page.getByRole('button', { name: '出典・掲載範囲', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '新宿・中野を含む4地域で検証中' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '全国の公開地図に登録された拠点' })).toBeVisible()
   await page.getByText('元データを表示', { exact: true }).click()
   await expect(page.locator('details[open] pre')).toContainText('timestamp_osm_base')
   await expect(page.getByRole('link', { name: '拠点データのODbL 1.0' })).toHaveAttribute(
