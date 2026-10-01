@@ -25,6 +25,7 @@ async function mockLocation(
     lat?: number
     lng?: number
     age?: number
+    ages?: number[]
     delayed?: boolean
     unsupported?: boolean
   } = {},
@@ -43,11 +44,12 @@ async function mockLocation(
                 failure: (value: unknown) => void,
               ) {
                 target.calls++
+                const age = options.ages?.[target.calls - 1] ?? options.age ?? 0
                 const deliver = () =>
                   options.error
                     ? failure({ code: options.error })
                     : success({
-                        timestamp: Date.now() - (options.age ?? 0),
+                        timestamp: Date.now() - age,
                         coords: {
                           latitude: options.lat ?? point.lat,
                           longitude: options.lng ?? point.lng,
@@ -72,7 +74,7 @@ async function mockLocation(
 }
 async function request(page: Page) {
   await page.getByRole('button', { name: '現在地から探す', exact: true }).click()
-  await expect(page.getByRole('dialog')).toContainText('許可したときだけ一度取得')
+  await expect(page.getByRole('dialog')).toContainText('許可して操作したときだけ現在地を取得')
   await page.getByRole('button', { name: '現在地を取得', exact: true }).click()
 }
 
@@ -104,6 +106,7 @@ test('nearby search uses a circle, distance order and common filters; position v
       validatePosition({ ...position, coords: { ...position.coords, latitude: value } }, 1000000),
     ).toThrow()
   expect(() => validatePosition({ ...position, timestamp: 1 }, 1000000)).toThrow('古い')
+  expect(() => validatePosition({ ...position, timestamp: 1020000 }, 1000000)).toThrow('時刻より先')
   expect(() =>
     validatePosition({ ...position, coords: { ...position.coords, accuracy: 2000 } }, 1000000),
   ).toThrow('誤差')
@@ -170,6 +173,7 @@ for (const [name, options, message] of [
   ['timeout', { error: 3 }, '時間切れ'],
   ['coarse', { accuracy: 3000 }, '誤差が大きい'],
   ['stale', { age: 180000 }, '古い位置情報'],
+  ['future-clock', { age: -20000 }, '時刻より先'],
   ['outside-japan', { lat: 37.33, lng: -122.03 }, '国内の地図表示範囲外'],
   ['unsupported-browser', { unsupported: true }, 'この接続では'],
 ] as const) {
@@ -180,6 +184,10 @@ for (const [name, options, message] of [
     await enter(page)
     await request(page)
     await expect(page.getByRole('alert')).toContainText(message)
+    if (name !== 'unsupported-browser')
+      expect(await page.evaluate(() => (window as unknown as { calls: number }).calls)).toBe(
+        name === 'stale' ? 2 : 1,
+      )
     await page.getByRole('button', { name: '地域名から探す', exact: true }).click()
     await page.getByLabel('駅名・地域から車を探す', { exact: true }).fill('新宿')
     await page.getByRole('button', { name: '地域を検索', exact: true }).click()
@@ -187,6 +195,71 @@ for (const [name, options, message] of [
     await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
   })
 }
+
+test('a stale fix is retried once; only the fresh result is shown and nothing starts a watch', async ({
+  page,
+}) => {
+  await mockLocation(page, { ages: [180000, 0] })
+  await enter(page)
+  await request(page)
+  await expect(page.getByRole('img', { name: '取得した現在地' })).toBeVisible()
+  expect(await page.evaluate(() => (window as unknown as { calls: number }).calls)).toBe(2)
+  expect(await page.evaluate(() => JSON.stringify(localStorage))).not.toContain(String(point.lat))
+})
+
+test('cancel during the stale retry ignores its late result and never retries again', async ({
+  page,
+}) => {
+  await mockLocation(page, { ages: [180000, 0], delayed: true })
+  await enter(page)
+  await request(page)
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { calls: number }).calls))
+    .toBe(1)
+  await page.evaluate(() => (window as unknown as { deliver: () => void }).deliver())
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { calls: number }).calls))
+    .toBe(2)
+  await page.getByRole('button', { name: '地域名から探す', exact: true }).click()
+  await page.evaluate(() => (window as unknown as { deliver: () => void }).deliver())
+  await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
+  await expectMapStationCount(page, 10)
+  expect(await page.evaluate(() => (window as unknown as { calls: number }).calls)).toBe(2)
+})
+
+test('the shared deadline rejects a hung request; a late stale fix cannot start a retry', async ({
+  page,
+}) => {
+  await mockLocation(page, { age: 180000, delayed: true })
+  await page.clock.install()
+  await enter(page)
+  await request(page)
+  await page.clock.fastForward(30001)
+  await expect(page.getByRole('alert')).toContainText('時間切れ')
+  await page.evaluate(() => (window as unknown as { deliver: () => void }).deliver())
+  expect(await page.evaluate(() => (window as unknown as { calls: number }).calls)).toBe(1)
+  await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
+})
+
+test('backgrounding before a stale response prevents another request and does not show a cancellation error', async ({
+  page,
+}) => {
+  await mockLocation(page, { age: 180000, delayed: true })
+  await enter(page)
+  await request(page)
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { calls: number }).calls))
+    .toBe(1)
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+    ;(window as unknown as { deliver: () => void }).deliver()
+  })
+  await expect(page.getByRole('button', { name: '現在地を取得', exact: true })).toBeEnabled()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
+  expect(await page.evaluate(() => (window as unknown as { calls: number }).calls)).toBe(1)
+})
 
 test('cancel ignores a late result; a second explicit request can succeed', async ({ page }) => {
   await mockLocation(page, { delayed: true })

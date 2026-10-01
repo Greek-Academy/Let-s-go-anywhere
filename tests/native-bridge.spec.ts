@@ -6,9 +6,14 @@ import { nearbyStations } from '../src/domain/nearbyStations'
 
 // These tests fake the plugin boundary to inject delays and failures. They do
 // not replace the XCTest run against the installed iOS app.
-async function bridge(page: Page, initial: string | null = null, readFailure = false) {
+async function bridge(
+  page: Page,
+  initial: string | null = null,
+  readFailure = false,
+  locationAges: number[] = [0],
+) {
   await page.addInitScript(
-    ({ initial, readFailure }) => {
+    ({ initial, readFailure, locationAges }) => {
       const key = 'test.native.preferences'
       if (initial !== null && localStorage.getItem(key) === null) localStorage.setItem(key, initial)
       const control = {
@@ -18,6 +23,7 @@ async function bridge(page: Page, initial: string | null = null, readFailure = f
         opens: [] as string[],
         copies: [] as string[],
         pause: null as (() => void) | null,
+        locationCalls: 0,
       }
       Object.assign(window, {
         nativeTest: control,
@@ -77,22 +83,52 @@ async function bridge(page: Page, initial: string | null = null, readFailure = f
               control.opens.push(options.url)
             }
             if (plugin === 'Share') control.copies.push(options.text)
-            if (plugin === 'Geolocation' && method === 'getCurrentPosition')
+            if (plugin === 'Geolocation' && method === 'getCurrentPosition') {
+              const age = locationAges[control.locationCalls++] ?? 0
               return {
-                timestamp: Date.now(),
+                timestamp: Date.now() - age,
                 coords: { latitude: 35.690921, longitude: 139.700258, accuracy: 10 },
               }
+            }
             return {}
           },
         },
       })
     },
-    { initial, readFailure },
+    { initial, readFailure, locationAges },
   )
 }
 
 const nativeRaw = (page: Page) =>
   page.evaluate(() => localStorage.getItem('test.native.preferences'))
+
+test('native stale locations retry once, explain simulator settings, and recover after a fresh fix', async ({
+  page,
+}) => {
+  const state = { ...createInitialState(), onboarded: true }
+  await bridge(page, JSON.stringify(state), false, [180000, 180000, 0])
+  await page.goto('/#/cars')
+  await page.getByRole('button', { name: '現在地から探す', exact: true }).click()
+  await page.getByRole('button', { name: '現在地を取得', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('古い位置情報')
+  await expect(page.getByRole('img', { name: '取得した現在地' })).toHaveCount(0)
+  await page.getByText('現在地を取得できないとき', { exact: true }).click()
+  await expect(page.getByRole('dialog')).toContainText('Custom Location')
+  await test.info().attach('古い位置の案内とシミュレーターの設定手順', {
+    body: await page.screenshot(),
+    contentType: 'image/png',
+  })
+  // Even with the explanation expanded, the next action is reachable in a small viewport.
+  await page.getByRole('button', { name: '現在地を取得', exact: true }).click()
+  await expect(page.getByRole('img', { name: '取得した現在地' })).toBeVisible()
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { nativeTest: { locationCalls: number } }).nativeTest.locationCalls,
+    ),
+  ).toBe(3)
+  expect(await nativeRaw(page)).not.toContain('35.690921')
+})
 
 test('native pause clears the GPS session without putting its position in Preferences', async ({
   page,
