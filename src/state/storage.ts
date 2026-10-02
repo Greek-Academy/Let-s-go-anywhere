@@ -102,6 +102,7 @@ const conditions: Rule = (v) => {
   const parsed = conditionsShape(v) as TripConditions
   return conditionsError(parsed) ? bad() : parsed
 }
+// Retired school records stay validated and intact when a user edits other data.
 const consultationShape = shape({
   id,
   schoolId: id,

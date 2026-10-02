@@ -6,12 +6,10 @@ import {
   ArrowRight,
   BookOpen,
   Check,
-  ChevronRight,
   ClipboardList,
   Heart,
   Leaf,
   MapPin,
-  MessageCircle,
   Pencil,
   Settings,
   Sparkles,
@@ -77,11 +75,6 @@ export function Profile() {
             <strong>{state.learned.length}</strong>
             <small>学習した内容</small>
           </button>
-          <button onClick={() => navigate('/profile/consultations')}>
-            <MessageCircle size={20} />
-            <strong>{state.consultations.length}</strong>
-            <small>講習の相談</small>
-          </button>
         </div>
         <div className="profile-interests">
           <div className="section-heading">
@@ -112,14 +105,10 @@ export function Profile() {
             onClick={() => navigate('/saved')}
           />
           <MenuRow icon={BookOpen} title="学習履歴" onClick={() => navigate('/profile/learning')} />
-          <MenuRow
-            icon={MessageCircle}
-            title="講習相談・共有履歴"
-            onClick={() => navigate('/profile/consultations')}
-          />
+          <MenuRow icon={Pencil} title="学習メモ" onClick={() => navigate('/learn/notes')} />
           <MenuRow
             icon={ClipboardList}
-            title="お出かけ・講習の振り返り"
+            title="お出かけ・練習の振り返り"
             onClick={() => navigate('/reflection')}
           />
           <MenuRow icon={Settings} title="設定" onClick={() => navigate('/settings')} />
@@ -254,47 +243,6 @@ export function LearningHistory() {
     </div>
   )
 }
-export function ConsultationHistory() {
-  const { drivingSchools } = useContent()
-  const { state } = useApp()
-  const navigate = useNavigate()
-  return (
-    <div className="screen">
-      <Header back title="講習相談・共有履歴" />
-      <div className="page-pad">
-        <p className="eyebrow teal">YOUR CONVERSATIONS</p>
-        <h1>
-          相談したことを、
-          <br />
-          いつでも確認。
-        </h1>
-        <p className="body-copy">共有先・内容・同意日時を確認できます。</p>
-        <div className="consultation-history">
-          {state.consultations.map((c) => (
-            <button key={c.id} onClick={() => navigate(`/consultations/${c.id}`)}>
-              <div>
-                <Tag tone={c.status.includes('キャンセル') ? 'neutral' : 'mint'}>{c.status}</Tag>
-                <h3>{drivingSchools.find((s) => s.id === c.schoolId)?.name}</h3>
-                <p>{new Date(c.createdAt).toLocaleString('ja-JP')}</p>
-                <small>{c.shared.length}項目を共有 · 外部送信なし</small>
-              </div>
-              <ChevronRight size={19} />
-            </button>
-          ))}
-        </div>
-        {!state.consultations.length && (
-          <EmptyState
-            icon={MessageCircle}
-            title="相談は、まだありません"
-            description="講習会社を選んで、聞いてみたいことをメモにしてみましょう。"
-            action="講習を探す"
-            onAction={() => navigate('/schools')}
-          />
-        )}
-      </div>
-    </div>
-  )
-}
 export function AppSettings() {
   const { state, update, reset, toast, memoryOnly } = useApp()
   const navigate = useNavigate()
@@ -349,11 +297,7 @@ export function AppSettings() {
             title="プロフィールを変更"
             onClick={() => navigate('/profile/edit')}
           />
-          <MenuRow
-            icon={MessageCircle}
-            title="共有した内容・同意履歴"
-            onClick={() => navigate('/profile/consultations')}
-          />
+          <MenuRow icon={Pencil} title="学習メモ" onClick={() => navigate('/learn/notes')} />
         </div>
         <PrimaryButton
           variant="secondary"
@@ -382,7 +326,7 @@ export function AppSettings() {
       {resetOpen && (
         <Modal title="保存データを削除しますか？" onClose={() => setResetOpen(false)}>
           <p className="body-copy">
-            初回設定、行きたい、車候補、学習、相談、振り返りのデータをこの保存領域から削除し、最初の画面に戻ります。読み込めなかった元のデータと、保存されていない変更も失われます。この操作は取り消せません。
+            初回設定、行きたい、車候補、学習メモ・履歴、振り返り、旧版の相談記録を含むデータをこの保存領域から削除し、最初の画面に戻ります。読み込めなかった元のデータと、保存されていない変更も失われます。この操作は取り消せません。
           </p>
           <PrimaryButton
             variant="danger"
@@ -412,7 +356,7 @@ export function Reflection() {
   const outcomes =
     type === 'お出かけ'
       ? ['行けた', '別の交通手段を選んだ', '今回は見送った', 'これから考えたい']
-      : ['教わったことを振り返りたい', '残った不安を相談したい', 'これから受講する']
+      : ['教わったことを振り返りたい', '次に確かめたいことがある', 'これから練習する']
   return (
     <div className="screen">
       <Header back title="休日と学びの振り返り" />
@@ -427,7 +371,7 @@ export function Reflection() {
           あなたの選択を、あなたの言葉で。
         </p>
         <div className="segmented">
-          {['お出かけ', '講習'].map((t) => (
+          {['お出かけ', '練習'].map((t) => (
             <Chip
               key={t}
               selected={type === t}
@@ -451,7 +395,7 @@ export function Reflection() {
                   type,
                   outcome: outcome || '自由メモ',
                   note,
-                  advice: type === '講習' ? advice : '',
+                  advice: type === '練習' ? advice : '',
                   createdAt: new Date().toISOString(),
                 },
                 ...s.reflections,
@@ -478,13 +422,13 @@ export function Reflection() {
               placeholder="小さなことから、自由にどうぞ。"
             />
           </label>
-          {type === '講習' && (
+          {type === '練習' && (
             <label className="field-label">
-              講師からの助言 <span>自分の記録と分けて残せます</span>
+              教わったこと <span>自分の記録と分けて残せます</span>
               <textarea
                 value={advice}
                 onChange={(e) => setAdvice(e.target.value)}
-                placeholder="講師に教わったこと"
+                placeholder="練習中に教わったこと"
               />
             </label>
           )}
@@ -509,7 +453,7 @@ export function Reflection() {
                 <p>{r.note}</p>
                 {r.advice && (
                   <div className="reflection-advice">
-                    <strong>講師からの助言（本人の記録）</strong>
+                    <strong>教わったこと（本人の記録）</strong>
                     <p>{r.advice}</p>
                   </div>
                 )}

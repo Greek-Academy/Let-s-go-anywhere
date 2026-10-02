@@ -71,7 +71,7 @@ export function StorageDetails() {
               : '保存されている元データをダウンロード'}
           </PrimaryButton>
           <p className="muted small">
-            相談メモなどを含むJSON
+            学習メモなどを含むJSON
             {isNativeApp
               ? 'テキストです。共有画面の「コピー」などで手元に控えてください。共有先へ渡す内容を確認してください。'
               : 'ファイルです。自分の端末で保管してください。'}

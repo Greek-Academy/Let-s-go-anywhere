@@ -33,13 +33,3 @@ export const experiences = [
   'ときどき運転している',
   'まだ整理できていない',
 ]
-
-export const sharingLabels = {
-  goal: '目標・行きたいこと',
-  when: '希望日時',
-  vehicle: '希望する車両',
-  questions: '講師への質問',
-  experience: '運転経験（自己申告）',
-  concerns: '不安な場面（自己申告）',
-  knowledge: '知識チェックの回答状況',
-}

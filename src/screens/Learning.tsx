@@ -38,7 +38,7 @@ export function getResults(quiz: AppState['quiz'], quizQuestions: readonly Quest
     .filter((q) => typeof quiz.answers[q.id] === 'number' && quiz.answers[q.id] !== q.correct)
     .map((q) => q.category)
   const unchecked = scenarios.filter((c) => !known.includes(c) && !review.includes(c))
-  return { known, review, unchecked, consultation: quiz.concerns }
+  return { known, review, unchecked, concerns: quiz.concerns }
 }
 export function CheckSetup() {
   const { state, update } = useApp()
@@ -236,8 +236,8 @@ export function Results() {
       empty: '回答した範囲ではありません',
     },
     {
-      title: '講師に相談したい項目',
-      items: result.consultation,
+      title: '練習で確認したい項目',
+      items: result.concerns,
       icon: MessageCircle,
       tone: 'blue',
       empty: '不安な場面は未選択です',
@@ -311,9 +311,9 @@ export function Results() {
         <PrimaryButton
           variant="secondary"
           icon={MessageCircle}
-          onClick={() => navigate('/schools')}
+          onClick={() => navigate('/learn/columns/return-to-driving')}
         >
-          講師に聞きたいことを相談する
+          久しぶりの運転に備える
         </PrimaryButton>
         <button
           className="text-button centered"
@@ -381,7 +381,15 @@ export function Learn() {
           小さな準備を。
         </h1>
         <p className="body-copy">知ることから、次の一歩が始まります。</p>
+        {new URLSearchParams(location.search).get('retired') === 'schools' && (
+          <p className="notice" role="status">
+            講習会社の紹介・相談機能は終了しました。運転再開のヒントは、こちらのコラムで読めます。
+          </p>
+        )}
         <LearningColumns />
+        <PrimaryButton variant="secondary" icon={BookOpen} onClick={() => navigate('/learn/notes')}>
+          学習メモを開く
+        </PrimaryButton>
         <SectionHeading
           title="知識を確かめる・復習する"
           subtitle="いつもの教材とチェックは、こちらから。"
@@ -401,7 +409,7 @@ export function Learn() {
           <span className="learning-leaf">✳</span>
         </div>
         <div className="chips wrap learning-chips">
-          {['すべて', '講習前の予習', '講習後の復習', 'お出かけ前の確認'].map((t) => (
+          {['すべて', '運転前の予習', '練習後の復習', 'お出かけ前の確認'].map((t) => (
             <Chip key={t} selected={use === t} onClick={() => setUse(t)}>
               {t}
             </Chip>
@@ -498,8 +506,8 @@ export function LearningDetail() {
         <div className="lesson-tip">
           <Sparkles size={19} />
           <div>
-            <strong>講師に聞きたいことは、メモに。</strong>
-            <p>分からないことが残っていても大丈夫。相談するときのヒントになります。</p>
+            <strong>気になったことは、学習メモに。</strong>
+            <p>分からないことが残っていても大丈夫。後で読み返すために、残しておきましょう。</p>
           </div>
         </div>
         <PrimaryButton
@@ -516,10 +524,10 @@ export function LearningDetail() {
                   : [s.memo.questions, text].filter(Boolean).join('\n'),
               },
             }))
-            toast('相談メモに追加しました')
+            toast('学習メモに追加しました')
           }}
         >
-          この内容を相談メモに追加
+          この内容を学習メモに追加
         </PrimaryButton>
         <div className="lesson-navigation">
           <PrimaryButton

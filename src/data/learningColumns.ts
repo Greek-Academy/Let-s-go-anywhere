@@ -1,4 +1,5 @@
 export const columnGenres = [
+  { id: 'restart', title: '運転の再開', description: '久しぶりの運転に、自分のペースで備える。' },
   { id: 'preparation', title: '出発前の準備', description: '走り出す前に、ひとつずつ。' },
   { id: 'on-the-road', title: '道中の判断', description: '予定と違う場面にも、選択肢を。' },
   {
@@ -13,6 +14,8 @@ export type LearningColumn = {
   id: string
   genre: ColumnGenre
   sourceEntry: string
+  origin?: string
+  editedAt?: string
   title: string
   summary: string
   image: string
@@ -27,6 +30,56 @@ export type LearningColumn = {
 // Editorial pilot, not approved teaching material. See docs/LEARNING_COLUMNS.md.
 // Reading these columns does not change quiz results or completed-learning records.
 export const learningColumns: readonly LearningColumn[] = [
+  {
+    id: 'return-to-driving',
+    genre: 'restart',
+    sourceEntry: 'REQUEST88',
+    origin: '久しぶりの運転に備えるための、準備と相談の提案です。',
+    editedAt: '2026年10月2日',
+    title: '久しぶりの運転は、ペーパードライバー講習で練習しよう',
+    summary: 'いきなり一人で走らなくても大丈夫。教わりながら、ひとつずつ確かめる時間を。',
+    image: '/images/car.jpg',
+    scene:
+      '行きたい場所は見つかった。でも、最後に運転したのは何年も前。「免許はあるけれど、このまま車を借りていいのかな」と迷っている。',
+    takeaway:
+      'お出かけの前に、講師と実車で練習する選択肢があります。運転の再開を急ぐ必要はありません。',
+    sections: [
+      {
+        title: '一人で走り出す前に、教わりながら練習する',
+        paragraphs: [
+          'ペーパードライバー講習は、免許を持っていても運転から離れていた人が、指導を受けながら練習するための選択肢です。東京指定自動車教習所協会も、しばらく運転していない人や運転経験の少ない人を対象にした教育課程を案内しています。',
+          '「駐車が気になる」「基本の操作から確認したい」など、今の気持ちから始めてかまいません。読み物で知ったことと、実車で確かめることを分けて、練習内容を講師と相談しましょう。受講したことやクイズの結果だけで、運転の可否が決まるわけではありません。',
+        ],
+      },
+      {
+        title: 'やりたいことと、不安なことを伝える',
+        paragraphs: [
+          '相談前に、最後に運転した時期、これまでの経験、使う予定の車、行ってみたい場所を書き出してみましょう。「近所への買い物を目指したい」「駐車の確認をしたい」のような具体例があると、自分の希望を伝えやすくなります。',
+          '何が不安なのか分からない場合も、そのまま伝えて大丈夫です。最初から高速道路や長距離のお出かけを目標にせず、何をどこから確認するかを相談できます。学習メモは自分で読み返すためのもので、このアプリから講習先へ送られることはありません。',
+        ],
+      },
+      {
+        title: '申し込む前に、練習の条件を確かめる',
+        paragraphs: [
+          '内容や受講条件は提供先によって異なります。対応エリア、集合場所、練習する車、希望する練習ができるか、料金の総額と追加費用、キャンセル条件、保険・補償の扱いを、提供先の公式情報で確認してから申し込みましょう。回数や費用を、このコラムで一律に決めることはできません。',
+          '練習後も不安が残ったら、追加で確かめたいことを整理し、次の練習やお出かけの予定を見直せます。近場に変更する、公共交通を使う、別日にするのも選択肢です。「予定を立てたから運転しなければ」と、無理をする必要はありません。',
+        ],
+      },
+    ],
+    preparation: [
+      '運転から離れていた期間・やりたいこと・不安なことをメモする。',
+      '練習内容と受講条件を提供先に確認し、自分のペースで予定を決める。',
+    ],
+    reflection: '講師と一緒に、最初に確かめたいことは何ですか？',
+    references: [
+      {
+        title: '東京指定自動車教習所協会｜各種講習のご案内',
+        url: 'https://www.tadsa.or.jp/class/',
+        scope:
+          'ペーパードライバー教育課程の対象者について。特定の会社の推薦や、このコラムの監修を示すものではありません。',
+      },
+    ],
+  },
   {
     id: 'know-your-car',
     genre: 'preparation',

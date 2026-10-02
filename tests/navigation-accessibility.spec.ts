@@ -22,7 +22,7 @@ test.afterEach(async ({ page }, info) => {
     })
 })
 
-test('keyboard onboarding and all five tabs move focus to the new screen without opening a text field', async ({
+test('keyboard onboarding and all four tabs move focus to the new screen without opening a text field', async ({
   page,
 }) => {
   await page.goto('/#/welcome')
@@ -34,7 +34,7 @@ test('keyboard onboarding and all five tabs move focus to the new screen without
     await keyboardActivate(page, page.getByRole('button', { name: 'スキップ', exact: true }))
     await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   }
-  for (const name of ['行きたい', '車を探す', '学ぶ', '講習', '見つける']) {
+  for (const name of ['行きたい', '車を探す', '学ぶ', '見つける']) {
     await keyboardActivate(
       page,
       page.getByRole('navigation').getByRole('button', { name, exact: true }),
