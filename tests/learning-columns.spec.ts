@@ -30,7 +30,7 @@ test('columns switch genres, retain selection on back/reload and preserve scroll
 }) => {
   await enter(page)
   const genres = page.getByRole('group', { name: 'コラムのジャンル' })
-  await expect(page.locator('.column-card')).toHaveCount(6)
+  await expect(page.locator('.column-card')).toHaveCount(7)
   for (const [index, name] of ['出発前の準備', '道中の判断', '同乗者との過ごし方'].entries()) {
     await genres.getByRole('button', { name, exact: true }).click()
     await expect(genres.getByRole('button', { name, exact: true })).toHaveAttribute(
@@ -60,7 +60,7 @@ test('columns switch genres, retain selection on back/reload and preserve scroll
   ).toHaveAttribute('aria-pressed', 'true')
   await expect(page.locator('.column-card')).toHaveCount(2)
   await genres.getByRole('button', { name: 'すべて', exact: true }).click()
-  await expect(page.locator('.column-card')).toHaveCount(6)
+  await expect(page.locator('.column-card')).toHaveCount(7)
 })
 
 test('all six columns have complete readable bodies; reading does not award quiz or learning results', async ({
@@ -121,7 +121,7 @@ test('direct detail has a useful back fallback, and invalid column/genre recover
   await expect(page).toHaveURL(/#\/learn\?genre=preparation$/)
   await expect(page.locator('.column-card')).toHaveCount(2)
   await page.goto('/#/learn?genre=unknown')
-  await expect(page.locator('.column-card')).toHaveCount(6)
+  await expect(page.locator('.column-card')).toHaveCount(7)
   await expect(
     page
       .getByRole('group', { name: 'コラムのジャンル' })
@@ -130,7 +130,7 @@ test('direct detail has a useful back fallback, and invalid column/genre recover
   await page.goto('/#/learn/columns/missing')
   await expect(page.getByRole('heading', { name: 'コラムが見つかりません' })).toBeVisible()
   await page.getByRole('button', { name: 'コラム一覧へ', exact: true }).click()
-  await expect(page.locator('.column-card')).toHaveCount(6)
+  await expect(page.locator('.column-card')).toHaveCount(7)
 })
 
 test('320px with larger text still fits, scrolls and reaches the article return', async ({

@@ -3,7 +3,6 @@ import { useContentTime } from '../content/ContentProvider'
 import { evaluateOuting } from '../domain/outingLifecycle'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowUpRight,
   CalendarDays,
   CarFront,
   Check,
@@ -12,7 +11,7 @@ import {
   MapPin,
   MoreHorizontal,
 } from 'lucide-react'
-import type { LearningContent, Outing, School, Station } from '../data/types'
+import type { LearningContent, Outing, Station } from '../data/types'
 import { useApp } from '../state/AppState'
 import { IconButton, Tag } from './ui'
 
@@ -185,46 +184,5 @@ export function LessonCard({ lesson }: { lesson: LearningContent }) {
       </div>
       <ChevronRight size={17} />
     </button>
-  )
-}
-export function SchoolCard({ school }: { school: School }) {
-  const navigate = useNavigate()
-  return (
-    <article className="school-card">
-      <div className="school-card-top">
-        <div className={`school-art ${school.color}`}>
-          <CarFront size={31} strokeWidth={1.3} />
-          <span>{school.initial}</span>
-        </div>
-        <div>
-          <Tag tone="neutral">サンプルの講習会社</Tag>
-          <h3>{school.name}</h3>
-          <p>
-            <MapPin size={12} />
-            {school.area.join('・')} · 出張対応
-          </p>
-        </div>
-      </div>
-      <p className="school-feature">{school.feature}</p>
-      <div className="tags">
-        {school.practices.map((p) => (
-          <Tag key={p}>{p}</Tag>
-        ))}
-        <Tag tone="neutral">{school.vehicles.join(' / ')}</Tag>
-      </div>
-      <div className="school-card-bottom">
-        <p>
-          <strong>¥{school.price.toLocaleString()}</strong>
-          <small> / {school.duration}〜（例）</small>
-        </p>
-        <button
-          data-focus-key={`school:${school.id}`}
-          onClick={() => navigate(`/schools/${school.id}`)}
-        >
-          詳細を見る
-          <ArrowUpRight size={15} />
-        </button>
-      </div>
-    </article>
   )
 }

@@ -2,7 +2,7 @@ import type { ListingLinks } from '../domain/externalLinks'
 import type { OutingLifecycle } from '../domain/outingLifecycle'
 import type { Prefecture } from './regions'
 
-export type Tab = 'discover' | 'saved' | 'cars' | 'learn' | 'schools'
+export type Tab = 'discover' | 'saved' | 'cars' | 'learn'
 export type StationType = 'すべて' | 'レンタカー' | 'カーシェア'
 export interface Outing {
   links?: ListingLinks
@@ -38,21 +38,6 @@ export interface Station {
   returnPolicy: string
   checkedAt: string
 }
-export interface School {
-  links?: ListingLinks
-  id: string
-  name: string
-  area: string[]
-  practices: string[]
-  price: number
-  duration: string
-  feature: string
-  teacher: string
-  initial: string
-  color: string
-  vehicles: string[]
-  description: string
-}
 export interface Question {
   id: string
   category: string
@@ -79,6 +64,7 @@ export interface UserProfile {
   companion: string
   interests: string[]
 }
+/** v1 storage: questions is now a private learning note; other fields retain existing goals. */
 export interface ConsultationMemo {
   goal: string
   when: string
@@ -87,6 +73,7 @@ export interface ConsultationMemo {
 }
 export type SharedField =
   'goal' | 'when' | 'vehicle' | 'questions' | 'experience' | 'concerns' | 'knowledge'
+/** Retired demo history. Kept only to read/preserve older device data; never sent or displayed. */
 export interface Consultation {
   id: string
   schoolId: string

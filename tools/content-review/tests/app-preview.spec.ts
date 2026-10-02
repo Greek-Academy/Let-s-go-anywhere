@@ -153,7 +153,7 @@ test('identity errors and invalid JSON retain the editor; all tabs and reset sta
   await expect(page.getByLabel('名称', { exact: true })).toHaveValue(sampleDraft().title)
   await open(page)
   const preview = app(page)
-  for (const name of ['車を探す', '学ぶ', '講習', '見つける']) {
+  for (const name of ['車を探す', '学ぶ', '見つける']) {
     await preview.getByRole('navigation').getByRole('button', { name, exact: true }).click()
     await expect(
       preview.getByRole('navigation').getByRole('button', { name, exact: true }),

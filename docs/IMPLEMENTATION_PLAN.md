@@ -1,5 +1,7 @@
 # Drive+（仮）スマートフォンモック 実装計画
 
+> 2026-10-02：講習紹介・相談機能を終了し、4タブへ変更しました。現行仕様は [機能変更の説明](LESSON_REFERRAL_RETIREMENT.md)、最新の検証は [#88のレポート](reviews/retire-schools/README.md) を参照してください。以下の講習・5タブの記述は当時の実装記録です。
+
 ## 確認した資料と環境
 
 - 仕様: 新アプリPRD v0.2（2026-09-13）。[元ドキュメント](https://docs.google.com/document/d/1PAdM_xDRuSDMuraAjECRCV3K8jzK9lUQjGAA7gE187Y/edit)

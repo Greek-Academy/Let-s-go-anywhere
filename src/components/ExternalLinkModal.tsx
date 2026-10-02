@@ -220,7 +220,7 @@ export function ExternalModal({
       </p>
       {decision.destination && (
         <p className="small muted">
-          表示したURLを開きます。プロフィール・学習回答・相談メモをURLに追加しません。
+          表示したURLを開きます。プロフィール・学習回答・学習メモをURLに追加しません。
         </p>
       )}
       <PrimaryButton variant="secondary" onClick={onClose}>

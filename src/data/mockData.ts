@@ -1,5 +1,5 @@
 import { sampleLifecycle } from './outingLifecycle'
-import type { LearningContent, Outing, Question, School, Station } from './types'
+import type { LearningContent, Outing, Question, Station } from './types'
 
 // All locations, dates, offers and educational text are fixtures for UX review.
 // These records are never fetched from a live service or presented as verified listings.
@@ -195,7 +195,7 @@ export const stations: Station[] = [
     x: 39,
     y: 63,
     hours: '公式情報を確認',
-    conditions: '講習利用の可否は事業者と講師へ確認。',
+    conditions: '練習での利用条件は事業者へ確認。',
     returnPolicy: '返却先と利用ルールは公式で確認',
     checkedAt: '未確認（画面設計用）',
   },
@@ -232,53 +232,6 @@ export const rentalStations = stations.filter((s) => s.type === 'レンタカー
 export const carShareStations = stations.filter((s) => s.type === 'カーシェア')
 export const providers = [...new Set(stations.map((s) => s.provider))]
 
-export const drivingSchools: School[] = [
-  {
-    id: 'shirokuma',
-    name: 'しろくまドライビングスクール',
-    area: ['東京', '神奈川'],
-    practices: ['駐車', '車線変更', '一般道'],
-    price: 14800,
-    duration: '120分',
-    feature: '一人ひとりのペースを大切に',
-    teacher: '佐藤講師（サンプル）',
-    initial: 'S',
-    color: 'mint',
-    vehicles: ['教習車', 'マイカー'],
-    description:
-      '初めての相談から、練習したいことを一緒に整理。お出かけの目標や不安に合わせて、講習内容を相談できます。架空の講習会社です。',
-  },
-  {
-    id: 'tokyo-drive',
-    name: '東京ドライブサポート',
-    area: ['東京', '埼玉'],
-    practices: ['高速道路', '駐車', '車線変更'],
-    price: 16500,
-    duration: '120分',
-    feature: 'お出かけの目標から、練習を相談',
-    teacher: '高橋講師（サンプル）',
-    initial: 'T',
-    color: 'blue',
-    vehicles: ['教習車'],
-    description:
-      '旅行前の相談や、苦手に感じる場面の確認に。希望する内容を伺い、実際の講習は状態に合わせて調整する想定のサンプルです。',
-  },
-  {
-    id: 'komorebi',
-    name: 'こもれび運転教室',
-    area: ['神奈川'],
-    practices: ['一般道', '駐車', '夜間'],
-    price: 13200,
-    duration: '90分',
-    feature: '小さな疑問も、ゆっくり聞ける',
-    teacher: '田中講師（サンプル）',
-    initial: 'K',
-    color: 'peach',
-    vehicles: ['教習車', 'マイカー'],
-    description:
-      '日常で使いたい道や駐車場の練習について相談。会話をしながら、一つずつ確認する体験を表現した架空の教室です。',
-  },
-]
 export const quizQuestions: Question[] = [
   {
     id: 'q-road',
@@ -329,7 +282,7 @@ export const learningContents: LearningContent[] = [
     category: '駐車',
     time: 3,
     image: '/images/car.jpg',
-    uses: ['講習前の予習', '講習後の復習', 'お出かけ前の確認'],
+    uses: ['運転前の予習', '練習後の復習', 'お出かけ前の確認'],
     introduction: '駐車が不安。その気持ちを、具体的な相談につなげましょう。',
     pages: [
       {
@@ -348,7 +301,7 @@ export const learningContents: LearningContent[] = [
     category: '一般道',
     time: 3,
     image: '/images/forest.jpg',
-    uses: ['講習前の予習', 'お出かけ前の確認'],
+    uses: ['運転前の予習', 'お出かけ前の確認'],
     introduction: '道路のイラストを見ながら、目を向ける場所を考えます。',
     pages: [
       {
@@ -363,11 +316,11 @@ export const learningContents: LearningContent[] = [
   },
   {
     id: 'highway',
-    title: '高速道路の不安を、相談メモに',
+    title: '高速道路の不安を、学習メモに',
     category: '高速道路',
     time: 4,
     image: '/images/coast.jpg',
-    uses: ['講習前の予習', '講習後の復習'],
+    uses: ['運転前の予習', '練習後の復習'],
     introduction: '合流や車線変更など、相談したい場面を整理します。',
     pages: [
       {
@@ -386,12 +339,12 @@ export const learningContents: LearningContent[] = [
     category: '夜間',
     time: 3,
     image: '/images/fireworks.jpg',
-    uses: ['お出かけ前の確認', '講習後の復習'],
+    uses: ['お出かけ前の確認', '練習後の復習'],
     introduction: '日中との違いや、帰りの予定を整理します。',
     pages: [
       {
         title: '経験と気がかりを分ける',
-        text: '夜に運転した経験と、見え方に対する不安を別々に記録します。分からないことを無理に解決したことにせず、相談メモに残しましょう。',
+        text: '夜に運転した経験と、見え方に対する不安を別々に記録します。分からないことを無理に解決したことにせず、学習メモに残しましょう。',
       },
       {
         title: '無理のない予定を考える',

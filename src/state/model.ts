@@ -38,6 +38,7 @@ export interface AppState {
     completed: boolean
   }
   memo: ConsultationMemo
+  /** Retired demo records: preserve for v1 compatibility; no active UI or sending. */
   consultations: Consultation[]
   reflections: Reflection[]
   goals: Record<string, { companion: string; when: string; note: string }>
@@ -51,6 +52,7 @@ export interface AppState {
     offset: { x: number; y: number }
   }
   discover: { category: string; search: string; tag: string; region: DiscoveryRegion }
+  /** Retired filters retained only for v1 storage compatibility. */
   schoolFilters: { area: string; practice: string; budget: string; vehicle: string }
   settings: { largeText: boolean; reducedMotion: boolean }
 }

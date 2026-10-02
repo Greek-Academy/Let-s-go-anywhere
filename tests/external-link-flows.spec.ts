@@ -109,7 +109,7 @@ test('a failed external page offers an explicit same-tab action and browser back
   await expect(page.locator('.saved-link')).toHaveCount(1)
 })
 
-test('sample event, station, entrance and school never produce active external links', async ({
+test('sample event, station, and entrance never produce active external links', async ({
   page,
   context,
 }) => {
@@ -135,10 +135,6 @@ test('sample event, station, entrance and school never produce active external l
     await expect(page.getByRole('dialog')).toContainText('予約・問い合わせは完了しません')
     await page.getByRole('button', { name: 'アプリに戻る', exact: true }).click()
   }
-  await page.goto('/#/schools')
-  await page.locator('.school-card').first().getByRole('button', { name: '詳細を見る' }).click()
-  await page.getByRole('button', { name: '公式情報を確認', exact: true }).click()
-  await expect(page.getByRole('dialog').getByRole('link')).toHaveCount(0)
   expect(requests).toEqual([])
 })
 

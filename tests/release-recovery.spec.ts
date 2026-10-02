@@ -107,7 +107,7 @@ test('a verified release restores the same origin after a failed deployment and 
       body: await page.screenshot({ animations: 'disabled', scale: 'css' }),
       contentType: 'image/png',
     })
-    for (const name of ['見つける', '行きたい', '車を探す', '学ぶ', '講習']) {
+    for (const name of ['見つける', '行きたい', '車を探す', '学ぶ']) {
       await page.getByRole('navigation').getByRole('button', { name, exact: true }).click()
       await expect(page.locator('.app-main')).toBeVisible()
       await expect(

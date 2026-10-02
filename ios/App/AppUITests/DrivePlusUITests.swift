@@ -254,7 +254,7 @@ final class DrivePlusUITests: XCTestCase {
             capture("01-welcome")
             tap("まずは見てみる")
         }
-        for tab in ["行きたい", "車を探す", "学ぶ", "講習", "見つける"] { tap(tab) }
+        for tab in ["行きたい", "車を探す", "学ぶ", "見つける"] { tap(tab) }
         capture("02-discover")
         tap("探す地域を変更")
         tap("すべての地域")
@@ -269,35 +269,34 @@ final class DrivePlusUITests: XCTestCase {
         tap("行きたい")
         XCTAssertTrue(unsave.waitForExistence(timeout: 10))
         tap("車を探す")
-        let pin = controls.matching(NSPredicate(format: "label CONTAINS %@", "の詳細カード")).firstMatch
+        let pin = controls.matching(NSPredicate(format: "label CONTAINS %@", "営業状況は未確認")).firstMatch
         XCTAssertTrue(pin.waitForExistence(timeout: 10))
         pin.tap()
         capture("04-map")
         tap("閉じる")
-        tap("講習")
-        tap("詳細を見る")
-        tap("希望日時を相談")
+        tap("学ぶ")
+        tap("学習メモを開く")
         let memo = web.textViews.firstMatch
         XCTAssertTrue(memo.waitForExistence(timeout: 10))
         memo.tap()
-        memo.typeText("Simulator memo ")
+        memo.typeText("Simulator learning memo ")
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5))
-        capture("05-keyboard")
+        capture("05-learning-keyboard")
         let done = app.buttons["完了"].exists ? app.buttons["完了"] : app.buttons["Done"]
         XCTAssertTrue(done.waitForExistence(timeout: 5))
         done.tap()
-        tap("共有する内容を確認")
-        XCTAssertTrue(web.staticTexts["共有内容の確認"].firstMatch.waitForExistence(timeout: 10))
-        capture("06-sharing-review")
-        tap("戻る")
-        XCTAssertTrue((memo.value as? String ?? "").contains("Simulator memo"))
+        tap("学ぶに戻る")
+        tap("運転の再開")
+        tap("久しぶりの運転は、ペーパードライバー講習で練習しようを読む")
+        XCTAssertTrue(web.staticTexts["一人で走り出す前に、教わりながら練習する"].firstMatch.waitForExistence(timeout: 10))
+        capture("06-return-to-driving-column")
+        tap("コラム一覧へ戻る")
         app.terminate()
         app.launch()
-        tap("講習")
-        tap("詳細を見る")
-        tap("希望日時を相談")
-        XCTAssertTrue((memo.value as? String ?? "").contains("Simulator memo"))
-        capture("07-memo-restored")
+        tap("学ぶ")
+        tap("学習メモを開く")
+        XCTAssertTrue((memo.value as? String ?? "").contains("Simulator learning memo"))
+        capture("07-learning-memo-restored")
     }
 
     @MainActor
