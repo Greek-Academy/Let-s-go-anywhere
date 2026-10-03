@@ -1,3 +1,4 @@
+import { useSharing } from '../sharing/SharingProvider'
 import { StorageDetails } from '../components/StorageStatus'
 import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
@@ -244,6 +245,7 @@ export function LearningHistory() {
   )
 }
 export function AppSettings() {
+  const sharing = useSharing()
   const { state, update, reset, toast, memoryOnly } = useApp()
   const navigate = useNavigate()
   const [resetOpen, setResetOpen] = useState(false)
@@ -326,12 +328,21 @@ export function AppSettings() {
       {resetOpen && (
         <Modal title="保存データを削除しますか？" onClose={() => setResetOpen(false)}>
           <p className="body-copy">
-            初回設定、行きたい、車候補、学習メモ・履歴、振り返り、旧版の相談記録を含むデータをこの保存領域から削除し、最初の画面に戻ります。読み込めなかった元のデータと、保存されていない変更も失われます。この操作は取り消せません。
+            初回設定、行きたい、車候補、学習メモ・履歴、振り返り、旧版の相談記録、共有リストの端末内デモを含むデータをこの保存領域から削除し、最初の画面に戻ります。読み込めなかった元のデータと、保存されていない変更も失われます。この操作は取り消せません。
           </p>
           <PrimaryButton
             variant="danger"
             onClick={async () => {
-              if (!(await reset())) return
+              if (!(await sharing.clear())) {
+                toast('共有デモの削除ができませんでした。もう一度お試しください。')
+                return
+              }
+              if (!(await reset())) {
+                toast(
+                  '共有デモは削除しましたが、個人データは削除できませんでした。もう一度削除をお試しください。',
+                )
+                return
+              }
               setResetOpen(false)
               navigate('/welcome', { replace: true })
             }}

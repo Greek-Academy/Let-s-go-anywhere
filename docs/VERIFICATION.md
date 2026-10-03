@@ -1,5 +1,7 @@
 # 実装・検証メモ
 
+2026-10-03：共有リストの端末内デモ #90 を追加しました。[検証レポート](reviews/shared-wishlists/README.md)と[操作方法](SHARED_WISHLIST_DEMO.md)を参照してください。別端末の実共有・Firebase接続は未完了です。
+
 > 2026-10-02：講習紹介・相談機能を終了し、4タブへ変更しました。現行仕様は [機能変更の説明](LESSON_REFERRAL_RETIREMENT.md)、最新の検証は [#88のレポート](reviews/retire-schools/README.md) を参照してください。以下の講習・5タブの記述は当時の実装記録です。
 
 静的配信物の復旧検証（2026-09-17）は [Issue #33：バックアップ・復元](reviews/release-recovery/README.md) を参照してください。アプリ210件＋入力ツール18件＋バックアップ処理9件の計237件を確認しています。外部への本番配信・DB復元・費用監視は含みません。

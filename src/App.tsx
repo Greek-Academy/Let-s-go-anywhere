@@ -1,3 +1,12 @@
+import { SharingProvider } from './sharing/SharingProvider'
+import {
+  SharedListHub,
+  CreateSharedList,
+  SharedListDetail,
+  SharedCandidateDetail,
+  SharedListSettings,
+  SharedInvitation,
+} from './screens/SharedLists'
 import { ContentProvider } from './content/ContentProvider'
 import { sampleCatalog } from './content/sampleCatalog'
 import type { ContentCatalog } from './content/catalog'
@@ -52,6 +61,12 @@ function AppRoutes() {
         <Route path="/web-spots/:id" element={<WebSpotDetail />} />
         <Route path="/events/:id/arrival" element={<Arrival />} />
         <Route path="/saved" element={<Saved />} />
+        <Route path="/saved/lists" element={<SharedListHub />} />
+        <Route path="/saved/lists/new" element={<CreateSharedList />} />
+        <Route path="/saved/lists/:listId" element={<SharedListDetail />} />
+        <Route path="/saved/lists/:listId/items/:itemId" element={<SharedCandidateDetail />} />
+        <Route path="/saved/lists/:listId/settings" element={<SharedListSettings />} />
+        <Route path="/saved/invites/:token" element={<SharedInvitation />} />
         <Route path="/cars" element={memoryOnly ? <Cars /> : <RealCars />} />
         <Route path="/cars/sample" element={<Cars />} />
         <Route path="/cars/places/:id" element={<RealStationDetail />} />
@@ -97,9 +112,11 @@ export default function App({
       <AppStateProvider persistenceMode={persistence} initialState={initialState}>
         <WebSearchProvider>
           <LocationSearchProvider>
-            <HashRouter>
-              <AppRoutes />
-            </HashRouter>
+            <SharingProvider>
+              <HashRouter>
+                <AppRoutes />
+              </HashRouter>
+            </SharingProvider>
           </LocationSearchProvider>
         </WebSearchProvider>
       </AppStateProvider>

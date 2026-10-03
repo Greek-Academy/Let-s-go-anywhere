@@ -1,3 +1,4 @@
+import { PrivateListSelector } from '../sharing/components'
 import { realStations } from '../domain/realStations'
 import { RealStationCard } from './RealCars'
 import { ExternalModal } from '../components/ExternalLinkModal'
@@ -44,6 +45,7 @@ export function Saved() {
           <Heart size={35} strokeWidth={1.2} />
         </div>
         <p className="body-copy">「行きたい」が増えると、休日が楽しみになる。</p>
+        <PrivateListSelector />
         <div className="segmented">
           <Chip
             selected={current === 'events'}
