@@ -221,6 +221,64 @@ final class DrivePlusUITests: XCTestCase {
         capture("columns-04-back")
     }
 
+    /// Device-only sharing demo. Run on a dedicated simulator with synthetic data.
+    @MainActor
+    func testSharedWishlistDemo() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let button = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
+            for _ in 0..<18 {
+                if button.isHittable { break }
+                if label == "戻る" || label == "リストの設定とメンバー" { web.swipeDown() }
+                else { web.swipeUp() }
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("行きたい")
+        tap("リストを切り替える")
+        tap("新しいリストを作る")
+        let name = web.textFields["リストの名前"].firstMatch
+        XCTAssertTrue(name.waitForExistence(timeout: 10))
+        name.tap()
+        name.typeText("Simulator休日")
+        // Dismiss the keyboard without submitting a different field.
+        web.swipeUp()
+        tap("リストを作成")
+        tap("リストの設定とメンバー")
+        tap("デモの招待を作る")
+        tap("招待される側を試す")
+        tap("説明を確認して参加申請")
+        XCTAssertTrue(web.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "候補はまだ見られません")).firstMatch.waitForExistence(timeout: 10))
+        tap("作成者として承認を試す")
+        tap("参加を承認")
+        tap("リストを開く")
+        XCTAssertTrue(controls.matching(NSPredicate(format: "label CONTAINS %@", "2人で持ち寄る行きたい")).firstMatch.waitForExistence(timeout: 10))
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "shared-wishlist-native-approved"
+        shot.lifetime = .keepAlways
+        add(shot)
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        tap("行きたい")
+        tap("リストを切り替える")
+        let savedList = controls.matching(NSPredicate(format: "label CONTAINS %@", "Simulator休日")).firstMatch
+        XCTAssertTrue(savedList.waitForExistence(timeout: 15))
+        savedList.tap()
+        XCTAssertTrue(controls.matching(NSPredicate(format: "label CONTAINS %@", "2人で持ち寄る行きたい")).firstMatch.waitForExistence(timeout: 10))
+    }
+
     @MainActor
     func testBundledApp() throws {
         continueAfterFailure = false

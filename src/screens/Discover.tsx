@@ -1,3 +1,5 @@
+import { ShareCandidateButton } from '../sharing/components'
+import { fromOuting } from '../sharing/candidates'
 import { ExternalModal } from '../components/ExternalLinkModal'
 import { evaluateOuting, occursThisWeekend, outingStateLabels } from '../domain/outingLifecycle'
 import { OutingImage, OutingStatus, OutingPhotoCredit } from '../components/OutingStatus'
@@ -660,6 +662,7 @@ export function EventDetail() {
         >
           {saved ? '行きたいに保存済み' : '行きたいに保存'}
         </PrimaryButton>
+        <ShareCandidateButton candidate={fromOuting(outing, now)} />
         <button className="text-button goal-link" onClick={() => setGoalOpen(true)}>
           <Plus size={15} />
           誰と・いつ・何をしたいかをメモ
