@@ -5,6 +5,47 @@ import CoreLocation
 /// Run on a dedicated simulator; this flow changes sample data.
 final class DrivePlusUITests: XCTestCase {
 
+    /// Firebase build only. Checks the real WKWebView entry without submitting credentials.
+    @MainActor
+    func testCloudSharingLoginEntry() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let target = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            XCTAssertTrue(target.waitForExistence(timeout: 15), label)
+            for _ in 0..<10 {
+                if target.isHittable { break }
+                if label == "ログイン" { web.swipeDown() } else { web.swipeUp() }
+            }
+            XCTAssertTrue(target.isHittable, label)
+            target.tap()
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("行きたい")
+        tap("リストを切り替える")
+        if web.staticTexts["この端末だけの共有体験デモ"].waitForExistence(timeout: 2) {
+            throw XCTSkip("Run npm run ios:copy:firebase to test the cloud entry")
+        }
+        XCTAssertTrue(web.staticTexts["行きたいを共有"].waitForExistence(timeout: 15))
+        XCTAssertTrue(web.textFields["メールアドレス"].waitForExistence(timeout: 15))
+        tap("新規登録")
+        XCTAssertTrue(web.staticTexts["8文字以上で設定してください。"].waitForExistence(timeout: 10))
+        web.swipeUp()
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "cloud-sharing-native-registration"
+        shot.lifetime = .keepAlways
+        add(shot)
+        tap("ログイン")
+        XCTAssertTrue(web.secureTextFields["パスワード"].waitForExistence(timeout: 10))
+    }
+
     /// A real touch gesture, without tapping an off-screen element (which can auto-scroll).
     @MainActor
     func testHomeTouchScroll() throws {

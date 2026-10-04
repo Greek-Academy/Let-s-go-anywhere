@@ -1,0 +1,103 @@
+.cloud-session {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.cloud-session h1 {
+  overflow-wrap: anywhere;
+}
+.cloud-session .sharing-toolbar h1 {
+  font-size: 23px;
+}
+.cloud-session .sharing-list-tile {
+  width: 100%;
+  text-align: left;
+}
+.cloud-candidate-card {
+  margin: 18px 0;
+  border: 1px solid #e2ece6;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 5px 18px #1e433b06;
+  background: white;
+}
+.cloud-card-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  background: transparent;
+  border: 0;
+}
+.cloud-card-open .sharing-candidate {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+.cloud-card-bottom {
+  padding: 0 16px 12px;
+}
+.cloud-reactions {
+  margin: 16px 0;
+}
+.cloud-reaction-summary {
+  padding: 8px 12px;
+  background: #f4f8f5;
+  border-radius: 12px;
+}
+.cloud-reaction-summary p {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  margin: 6px 0;
+}
+.cloud-reaction-summary strong {
+  max-width: 65%;
+  overflow-wrap: anywhere;
+}
+.cloud-reactions .chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.cloud-reactions .chip {
+  padding: 8px 10px;
+  font-size: 11px;
+}
+.cloud-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 22px 0 12px;
+}
+.cloud-footnote {
+  margin: 22px 0;
+}
+.cloud-note {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.cloud-member {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  border-bottom: 1px solid #e7eeea;
+}
+.cloud-member strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.cloud-member small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 5px;
+}
+.cloud-member .text-button {
+  display: block;
+  font-size: 12px;
+}

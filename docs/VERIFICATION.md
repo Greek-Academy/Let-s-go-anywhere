@@ -1,5 +1,7 @@
 # 実装・検証メモ
 
+2026-10-04：相手への招待・候補・反応は[実共有の検証記録](reviews/cloud-sharing/README.md)と[操作手順](SHARED_WISHLIST_CLOUD.md)を参照してください。
+
 2026-10-04：#93でFirebase検証版の本人用リスト保存・権限拒否を実クラウドでも確認しました。[接続の検証レポート](reviews/firebase-connection/README.md)。相手の招待・候補・反応の実共有は未完了です。
 
 2026-10-03：共有リストの端末内デモ #90 を追加しました。[検証レポート](reviews/shared-wishlists/README.md)と[操作方法](SHARED_WISHLIST_DEMO.md)を参照してください。

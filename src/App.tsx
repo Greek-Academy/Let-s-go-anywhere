@@ -32,6 +32,7 @@ import { LearningNotes } from './screens/LearningNotes'
 import { LearningColumnDetail } from './screens/LearningColumns'
 import { AppSettings, LearningHistory, Profile, ProfileEdit, Reflection } from './screens/Profile'
 
+const CloudSharing = lazy(() => import('./screens/CloudSharing'))
 const FirebasePreparation = lazy(() => import('./screens/FirebasePreparation'))
 
 function Start() {
@@ -66,7 +67,7 @@ function AppRoutes() {
         <Route path="/events/:id/arrival" element={<Arrival />} />
         <Route path="/saved" element={<Saved />} />
         <Route
-          path="/saved/cloud"
+          path="/saved/cloud/preparation"
           element={
             firebasePilot && !memoryOnly ? (
               <Suspense
@@ -77,6 +78,24 @@ function AppRoutes() {
                 }
               >
                 <FirebasePreparation />
+              </Suspense>
+            ) : (
+              <Navigate to="/saved/lists" replace />
+            )
+          }
+        />
+        <Route
+          path="/saved/cloud/*"
+          element={
+            firebasePilot && !memoryOnly ? (
+              <Suspense
+                fallback={
+                  <p className="page-pad" role="status">
+                    読み込み中…
+                  </p>
+                }
+              >
+                <CloudSharing />
               </Suspense>
             ) : (
               <Navigate to="/saved/lists" replace />

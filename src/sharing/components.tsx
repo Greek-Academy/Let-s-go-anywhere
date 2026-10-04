@@ -1,3 +1,4 @@
+import { firebasePilot } from '../firebase/config'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown, Heart, ImageOff, Users } from 'lucide-react'
@@ -66,7 +67,7 @@ export function PrivateListSelector() {
       className="sharing-selector"
       onClick={() => {
         setActor('self')
-        navigate('/saved/lists')
+        navigate(firebasePilot ? '/saved/cloud' : '/saved/lists')
       }}
       aria-label="リストを切り替える"
     >
@@ -116,6 +117,8 @@ export function CandidatePreview({
   )
 }
 export function ShareCandidateButton({ candidate }: { candidate: Candidate }) {
+  const navigate = useNavigate()
+  const { memoryOnly } = useApp()
   const [open, setOpen] = useState(false)
   const { setActor } = useSharing()
   return (
@@ -124,6 +127,10 @@ export function ShareCandidateButton({ candidate }: { candidate: Candidate }) {
         icon={Users}
         variant="secondary"
         onClick={() => {
+          if (firebasePilot && !memoryOnly) {
+            navigate('/saved/cloud', { state: { candidate } })
+            return
+          }
           setActor('self')
           setOpen(true)
         }}

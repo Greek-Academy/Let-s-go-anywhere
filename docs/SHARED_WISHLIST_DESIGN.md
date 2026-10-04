@@ -1,5 +1,7 @@
 # 「行きたい」を一緒に育てる — TimeTree調査と機能設計案
 
+> 2026-10-04更新：#93の本人用保存は利用者確認・マージ済み。#94で相手への招待・候補・反応を接続しました。現在の操作は[実共有の3ステップ](SHARED_WISHLIST_CLOUD.md)を参照してください。以下はこの段階までの設計／準備記録です。
+
 2026-10-03 / 関連Issue [#39](https://github.com/Greek-Academy/Let-s-go-anywhere/issues/39)・[#40](https://github.com/Greek-Academy/Let-s-go-anywhere/issues/40)
 
 **2026-10-03追記：ユーザーが設計を承認し、Issue #90で端末内の共有体験デモを実装しました。** [今回の操作方法と未実装範囲](SHARED_WISHLIST_DEMO.md)を参照してください。Firebaseは未作成で、別端末共有・ログイン・サーバー接続は未実装です。下記の人数・期限・権限はTimeTreeの仕様そのものではなく、Drive+向けに設計したルールです。
