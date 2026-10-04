@@ -104,7 +104,7 @@ export function SharedListHub() {
         <p className="body-copy">誘いたくなったら、新しいリストに「行きたい」を持ち寄ろう。</p>
         {firebasePilot && !memoryOnly && (
           <PrimaryButton variant="secondary" onClick={() => navigate('/saved/cloud')}>
-            ログインして共有の準備
+            ログインして相手と共有
           </PrimaryButton>
         )}
         <DemoNotice />

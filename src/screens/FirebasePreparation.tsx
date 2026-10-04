@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { App as NativeApp } from '@capacitor/app'
 import {
   createUserWithEmailAndPassword,
@@ -31,7 +32,13 @@ const sessionOf = (user: User | null): Session | null =>
     verified: user.emailVerified,
   }
 
-export default function FirebasePreparation() {
+export default function FirebasePreparation({
+  shared = false,
+  children,
+}: {
+  shared?: boolean
+  children?: (uid: string, busy: boolean) => ReactNode
+}) {
   const [{ auth }] = useState(getFirebaseClient)
   const [session, setSession] = useState<Session | null>(null)
   const [ready, setReady] = useState(false)
@@ -129,22 +136,28 @@ export default function FirebasePreparation() {
 
   return (
     <div className="screen firebase-preparation">
-      <Header back title="共有の準備" />
+      <Header back title={shared ? '行きたいを共有' : '共有の準備'} />
       <div className="page-pad">
-        <p className="eyebrow teal">OUR NEXT DAY OFF</p>
-        <h1>
-          一緒に出かける、
-          <br />
-          その前に。
-        </h1>
-        <aside className="sharing-demo">
-          <strong>
-            {firebasePilot?.mode === 'emulator' ? 'ローカル接続テスト' : 'Firebase接続の検証版'}
-          </strong>
-          <p>
-            今回はログインと、自分のリスト名・色の保存まで。相手の招待や候補の共有は準備中です。
-          </p>
-        </aside>
+        {(!shared || !session?.verified) && (
+          <>
+            <p className="eyebrow teal">OUR NEXT DAY OFF</p>
+            <h1>
+              一緒に出かける、
+              <br />
+              その前に。
+            </h1>
+            <aside className="sharing-demo">
+              <strong>
+                {firebasePilot?.mode === 'emulator' ? 'ローカル接続テスト' : 'Firebase接続の検証版'}
+              </strong>
+              <p>
+                {shared
+                  ? '招待した相手と、選んだ候補だけを共有します。参加にはメール確認と作成者の承認が必要です。'
+                  : '自分だけの準備リストです。共有に使う場合は、共有リスト画面で名前と色を選んでコピーできます。'}
+              </p>
+            </aside>
+          </>
+        )}
         {!ready && <p role="status">ログイン状態を確認中…</p>}
         {error && (
           <p className="sharing-error" role="alert">
@@ -309,7 +322,13 @@ export default function FirebasePreparation() {
               </>
             )}
             {session.verified && active && (
-              <Drafts key={session.uid} uid={session.uid} parentBusy={busy} />
+              <section key={session.uid}>
+                {children ? (
+                  children(session.uid, busy)
+                ) : (
+                  <Drafts uid={session.uid} parentBusy={busy} />
+                )}
+              </section>
             )}
             {session.verified && !active && (
               <p role="status">アプリへ戻ると最新の内容を読み直します。</p>
@@ -394,7 +413,7 @@ function Drafts({ uid, parentBusy }: { uid: string; parentBusy: boolean }) {
         <Tag>本人のみ</Tag>
       </div>
       <p className="small muted">
-        リストの名前・色と作成者ID・更新日時をFirebaseに保存します。まだ相手は招待できません。
+        リストの名前・色と作成者ID・更新日時をFirebaseに保存します。相手との候補共有は「共有リスト」画面から行います。
       </p>
       {busy && <p role="status">保存先と通信中…</p>}
       {error && (

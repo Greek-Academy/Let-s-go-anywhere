@@ -18,7 +18,7 @@ async function account(request: APIRequestContext, address = email()) {
   return address
 }
 async function login(page: Page, address: string) {
-  await page.goto('/#/saved/cloud')
+  await page.goto('/#/saved/cloud/preparation')
   await page.getByLabel('メールアドレス', { exact: true }).fill(address)
   await page.getByLabel('パスワード', { exact: true }).fill(password)
   await page.getByRole('button', { name: 'メールでログイン', exact: true }).click()
@@ -52,7 +52,7 @@ test('register, block unverified reads, consume email link, save, reload and log
   page.on('request', (req) => {
     if (req.url().includes(':8086/')) firestoreRequests.push(req.url())
   })
-  await page.goto('/#/saved/cloud')
+  await page.goto('/#/saved/cloud/preparation')
   await page.getByRole('button', { name: '新規登録', exact: true }).click()
   await page.getByLabel('メールアドレス', { exact: true }).fill(address)
   await page.getByLabel('パスワード', { exact: true }).fill(password)
@@ -141,7 +141,7 @@ test('reset flow, wrong password error and 320px width remain usable', async ({
 }) => {
   const address = await account(request)
   await page.setViewportSize({ width: 320, height: 720 })
-  await page.goto('/#/saved/cloud')
+  await page.goto('/#/saved/cloud/preparation')
   await page.getByLabel('メールアドレス', { exact: true }).fill(address)
   await page.getByLabel('パスワード', { exact: true }).fill('incorrect-password')
   await page.getByRole('button', { name: 'メールでログイン' }).click()

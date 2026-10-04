@@ -36,7 +36,7 @@
     "test:discovery-search": "playwright test --config playwright.discovery-search.config.ts",
     "dev:firebase": "vite --mode firebase --host 127.0.0.1 --port 5182 --strictPort",
     "build:firebase": "tsc -b && vite build --mode firebase",
-    "test:firebase:rules": "firebase emulators:exec --only firestore --project demo-driveplus \"node --test firebase/tests/*.test.mjs\"",
+    "test:firebase:rules": "firebase emulators:exec --only firestore --project demo-driveplus \"node --test --test-concurrency=1 firebase/tests/*.test.mjs\"",
     "test:firebase:ui": "firebase emulators:exec --only auth,firestore --project demo-driveplus \"playwright test --config playwright.firebase.config.ts\"",
     "firebase:login": "firebase login",
     "ios:copy:firebase": "npm run build:firebase && DRIVEPLUS_IOS_VARIANT=firebase cap copy ios"
