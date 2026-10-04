@@ -1,3 +1,5 @@
+import { RecommendationBadges, RecommendationFeedback } from './RecommendationFeedback'
+import { providerNames } from '../domain/recommendations'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Heart, ImageOff, MapPin, ExternalLink } from 'lucide-react'
@@ -27,22 +29,27 @@ export function WebSpotStatus({ spot }: { spot: WebSpot }) {
   )
 }
 export function WebSpotSource({ spot }: { spot: WebSpot }) {
-  const [open, setOpen] = useState(false)
+  const [url, setUrl] = useState<string | null>(null)
+  const sources = spot.recommendations ?? [{ provider: null, sourceUrl: spot.sourceUrl }]
   return (
     <>
-      <button
-        className="text-button web-source"
-        onClick={() => setOpen(true)}
-        aria-label={`${spot.name}の出典を確認`}
-      >
-        <ExternalLink size={14} aria-hidden="true" />
-        出典：{new URL(spot.sourceUrl).hostname}
-      </button>
-      {open && (
+      {sources.map((source) => (
+        <button
+          key={source.provider ?? 'legacy'}
+          className="text-button web-source"
+          onClick={() => setUrl(source.sourceUrl)}
+          aria-label={`${spot.name}の${source.provider ? providerNames[source.provider] + 'の' : ''}出典を確認`}
+        >
+          <ExternalLink size={14} aria-hidden="true" />
+          {source.provider ? providerNames[source.provider] + 'の' : ''}出典：
+          {new URL(source.sourceUrl).hostname}
+        </button>
+      ))}
+      {url && (
         <ExternalModal
           title={spot.name}
-          request={{ type: 'research', url: spot.sourceUrl }}
-          onClose={() => setOpen(false)}
+          request={{ type: 'research', url, comparison: Boolean(spot.recommendations) }}
+          onClose={() => setUrl(null)}
         />
       )}
     </>
@@ -85,6 +92,7 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
       </button>
       <div className="event-card-body">
         <WebSpotStatus spot={spot} />
+        <RecommendationBadges spot={spot} />
         <button className="card-title-button" onClick={() => navigate(`/web-spots/${spot.id}`)}>
           <h3>{spot.name}</h3>
         </button>
@@ -96,6 +104,7 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
           </span>
         </div>
         <WebSpotSource spot={spot} />
+        <RecommendationFeedback spot={spot} />
         <p className="small muted">
           検索：{searchDate(spot.retrievedAt)}
           <br />

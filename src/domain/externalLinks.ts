@@ -28,7 +28,7 @@ export type ExternalRequest =
   | { type: 'station-snapshot'; id: string; target: 'source' | 'map' }
   | CarSearchRequest
   | { type: 'personal'; url: string }
-  | { type: 'research'; url: string }
+  | { type: 'research'; url: string; comparison?: boolean }
   | {
       type: 'listing'
       catalogSource: 'sample' | 'approved'
@@ -180,7 +180,9 @@ export function evaluateExternalRequest(request: ExternalRequest, at = today()):
       return { kind, destination: realStationDestination(request.id, request.target) }
     if (request.type === 'car-search') return { kind, destination: carSearchDestination(request) }
     if (request.type === 'research') {
-      const url = researchSourceUrl(request.url)
+      const url = request.comparison
+        ? outboundHttpsUrl(request.url)
+        : researchSourceUrl(request.url)
       return { kind, destination: { url: url.href, host: url.hostname } }
     }
     if (request.type === 'personal') {

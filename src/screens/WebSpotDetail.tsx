@@ -1,3 +1,5 @@
+import { RecommendationBadges, RecommendationFeedback } from '../components/RecommendationFeedback'
+import { providerNames } from '../domain/recommendations'
 import { ShareCandidateButton } from '../sharing/components'
 import { fromWebSpot } from '../sharing/candidates'
 import { ArrowLeft, ArrowRight, CarFront, Heart } from 'lucide-react'
@@ -62,11 +64,22 @@ export function WebSpotDetail() {
       </div>
       <div className="detail-body page-pad">
         <WebSpotStatus spot={spot} />
+        <RecommendationBadges spot={spot} />
         <h1>{spot.name}</h1>
         <p className="detail-subtitle">{spot.area}</p>
         <p className="body-copy">{spot.summary}</p>
         <SectionHeading title="希望に合うと考えた理由" />
-        <p className="body-copy">{spot.matchReason}</p>
+        {spot.recommendations ? (
+          spot.recommendations.map((r) => (
+            <div className="recommendation-reason" key={r.provider}>
+              <h3>{providerNames[r.provider]}の提案理由</h3>
+              <p className="body-copy">{r.reason}</p>
+            </div>
+          ))
+        ) : (
+          <p className="body-copy">{spot.matchReason}</p>
+        )}
+        <RecommendationFeedback spot={spot} />
         <p className="notice">
           {spot.mode === 'sample'
             ? '架空の検索サンプルです。出典リンクも動作確認用です。'
