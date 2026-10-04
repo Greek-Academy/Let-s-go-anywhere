@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+import { mkdir, writeFile, unlink, realpath } from 'node:fs/promises'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { createInitialState } from '../../../src/state/model'
@@ -137,4 +139,21 @@ test('検索結果を再読み込み後に無料で開き直せる。比較検�
   await page.getByRole('button', { name: '前回の比較結果を開く（無料）', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(18)
   expect(posts).toBe(1)
+})
+
+test('Mac内の比較結果・台帳は開発サーバーの直接URLから配信しない', async ({ request }) => {
+  await mkdir('.local-research', { recursive: true, mode: 0o700 })
+  const file = `.local-research/probe-${randomUUID()}.json`
+  const marker = 'private-comparison-fixture-only'
+  await writeFile(file, JSON.stringify({ marker }), { mode: 0o600, flag: 'wx' })
+  try {
+    const path = await realpath(file)
+    for (const url of [`/${file}`, `/@fs/${path}`]) {
+      const response = await request.get(url)
+      expect(response.status()).toBe(403)
+      expect(await response.text()).not.toContain(marker)
+    }
+  } finally {
+    await unlink(file)
+  }
 })

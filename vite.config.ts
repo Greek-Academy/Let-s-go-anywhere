@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import { privateDevelopmentFiles } from './build/privateFiles.ts'
 import { searchBridge } from './build/searchBridge.ts'
 import { previewCsp, resolvePreviewConfig } from './build/preview.ts'
 import { firebaseConnectSources, resolveFirebasePilot } from './build/firebasePilot.ts'
@@ -42,6 +43,7 @@ export default defineConfig(({ mode, command }) => {
           : 'firebase-dist'
         : 'dist',
     },
+    server: { fs: { deny: privateDevelopmentFiles } },
     plugins: [
       react(),
       searchBridge(Number(process.env.DRIVEPLUS_SEARCH_BACKEND_PORT ?? 4181)),
