@@ -1,3 +1,5 @@
+import { ShareCandidateButton } from '../sharing/components'
+import { fromWebSpot } from '../sharing/candidates'
 import { ArrowLeft, ArrowRight, CarFront, Heart } from 'lucide-react'
 import { useRef } from 'react'
 import type { WebSpot } from '../domain/webSearch'
@@ -93,6 +95,7 @@ export function WebSpotDetail() {
         <p className="small muted">
           この端末に保存します。保存しても確認済み情報には変わりません。
         </p>
+        <ShareCandidateButton candidate={fromWebSpot(spot)} />
         <div className="divider" />
         <SectionHeading
           title="このお出かけに向けて"
