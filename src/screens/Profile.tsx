@@ -1,4 +1,5 @@
 import { useSharing } from '../sharing/SharingProvider'
+import { firebasePilot } from '../firebase/config'
 import { StorageDetails } from '../components/StorageStatus'
 import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
@@ -317,8 +318,11 @@ export function AppSettings() {
           <p>
             {memoryOnly
               ? '入力候補の確認用です。操作内容はこの確認画面を閉じると消えます。'
-              : 'データはこの端末のアプリまたはブラウザ内に保存され、相互に同期しません。'}
-            ログイン、外部API、予約、決済、通知の配信はありません。
+              : '個人の保存データはこの端末のアプリまたはブラウザ内に保存され、相互に同期しません。'}
+            {firebasePilot && !memoryOnly
+              ? '共有の準備でログインした場合、明示して作成したリスト名・色はFirebaseに保存します。'
+              : '共有用のログインとクラウド保存は、この通常版では無効です。'}
+            予約、決済、通知の配信はありません。
           </p>
         </div>
         <PrimaryButton variant="danger" icon={Trash2} onClick={() => setResetOpen(true)}>
@@ -330,9 +334,23 @@ export function AppSettings() {
           <p className="body-copy">
             初回設定、行きたい、車候補、学習メモ・履歴、振り返り、旧版の相談記録、共有リストの端末内デモを含むデータをこの保存領域から削除し、最初の画面に戻ります。読み込めなかった元のデータと、保存されていない変更も失われます。この操作は取り消せません。
           </p>
+          {firebasePilot && !memoryOnly && (
+            <p className="small muted">
+              共有用アカウントからもログアウトします。Firebase側のリストやアカウントは削除されません。
+            </p>
+          )}
           <PrimaryButton
             variant="danger"
             onClick={async () => {
+              if (firebasePilot && !memoryOnly) {
+                try {
+                  const { signOutFirebaseIfStarted } = await import('../firebase/client')
+                  await signOutFirebaseIfStarted()
+                } catch {
+                  toast('ログアウトできませんでした。もう一度お試しください。')
+                  return
+                }
+              }
               if (!(await sharing.clear())) {
                 toast('共有デモの削除ができませんでした。もう一度お試しください。')
                 return

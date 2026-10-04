@@ -1,4 +1,6 @@
 import { SharingProvider } from './sharing/SharingProvider'
+import { lazy, Suspense } from 'react'
+import { firebasePilot } from './firebase/config'
 import {
   SharedListHub,
   CreateSharedList,
@@ -29,6 +31,8 @@ import { CheckSetup, Learn, LearningDetail, Quiz, Results } from './screens/Lear
 import { LearningNotes } from './screens/LearningNotes'
 import { LearningColumnDetail } from './screens/LearningColumns'
 import { AppSettings, LearningHistory, Profile, ProfileEdit, Reflection } from './screens/Profile'
+
+const FirebasePreparation = lazy(() => import('./screens/FirebasePreparation'))
 
 function Start() {
   const { state } = useApp()
@@ -61,6 +65,24 @@ function AppRoutes() {
         <Route path="/web-spots/:id" element={<WebSpotDetail />} />
         <Route path="/events/:id/arrival" element={<Arrival />} />
         <Route path="/saved" element={<Saved />} />
+        <Route
+          path="/saved/cloud"
+          element={
+            firebasePilot && !memoryOnly ? (
+              <Suspense
+                fallback={
+                  <p className="page-pad" role="status">
+                    読み込み中…
+                  </p>
+                }
+              >
+                <FirebasePreparation />
+              </Suspense>
+            ) : (
+              <Navigate to="/saved/lists" replace />
+            )
+          }
+        />
         <Route path="/saved/lists" element={<SharedListHub />} />
         <Route path="/saved/lists/new" element={<CreateSharedList />} />
         <Route path="/saved/lists/:listId" element={<SharedListDetail />} />

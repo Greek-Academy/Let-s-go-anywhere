@@ -67,3 +67,8 @@ PCの自動テストは1366 × 1000px、デザイン確認画像は1280 × 1000p
 ## 検証範囲の限界
 
 実機Safari・AndroidのWebView、OS固有の共有メニュー、実際のキーボード表示やGPSは検証していません。静的なイメージ写真とSVG地図・道路は実在の施設・地理・指導内容を保証しません。教材の監修、掲載情報の確認、外部連携・認証・予約・送信は本実装の対象です。
+
+
+## Firebase接続の検証（#93）
+
+通常版とは別のモードでログインと本人だけのリスト保存を検証します。`npm run test:firebase:rules` と `npm run test:firebase:ui` はローカルのAuth/Firestore Emulatorだけを使用し、実Firebaseへデータ・確認メールを送りません。手順と限界は [FIREBASE_CONNECTION_PILOT.md](FIREBASE_CONNECTION_PILOT.md) を参照してください。

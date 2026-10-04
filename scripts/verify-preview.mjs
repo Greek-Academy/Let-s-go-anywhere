@@ -52,7 +52,8 @@ export async function verifyPreview(directory, { forUpload = false } = {}) {
   if (
     release.schemaVersion !== 1 ||
     release.channel !== 'preview' ||
-    release.contentSource !== 'sample'
+    release.contentSource !== 'sample' ||
+    release.cloudPilot !== undefined
   ) {
     throw new Error('Not a supported sample preview release')
   }

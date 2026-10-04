@@ -7,6 +7,7 @@ export default defineConfig(({ command }) => ({
   root: fileURLToPath(new URL('./tools/content-review', import.meta.url)),
   publicDir: '../../public',
   envPrefix: 'CONTENT_REVIEW_PUBLIC_',
+  define: { __FIREBASE_PILOT__: 'null' },
   build: {
     outDir: '../../review-dist',
     emptyOutDir: true,

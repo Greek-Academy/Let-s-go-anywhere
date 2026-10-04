@@ -25,3 +25,11 @@ driveplus-local-backup*.json
 driveplus-research-*.json
 discovery-search-test-results/
 discovery-search-report/
+firebase-dist/
+firebase-emulator-dist/
+firebase-test-results/
+firebase-playwright-report/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebase/

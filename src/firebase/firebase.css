@@ -1,0 +1,52 @@
+.firebase-preparation .firebase-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 24px 0;
+  padding: 14px;
+  border-radius: 14px;
+  background: #eff7f3;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.firebase-account span {
+  min-width: 0;
+}
+.firebase-preparation form {
+  margin-bottom: 18px;
+}
+.firebase-preparation .text-button {
+  margin: 10px 0;
+}
+.firebase-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 18px 0;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.firebase-consent input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  accent-color: var(--teal);
+}
+.firebase-message {
+  border-radius: 14px;
+  padding: 14px;
+  background: #edf6ef;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.firebase-preparation .sharing-list-tile {
+  gap: 8px;
+  padding: 12px;
+}
+.firebase-preparation .sharing-list-tile > svg {
+  flex-shrink: 0;
+}
+.firebase-preparation .sharing-list-tile .text-button {
+  font-size: 12px;
+}

@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function verifiedOwner(uid) {
+      return request.auth != null
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true;
+    }
+    function validList(uid, slot) {
+      let d = request.resource.data;
+      return slot in ['1', '2', '3']
+        && d.keys().hasAll(['schemaVersion', 'ownerId', 'name', 'color', 'revision', 'createdAt', 'updatedAt'])
+        && d.keys().hasOnly(['schemaVersion', 'ownerId', 'name', 'color', 'revision', 'createdAt', 'updatedAt'])
+        && d.schemaVersion == 1 && d.ownerId == uid
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 40
+        && d.name.matches('.*[^\\s].*')
+        && d.color in ['teal', 'blue', 'peach']
+        && d.revision is int && d.revision >= 1
+        && d.createdAt is timestamp && d.updatedAt == request.time;
+    }
+    // Private list preparation only. Invitations/members/items are deliberately not writable.
+    match /wishlistDrafts/{uid}/lists/{slot} {
+      allow read: if verifiedOwner(uid);
+      allow create: if verifiedOwner(uid) && validList(uid, slot)
+        && request.resource.data.revision == 1
+        && request.resource.data.createdAt == request.time;
+      allow update: if verifiedOwner(uid) && validList(uid, slot)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if verifiedOwner(uid);
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
