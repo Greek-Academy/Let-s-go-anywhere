@@ -234,6 +234,11 @@ test('the shared deadline rejects a hung request; a late stale fix cannot start 
   await page.clock.install()
   await enter(page)
   await request(page)
+  // The Capacitor adapter loads asynchronously. Advance the simulated clock only
+  // after the geolocation request has registered its delayed callback.
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { calls: number }).calls))
+    .toBe(1)
   await page.clock.fastForward(30001)
   await expect(page.getByRole('alert')).toContainText('時間切れ')
   await page.evaluate(() => (window as unknown as { deliver: () => void }).deliver())
