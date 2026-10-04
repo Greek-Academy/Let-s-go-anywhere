@@ -3,6 +3,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { searchBridge } from './build/searchBridge.ts'
 import { previewCsp, resolvePreviewConfig } from './build/preview.ts'
+import { firebaseConnectSources, resolveFirebasePilot } from './build/firebasePilot.ts'
 
 function revision() {
   try {
@@ -16,16 +17,31 @@ function revision() {
 }
 
 export default defineConfig(({ mode, command }) => {
-  const config = resolvePreviewConfig({
+  const environment = {
     ...loadEnv(mode, process.cwd(), 'DRIVEPLUS_'),
     ...Object.fromEntries(
       Object.entries(process.env).filter(([key]) => key.startsWith('DRIVEPLUS_')),
     ),
+  }
+  const firebase = resolveFirebasePilot(mode, environment)
+  const csp = firebase
+    ? previewCsp.replace('connect-src ', `connect-src ${firebaseConnectSources(firebase)} `)
+    : previewCsp
+  const config = resolvePreviewConfig({
+    ...environment,
   })
   return {
     // No arbitrary VITE_* values are exposed to browser code. This preview needs no API keys.
     envPrefix: 'DRIVEPLUS_PUBLIC_',
-    build: { sourcemap: false },
+    define: { __FIREBASE_PILOT__: JSON.stringify(firebase) },
+    build: {
+      sourcemap: false,
+      outDir: firebase
+        ? firebase.mode === 'emulator'
+          ? 'firebase-emulator-dist'
+          : 'firebase-dist'
+        : 'dist',
+    },
     plugins: [
       react(),
       searchBridge(Number(process.env.DRIVEPLUS_SEARCH_BACKEND_PORT ?? 4181)),
@@ -47,7 +63,7 @@ export default defineConfig(({ mode, command }) => {
               ? [
                   {
                     tag: 'meta',
-                    attrs: { 'http-equiv': 'Content-Security-Policy', content: previewCsp },
+                    attrs: { 'http-equiv': 'Content-Security-Policy', content: csp },
                     injectTo: 'head' as const,
                   },
                 ]
@@ -63,6 +79,7 @@ export default defineConfig(({ mode, command }) => {
                 {
                   schemaVersion: 1,
                   ...config,
+                  ...(firebase ? { cloudPilot: firebase.mode } : {}),
                   ...revision(),
                   builtAt: new Date().toISOString(),
                 },
@@ -70,6 +87,13 @@ export default defineConfig(({ mode, command }) => {
                 2,
               ) + '\n',
           })
+        },
+        async writeBundle(options) {
+          if (!firebase) return
+          const { readFile, writeFile } = await import('node:fs/promises')
+          const path = `${options.dir}/_headers`
+          const headers = await readFile(path, 'utf8')
+          await writeFile(path, headers.replace(previewCsp, csp))
         },
       },
     ],

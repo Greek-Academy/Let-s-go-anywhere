@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { firebasePilot } from '../firebase/config'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ChevronDown,
@@ -83,6 +84,7 @@ function ColorPicker({ value, onChange }: { value: Color; onChange: (c: Color) =
   )
 }
 export function SharedListHub() {
+  const { memoryOnly } = useApp()
   const { state, actor, pending, ready, setActor } = useSharing()
   const navigate = useNavigate()
   const [joining, setJoining] = useState(false)
@@ -100,6 +102,11 @@ export function SharedListHub() {
           みんなの楽しみも。
         </h1>
         <p className="body-copy">誘いたくなったら、新しいリストに「行きたい」を持ち寄ろう。</p>
+        {firebasePilot && !memoryOnly && (
+          <PrimaryButton variant="secondary" onClick={() => navigate('/saved/cloud')}>
+            ログインして共有の準備
+          </PrimaryButton>
+        )}
         <DemoNotice />
         <SharingStatus />
         <button

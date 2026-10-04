@@ -235,3 +235,26 @@ test('a failed app frame can be retried without losing the draft', async ({ page
   await close(page)
   await expect(page.getByLabel('名称', { exact: true })).toHaveValue(sampleDraft().title)
 })
+
+test('detail navigation waits for the actual frame instead of navigating about:blank', async ({
+  page,
+}) => {
+  await load(page)
+  let release!: () => void
+  const held = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  await page.route('**/app.html', async (route) => {
+    await held
+    await route.continue()
+  })
+  await open(page)
+  const details = page.getByRole('button', { name: '入力候補の詳細を見る' })
+  await expect(details).toBeDisabled()
+  release()
+  await expect(details).toBeEnabled()
+  await details.click()
+  await expect(
+    app(page).getByRole('heading', { name: sampleDraft().title, level: 1 }),
+  ).toBeVisible()
+})

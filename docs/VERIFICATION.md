@@ -1,6 +1,8 @@
 # 実装・検証メモ
 
-2026-10-03：共有リストの端末内デモ #90 を追加しました。[検証レポート](reviews/shared-wishlists/README.md)と[操作方法](SHARED_WISHLIST_DEMO.md)を参照してください。別端末の実共有・Firebase接続は未完了です。
+2026-10-04：#93でFirebase検証版の本人用リスト保存・権限拒否を実クラウドでも確認しました。[接続の検証レポート](reviews/firebase-connection/README.md)。相手の招待・候補・反応の実共有は未完了です。
+
+2026-10-03：共有リストの端末内デモ #90 を追加しました。[検証レポート](reviews/shared-wishlists/README.md)と[操作方法](SHARED_WISHLIST_DEMO.md)を参照してください。
 
 > 2026-10-02：講習紹介・相談機能を終了し、4タブへ変更しました。現行仕様は [機能変更の説明](LESSON_REFERRAL_RETIREMENT.md)、最新の検証は [#88のレポート](reviews/retire-schools/README.md) を参照してください。以下の講習・5タブの記述は当時の実装記録です。
 
@@ -67,3 +69,10 @@ PCの自動テストは1366 × 1000px、デザイン確認画像は1280 × 1000p
 ## 検証範囲の限界
 
 実機Safari・AndroidのWebView、OS固有の共有メニュー、実際のキーボード表示やGPSは検証していません。静的なイメージ写真とSVG地図・道路は実在の施設・地理・指導内容を保証しません。教材の監修、掲載情報の確認、外部連携・認証・予約・送信は本実装の対象です。
+
+
+## Firebase接続の検証（#93）
+
+通常版とは別のモードでログインと本人だけのリスト保存を検証します。`npm run test:firebase:rules` と `npm run test:firebase:ui` はローカルのAuth/Firestore Emulatorだけを使用し、実Firebaseへデータ・確認メールを送りません。手順と限界は [FIREBASE_CONNECTION_PILOT.md](FIREBASE_CONNECTION_PILOT.md) を参照してください。
+
+2026-10-04には実クラウドへルールを反映し、ブラウザからの保存・更新・ログアウトと、未確認アカウント・別の確認済みアカウントへのアクセス拒否を別途検証しました。検証用アカウント2件・文書1件は削除済みです。実メールの到着・本人による確認リンクの操作・実iPhoneは未確認です。

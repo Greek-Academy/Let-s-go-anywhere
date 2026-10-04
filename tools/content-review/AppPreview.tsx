@@ -11,6 +11,7 @@ export function AppPreview({
 }) {
   const frame = useRef<HTMLIFrameElement>(null)
   const [error, setError] = useState(false)
+  const [ready, setReady] = useState(false)
   const [frameVersion, setFrameVersion] = useState(0)
   const [now, setNow] = useState(() => new Date())
   const apply = () => {
@@ -19,8 +20,10 @@ export function AppPreview({
       if (!api) throw new Error('Preview not ready')
       api.present(snapshot)
       setError(false)
+      setReady(true)
     } catch {
       setError(true)
+      setReady(false)
     }
   }
   useEffect(() => {
@@ -47,6 +50,7 @@ export function AppPreview({
             : '未確認・期限切れ・終了などの候補は、おすすめに表示しません。詳細で理由を確認できます。'}
         </p>
         <button
+          disabled={!ready}
           onClick={() => {
             const child = frame.current?.contentWindow
             if (child) child.location.hash = '/events/' + snapshot.outing.id
@@ -61,6 +65,7 @@ export function AppPreview({
           <button
             onClick={() => {
               setError(false)
+              setReady(false)
               setFrameVersion((value) => value + 1)
             }}
           >
