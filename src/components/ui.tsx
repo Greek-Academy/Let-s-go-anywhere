@@ -11,7 +11,6 @@ import {
   Heart,
   House,
   Map,
-  MessageCircle,
   Search,
   UserRound,
   X,
@@ -117,9 +116,8 @@ export function Header({
   )
 }
 export function activeTab(path: string, origin?: Tab): Tab {
-  if (origin) return origin
+  if (origin && ['discover', 'saved', 'cars', 'learn'].includes(origin)) return origin
   if (/^\/(cars|stations)/.test(path)) return 'cars'
-  if (/^\/(schools|consult|consultations)/.test(path)) return 'schools'
   if (/^\/(learn|check|quiz|results)/.test(path)) return 'learn'
   if (/^\/saved/.test(path)) return 'saved'
   return 'discover'
@@ -129,7 +127,6 @@ const tabs: { id: Tab; title: string; icon: LucideIcon }[] = [
   { id: 'saved', title: '行きたい', icon: Heart },
   { id: 'cars', title: '車を探す', icon: Map },
   { id: 'learn', title: '学ぶ', icon: BookOpen },
-  { id: 'schools', title: '講習', icon: MessageCircle },
 ]
 export function BottomNavigation() {
   const navigate = useNavigate()

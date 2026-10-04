@@ -74,7 +74,9 @@ export function LearningColumns() {
           </button>
         ))}
       </div>
-      <p className="column-pilot-note">まずは6本から。試作・未監修のコラムです。</p>
+      <p className="column-pilot-note">
+        まずは{learningColumns.length}本から。試作・未監修のコラムです。
+      </p>
     </section>
   )
 }
@@ -151,7 +153,8 @@ export function LearningColumnDetail() {
         <div className="column-references">
           <h2>このコラムについて</h2>
           <p>
-            提供された「知らなかったことの一覧」をもとに編集した試作です。専門家の監修は未実施で、実技の評価や運転の可否の判定には使いません。
+            {column.origin ?? '提供された「知らなかったことの一覧」をもとに編集した試作です。'}
+            専門家の監修は未実施で、実技の評価や運転の可否の判定には使いません。
           </p>
           {column.references.length > 0 ? (
             <>
@@ -184,7 +187,7 @@ export function LearningColumnDetail() {
           ) : (
             <p>会話例と準備の提案です。特定の効果や、相手の気持ちを保証するものではありません。</p>
           )}
-          <p>編集日：2026年10月1日</p>
+          <p>編集日：{column.editedAt ?? '2026年10月1日'}</p>
         </div>
         <PrimaryButton icon={ArrowRight} onClick={goBack}>
           コラム一覧へ戻る

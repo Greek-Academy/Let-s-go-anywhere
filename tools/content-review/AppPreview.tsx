@@ -34,7 +34,7 @@ export function AppPreview({
         <div>
           <strong>入力候補のアプリ確認</strong>
           <p>未公開の表示テストです。保存・入力はこの確認画面を閉じると消えます。</p>
-          <p>普段の保存データは使いません。車・教材・講習は既存のサンプルです。</p>
+          <p>普段の保存データは使いません。車・教材は既存のサンプルです。</p>
         </div>
         <button className="review-primary" onClick={onClose} autoFocus>
           入力に戻る

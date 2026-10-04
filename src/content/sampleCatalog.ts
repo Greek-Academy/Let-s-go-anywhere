@@ -1,11 +1,5 @@
 import { lifecycleExamples } from '../data/lifecycleExamples'
-import {
-  outings,
-  stations,
-  drivingSchools,
-  quizQuestions,
-  learningContents,
-} from '../data/mockData'
+import { outings, stations, quizQuestions, learningContents } from '../data/mockData'
 import { arrivalGuides } from '../data/arrivalGuides'
 import { tripFacts } from '../data/tripFacts'
 import { createContentCatalog } from './catalog'
@@ -15,7 +9,6 @@ export const sampleCatalog = createContentCatalog({
   source: 'sample',
   outings: [...outings, ...lifecycleExamples],
   stations,
-  drivingSchools,
   quizQuestions,
   learningContents,
   arrivalGuides,

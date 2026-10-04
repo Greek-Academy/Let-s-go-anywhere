@@ -476,7 +476,7 @@ export function StationDetail() {
             ['営業時間・入出庫', station.hours],
             ['登録・利用条件', station.conditions],
             ['返却条件', station.returnPolicy],
-            ['講習での利用', '事業者・講師への確認が必要'],
+            ['練習での利用', '利用条件は事業者への確認が必要'],
             ['情報源', '画面設計用のモックデータ'],
             ['情報確認日', station.checkedAt],
           ]}

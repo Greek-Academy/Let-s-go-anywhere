@@ -21,7 +21,7 @@ for (const [name, route] of [
   ['03-discover', '/discover'],
   ['04-cars', '/cars'],
   ['05-check', '/quiz/0'],
-  ['06-schools', '/schools'],
+  ['06-learning-notes', '/learn/notes'],
   ['07-station', '/stations/toyota-shibuya'],
 ]) {
   await page.goto(`http://127.0.0.1:5173/#${route}`)

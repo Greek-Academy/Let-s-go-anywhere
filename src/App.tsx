@@ -17,22 +17,9 @@ import { RealCars, RealStationDetail, CarMapSources } from './screens/RealCars'
 import { Cars, StationDetail } from './screens/Cars'
 import { CarSearch } from './screens/CarSearch'
 import { CheckSetup, Learn, LearningDetail, Quiz, Results } from './screens/Learning'
+import { LearningNotes } from './screens/LearningNotes'
 import { LearningColumnDetail } from './screens/LearningColumns'
-import {
-  ConsultationMemo,
-  ConsultationStatus,
-  SchoolDetail,
-  Schools,
-  SharingReview,
-} from './screens/Schools'
-import {
-  AppSettings,
-  ConsultationHistory,
-  LearningHistory,
-  Profile,
-  ProfileEdit,
-  Reflection,
-} from './screens/Profile'
+import { AppSettings, LearningHistory, Profile, ProfileEdit, Reflection } from './screens/Profile'
 
 function Start() {
   const { state } = useApp()
@@ -77,15 +64,18 @@ function AppRoutes() {
         <Route path="/learn" element={<Learn />} />
         <Route path="/learn/columns/:id" element={<LearningColumnDetail />} />
         <Route path="/learn/:id" element={<LearningDetail />} />
-        <Route path="/schools" element={<Schools />} />
-        <Route path="/schools/:id" element={<SchoolDetail />} />
-        <Route path="/consult/:id" element={<ConsultationMemo />} />
-        <Route path="/consult/:id/review" element={<SharingReview />} />
-        <Route path="/consultations/:id" element={<ConsultationStatus />} />
+        {/* Replace retired URLs so Back never returns to a consultation form. */}
+        <Route path="/schools/*" element={<Navigate to="/learn?retired=schools" replace />} />
+        <Route path="/consult/*" element={<Navigate to="/learn?retired=schools" replace />} />
+        <Route path="/consultations/*" element={<Navigate to="/learn?retired=schools" replace />} />
+        <Route path="/learn/notes" element={<LearningNotes />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/edit" element={<ProfileEdit />} />
         <Route path="/profile/learning" element={<LearningHistory />} />
-        <Route path="/profile/consultations" element={<ConsultationHistory />} />
+        <Route
+          path="/profile/consultations"
+          element={<Navigate to="/learn?retired=schools" replace />}
+        />
         <Route path="/settings" element={<AppSettings />} />
         <Route path="/reflection" element={<Reflection />} />
         <Route path="*" element={<NotFound />} />

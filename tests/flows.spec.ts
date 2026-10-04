@@ -44,7 +44,7 @@ test('three-question onboarding supports back, multiple interests, tabs and relo
   await page.getByRole('button', { name: '温泉 ゆっくり、ひと休み' }).click()
   await page.getByRole('button', { name: 'おすすめを見る' }).click()
   await expect(page).toHaveURL(/#\/discover$/)
-  for (const name of ['行きたい', '車を探す', '学ぶ', '講習', '見つける']) {
+  for (const name of ['行きたい', '車を探す', '学ぶ', '見つける']) {
     await page.getByRole('navigation').getByRole('button', { name, exact: true }).click()
     await expect(
       page.getByRole('navigation').getByRole('button', { name, exact: true }),
@@ -58,7 +58,7 @@ test('three-question onboarding supports back, multiple interests, tabs and relo
     interests: ['自然', '温泉'],
   })
   expect(state.onboarded).toBe(true)
-  await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(5)
+  await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(4)
 })
 
 test('saved outings stay synchronized; back restores scroll; unverified SNS stays personal', async ({
@@ -117,7 +117,7 @@ test('quiz separates knowledge, wrong answers, self-report and skipped items', a
     '駐車',
   )
   await expect(
-    page.locator('.result-group').filter({ hasText: '講師に相談したい項目' }),
+    page.locator('.result-group').filter({ hasText: '練習で確認したい項目' }),
   ).toContainText('車線変更')
   await expect(page.locator('.result-group.neutral')).toContainText('高速道路')
   await expect(page.locator('.result-group.neutral')).toContainText('夜間')
@@ -137,18 +137,18 @@ test('quiz separates knowledge, wrong answers, self-report and skipped items', a
   await page.getByRole('button', { name: '振り返りに戻る' }).click()
 })
 
-test('learning has next/previous, adds consultation notes and persists completion', async ({
+test('learning has next/previous, adds private learning notes and persists completion', async ({
   page,
 }) => {
   await enter(page, '/learn')
-  await page.getByRole('button', { name: '講習後の復習', exact: true }).click()
+  await page.getByRole('button', { name: '練習後の復習', exact: true }).click()
   await expect(page.locator('.lesson-card')).toHaveCount(3)
   await page.getByRole('button', { name: /駐車の前に、確認したいこと/ }).click()
   await expect(page.getByRole('button', { name: '前の問題' })).toBeDisabled()
   await page.getByRole('button', { name: '次の問題' }).click()
   await expect(page.getByRole('heading', { name: '実車で確かめたいことを整理' })).toBeVisible()
   await page.getByRole('button', { name: '前の問題' }).click()
-  await page.getByRole('button', { name: 'この内容を相談メモに追加' }).click()
+  await page.getByRole('button', { name: 'この内容を学習メモに追加' }).click()
   await page.getByRole('button', { name: '次の問題' }).click()
   await page.getByRole('button', { name: '学習を記録', exact: true }).click()
   expect((await readState(page)).learned).toEqual(['parking'])
@@ -198,59 +198,6 @@ test('map pins, station details, provider filters, lists and zero-result search'
   await expect(page.locator('.station-list')).toContainText('タイムズカー 渋谷駅前')
 })
 
-test('consultation requires explicit consent and only stores selected snapshot fields', async ({
-  page,
-}) => {
-  await enter(page, '/schools')
-  await page.locator('.school-card').first().getByRole('button', { name: '詳細を見る' }).click()
-  await page.getByRole('button', { name: '希望日時を相談', exact: true }).click()
-  await page
-    .getByRole('textbox', { name: /実現したいこと・目標/ })
-    .fill('パートナーと旅行の運転を交代したい')
-  await page.getByRole('textbox', { name: /希望日時/ }).fill('10月の土曜日')
-  await page.getByRole('textbox', { name: /講師に聞きたいこと/ }).fill('車線変更が不安です')
-  await page.getByRole('button', { name: '共有する内容を確認' }).click()
-  const send = page.getByRole('button', { name: 'この内容で相談する（デモ）' })
-  await expect(send).toBeDisabled()
-  expect((await readState(page)).consultations).toHaveLength(0)
-  await page.getByRole('button', { name: /講師への質問 車線変更が不安です/ }).click()
-  await page.getByRole('checkbox').check()
-  await send.click()
-  const state = await readState(page)
-  expect(state.consultations).toHaveLength(1)
-  expect(state.consultations[0].snapshot).toEqual({
-    goal: 'パートナーと旅行の運転を交代したい',
-    when: '10月の土曜日',
-    vehicle: '相談して決めたい',
-  })
-  expect(state.consultations[0].consentAt).toBeTruthy()
-  await expect(page.locator('.status-intro')).toContainText('講習の予約は確定していません')
-  await page.getByRole('button', { name: '受付後の表示を試す' }).click()
-  await expect(page.locator('.status-intro')).toContainText('相談受付（デモ）')
-  await page.getByRole('button', { name: '共有した内容を確認' }).click()
-  await expect(page.getByRole('dialog')).not.toContainText('車線変更が不安です')
-  await page.getByRole('dialog').getByRole('button', { name: '閉じる', exact: true }).last().click()
-  await page.reload()
-  expect((await readState(page)).consultations).toHaveLength(1)
-})
-
-test('school filters work without requiring a check; empty results can be reset', async ({
-  page,
-}) => {
-  await enter(page, '/schools')
-  await page.getByRole('button', { name: '絞り込み', exact: true }).click()
-  await page.getByRole('combobox', { name: '対応エリア' }).selectOption('千葉')
-  await page.getByRole('button', { name: 'この条件で表示' }).click()
-  await expect(page.locator('.school-card')).toHaveCount(0)
-  await page.getByRole('button', { name: '条件をリセット' }).click()
-  await expect(page.locator('.school-card')).toHaveCount(3)
-  await page.getByRole('button', { name: '絞り込み', exact: true }).click()
-  await page.getByRole('combobox', { name: '予算の目安' }).selectOption('15000')
-  await page.getByRole('combobox', { name: '使いたい車' }).selectOption('マイカー')
-  await page.getByRole('button', { name: 'この条件で表示' }).click()
-  await expect(page.locator('.school-card')).toHaveCount(2)
-})
-
 test('profile, reflection and data reset preserve honest user outcomes', async ({ page }) => {
   await enter(page)
   await page.getByRole('button', { name: 'マイページを開く' }).click()
@@ -259,7 +206,7 @@ test('profile, reflection and data reset preserve honest user outcomes', async (
   await page.getByRole('button', { name: '自然', exact: true }).click()
   await page.getByRole('button', { name: '変更を保存' }).click()
   await expect(page.getByRole('heading', { name: 'たろうさん' })).toBeVisible()
-  await page.getByRole('button', { name: 'お出かけ・講習の振り返り' }).click()
+  await page.getByRole('button', { name: 'お出かけ・練習の振り返り' }).click()
   await page.getByRole('button', { name: '別の交通手段を選んだ' }).click()
   await page.getByRole('textbox', { name: '思ったこと・学んだこと' }).fill('今回は電車で楽しんだ。')
   await page.getByRole('button', { name: '振り返りを保存' }).click()
@@ -296,16 +243,13 @@ test('phone contains scroll; all routes render without errors, overflow or broke
     '/results',
     '/learn',
     '/learn/parking',
+    '/learn/notes',
+    '/learn/columns/return-to-driving',
     '/cars',
     '/stations/toyota-shibuya',
-    '/schools',
-    '/schools/shirokuma',
-    '/consult/shirokuma',
-    '/consult/shirokuma/review',
     '/profile',
     '/profile/edit',
     '/profile/learning',
-    '/profile/consultations',
     '/settings',
     '/reflection',
   ]) {
