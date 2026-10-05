@@ -1,6 +1,7 @@
 import { createContext, useContext, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { parseWebSearchResult } from '../domain/webSearch'
+import { parseWebSearchResult, sameWebSpot } from '../domain/webSearch'
+import { groupPlaces } from '../domain/placeIdentity'
 import type { WebSearchResult, WebSpot } from '../domain/webSearch'
 import { useApp } from './AppState'
 import { prefectures } from '../data/regions'
@@ -27,6 +28,7 @@ interface SearchStatus {
   attempts: unknown[]
 }
 interface SearchContext {
+  savedSpots: WebSpot[]
   method: SearchMethod
   setMethod: (method: SearchMethod) => void
   comparisonView: ComparisonView
@@ -275,7 +277,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       toast('元の保存データを保護しています。保存状態の案内を確認してください。')
       return
     }
-    const saved = state.savedWebSpots.some((s) => s.id === spot.id)
+    const saved = state.savedWebSpots.some((s) => sameWebSpot(s, spot))
     if (!saved && state.savedWebSpots.length >= 500) {
       toast('Web候補は500件までです。不要な候補を解除してから保存してください。')
       return
@@ -283,14 +285,15 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     update((s) => ({
       ...s,
       savedWebSpots: saved
-        ? s.savedWebSpots.filter((item) => item.id !== spot.id)
-        : [...s.savedWebSpots.filter((item) => item.id !== spot.id), spot],
+        ? s.savedWebSpots.filter((item) => !sameWebSpot(item, spot))
+        : [...s.savedWebSpots, spot],
     }))
     toast(saved ? '行きたいから外しました' : '未確認のWeb候補を行きたいに追加しました')
   }
   return (
     <Context.Provider
       value={{
+        savedSpots: groupPlaces(state.savedWebSpots),
         method,
         setMethod,
         comparisonView,

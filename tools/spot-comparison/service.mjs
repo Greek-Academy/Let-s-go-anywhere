@@ -26,7 +26,13 @@ export function createComparison({ demo, apiKey, anthropicApiKey, directory, fet
     lastResult() {
       if (demo) return sampleResult
       try {
-        return JSON.parse(readFileSync(resultFile, 'utf8'))
+        const result = JSON.parse(readFileSync(resultFile, 'utf8'))
+        const combined = combineCandidates([{ spots: result.spots }])
+        return {
+          ...result,
+          ...combined,
+          duplicates: (result.duplicates ?? 0) + combined.duplicates,
+        }
       } catch (error) {
         if (error.code === 'ENOENT') return null
         throw new PilotError(

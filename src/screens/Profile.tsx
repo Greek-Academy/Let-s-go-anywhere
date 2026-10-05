@@ -1,3 +1,4 @@
+import { groupPlaces } from '../domain/placeIdentity'
 import { useSharing } from '../sharing/SharingProvider'
 import { firebasePilot } from '../firebase/config'
 import { StorageDetails } from '../components/StorageStatus'
@@ -68,7 +69,9 @@ export function Profile() {
           <button onClick={() => navigate('/saved')}>
             <Heart size={20} />
             <strong>
-              {state.savedEvents.length + state.links.length + state.savedWebSpots.length}
+              {state.savedEvents.length +
+                state.links.length +
+                groupPlaces(state.savedWebSpots).length}
             </strong>
             <small>行きたい</small>
           </button>
@@ -103,7 +106,7 @@ export function Profile() {
           <MenuRow
             icon={Heart}
             title="行きたいリスト"
-            value={`${state.savedEvents.length + state.links.length + state.savedWebSpots.length}件`}
+            value={`${state.savedEvents.length + state.links.length + groupPlaces(state.savedWebSpots).length}件`}
             onClick={() => navigate('/saved')}
           />
           <MenuRow icon={BookOpen} title="学習履歴" onClick={() => navigate('/profile/learning')} />

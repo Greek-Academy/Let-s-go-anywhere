@@ -1,6 +1,7 @@
 import { decodeTags, decodeRecommendations, decodeReports } from './recommendations'
 import type { Recommendation, ProviderReport } from './recommendations'
 import { outboundHttpsUrl, researchSourceUrl } from './externalLinks'
+import { samePlace } from './placeIdentity'
 
 export interface WebSpot {
   id: string
@@ -25,6 +26,10 @@ export interface WebSearchResult {
   kind?: 'comparison'
   reports?: ProviderReport[]
   duplicates?: number
+}
+
+export function sameWebSpot(a: WebSpot, b: WebSpot) {
+  return a.id === b.id || Boolean(a.recommendations && b.recommendations && samePlace(a, b))
 }
 
 const record = (v: unknown): Record<string, unknown> => {

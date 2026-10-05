@@ -1,4 +1,6 @@
 import type { WebSpot } from '../domain/webSearch'
+import { sameWebSpot } from '../domain/webSearch'
+import { groupPlaces } from '../domain/placeIdentity'
 import { providerNames } from '../domain/recommendations'
 import { useApp } from '../state/AppState'
 import { Chip, Tag } from './ui'
@@ -17,7 +19,7 @@ export function RecommendationBadges({ spot }: { spot: WebSpot }) {
 }
 export function RecommendationFeedback({ spot }: { spot: WebSpot }) {
   const { state, update, storageProtected } = useApp()
-  const saved = state.savedWebSpots.find((s) => s.id === spot.id)
+  const saved = groupPlaces(state.savedWebSpots).find((s) => sameWebSpot(s, spot))
   const availableTags = saved?.tags ?? spot.tags ?? []
   if (!spot.recommendations || !availableTags.length) return null
   const selected = saved?.likedFor ?? saved?.tags ?? []
@@ -25,7 +27,9 @@ export function RecommendationFeedback({ spot }: { spot: WebSpot }) {
     update((s) => ({
       ...s,
       savedWebSpots: s.savedWebSpots.map((item) =>
-        item.id === spot.id ? { ...item, likedFor: next } : item,
+        sameWebSpot(item, spot)
+          ? { ...item, likedFor: next.filter((tag) => item.tags?.includes(tag)) }
+          : item,
       ),
     }))
   return (

@@ -1,6 +1,7 @@
 import tags from '../data/recommendationTags.json' with { type: 'json' }
 import { outboundHttpsUrl } from './externalLinks'
 import type { WebSpot } from './webSearch'
+import { groupPlaces } from './placeIdentity'
 
 export const recommendationTags: readonly string[] = tags
 export type RecommendationProvider = 'openai' | 'anthropic'
@@ -126,7 +127,7 @@ export function decodeReports(value: unknown): ProviderReport[] {
 export function preferenceWeights(saved: WebSpot[], mode: WebSpot['mode']) {
   const weights = new Map<string, number>()
   let likes = 0
-  for (const spot of saved) {
+  for (const spot of groupPlaces(saved)) {
     if (spot.mode !== mode || !spot.recommendations) continue
     const selected = spot.likedFor ?? spot.tags ?? []
     if (!selected.length) continue

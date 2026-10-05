@@ -1,6 +1,7 @@
 import { isIP } from 'node:net'
 import { prefectures } from '../../src/data/regions.ts'
 import tags from '../../src/data/recommendationTags.json' with { type: 'json' }
+import { groupPlaces } from '../../src/domain/placeIdentity.ts'
 import { PilotError, measureUsage as openaiUsage } from '../spot-research/core.mjs'
 
 export const PROVIDERS = ['openai', 'anthropic']
@@ -263,34 +264,14 @@ export function parseComparisonResponse(provider, response) {
   return { spots, omitted: parsed.spots.length - spots.length }
 }
 
-const normalize = (text) =>
-  text
-    .normalize('NFKC')
-    .toLowerCase()
-    .replace(/[\s・「」『』]/gu, '')
 export function combineCandidates(results) {
-  const spots = [],
-    keys = new Map()
+  const interleaved = []
   // Interleave providers so the initial general order does not always favor one provider.
-  for (let i = 0; i < 10; i++)
+  for (let i = 0; i < Math.max(0, ...results.map((result) => result.spots.length)); i++)
     for (const result of results) {
       const s = result.spots[i]
-      if (!s) continue
-      // URL alone can identify a listicle, not a shop. Branch names remain significant.
-      const key = `${normalize(s.name)}|${normalize(s.area)}`
-      const sourceKey = `${normalize(s.name)}|${s.sourceUrl}`
-      const prior = keys.get(key) ?? keys.get(sourceKey)
-      if (prior) {
-        for (const r of s.recommendations)
-          if (!prior.recommendations.some((p) => p.provider === r.provider))
-            prior.recommendations.push(r)
-        prior.tags = [...new Set([...prior.tags, ...s.tags])].slice(0, 3)
-      } else {
-        const copy = structuredClone(s)
-        keys.set(key, copy)
-        keys.set(sourceKey, copy)
-        spots.push(copy)
-      }
+      if (s) interleaved.push(s)
     }
-  return { spots, duplicates: results.reduce((sum, r) => sum + r.spots.length, 0) - spots.length }
+  const spots = groupPlaces(interleaved)
+  return { spots, duplicates: interleaved.length - spots.length }
 }

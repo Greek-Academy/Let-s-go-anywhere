@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync, existsSync } from 'node:fs'
+import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createPilot } from '../server.mjs'
@@ -136,6 +136,61 @@ test('combine preserves both reasons, keeps same-page different shops and distin
   const branch = structuredClone(results[0].spots[0])
   branch.name += '別支店'
   assert.equal(combineCandidates([{ spots: [results[0].spots[0], branch] }]).spots.length, 2)
+})
+test('reviewed area/address variants merge while retaining both providers; same-name branches remain separate', () => {
+  const template = parseComparisonResponse('openai', comparisonSample('openai', query)).spots[0]
+  const a = {
+    ...template,
+    name: '茂庵',
+    area: '左京区 吉田山付近',
+    sourceUrl: 'https://ja.kyoto.travel/tourism/single01.php?category_id=4&tourism_id=2861',
+  }
+  a.recommendations = [{ provider: 'openai', sourceUrl: a.sourceUrl, reason: '理由A' }]
+  const b = {
+    ...a,
+    area: '京都市左京区吉田神楽岡町８',
+    sourceUrl: 'https://icotto.jp/presses/18579',
+  }
+  b.recommendations = [{ provider: 'anthropic', sourceUrl: b.sourceUrl, reason: '理由B' }]
+  const merged = combineCandidates([{ spots: [a] }, { spots: [b] }])
+  assert.equal(merged.spots.length, 1)
+  assert.equal(merged.duplicates, 1)
+  assert.deepEqual(merged.spots[0].recommendations, [...a.recommendations, ...b.recommendations])
+  assert.equal(a.recommendations.length, 1)
+  for (const other of [
+    { ...b, name: '茂庵 別支店' },
+    { ...b, area: '京都市左京区吉田神楽岡町99' },
+    { ...b, area: '京都市右京区' },
+    { ...b, sourceUrl: 'https://unreviewed.example.com/shop' },
+    { ...b, name: '同名チェーン', sourceUrl: a.sourceUrl },
+  ])
+    assert.equal(combineCandidates([{ spots: [a, other] }]).spots.length, 2)
+  const chain = { ...a, name: '同名チェーン' }
+  assert.equal(
+    combineCandidates([{ spots: [chain, { ...chain, area: '京都市左京区別町10' }] }]).spots.length,
+    2,
+  )
+})
+test('cached results with more than ten cards regroup without rewriting the cache or spending a request', (t) => {
+  const opt = options(t)
+  const results = ['openai', 'anthropic'].map((p) =>
+    parseComparisonResponse(p, comparisonSample(p, query)),
+  )
+  const input = { kind: 'comparison', ...combineCandidates(results) }
+  input.spots.push(structuredClone(input.spots[0]))
+  const file = join(opt.directory, 'result.json')
+  writeFileSync(file, JSON.stringify(input))
+  const original = readFileSync(file)
+  const service = createComparison({
+    ...opt,
+    fetcher: () => assert.fail('no API during regrouping'),
+  })
+  for (let i = 0; i < 2; i++) {
+    assert.equal(service.lastResult().spots.length, 18)
+    assert.equal(service.lastResult().duplicates, 3)
+    assert.equal(service.status().attempts.length, 0)
+  }
+  assert.deepEqual(readFileSync(file), original)
 })
 test('Claude usage includes search, cache and tokens; absent usage never becomes zero', () => {
   assert.equal(comparisonUsage('anthropic', {}), null)

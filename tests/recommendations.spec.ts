@@ -6,6 +6,8 @@ import type { WebSpot } from '../src/domain/webSearch'
 import { personalRecommendations, preferenceWeights } from '../src/domain/recommendations'
 import { fromWebSpot } from '../src/sharing/candidates'
 import { evaluateExternalRequest } from '../src/domain/externalLinks'
+import { groupPlaces } from '../src/domain/placeIdentity'
+import { sameWebSpot } from '../src/domain/webSearch'
 
 const query = { region: '東京都', theme: 'カフェ' }
 const candidate = (n: number, tag = 'カフェ') => ({
@@ -125,4 +127,41 @@ test('比較出典の公開HTTPSだけを開ける。従来検索の出典制限
     expect(
       evaluateExternalRequest({ type: 'research', url, comparison: true }).destination,
     ).toBeUndefined()
+})
+test('同一店舗の旧保存は1件として数え、理由・元ID・保存内容を残す', async () => {
+  const data = response()
+  Object.assign(data.spots[0], {
+    name: '茂庵',
+    area: '左京区 吉田山付近',
+    sourceUrl: 'https://ja.kyoto.travel/tourism/single01.php?category_id=4&tourism_id=2861',
+  })
+  Object.assign(data.spots[1], {
+    name: '茂庵',
+    area: '京都市左京区吉田神楽岡町8',
+    sourceUrl: 'https://icotto.jp/presses/18579',
+  })
+  data.spots.forEach((s, i) => {
+    s.recommendations = [
+      { provider: i === 0 ? 'openai' : 'anthropic', sourceUrl: s.sourceUrl, reason: `理由${i}` },
+    ]
+  })
+  const { spots } = await parseWebSearchResult(data, query)
+  expect(spots[0].id).not.toBe(spots[1].id)
+  expect(sameWebSpot(spots[0], spots[1])).toBe(true)
+  const saved = [{ ...spots[0], likedFor: [] }, spots[1]]
+  const before = JSON.stringify(saved)
+  const grouped = groupPlaces(saved)
+  expect(grouped).toHaveLength(1)
+  expect(grouped[0].id).toBe(spots[0].id)
+  expect(grouped[0].recommendations).toHaveLength(2)
+  expect(grouped[0].likedFor).toEqual(['自然'])
+  expect(preferenceWeights(saved, 'live').likes).toBe(1)
+  expect(preferenceWeights(saved, 'live').weights.get('自然')).toBe(1)
+  expect(preferenceWeights(saved, 'live').weights.has('カフェ')).toBe(false)
+  expect(JSON.stringify(saved)).toBe(before)
+  expect(
+    decodeStoredState(JSON.stringify({ ...createInitialState(), savedWebSpots: saved })).problem,
+  ).toBe(null)
+  expect(groupPlaces([spots[0], { ...spots[1], mode: 'sample' as const }])).toHaveLength(2)
+  expect(fromWebSpot(grouped[0])).not.toHaveProperty('likedFor')
 })

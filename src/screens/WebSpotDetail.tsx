@@ -5,6 +5,8 @@ import { fromWebSpot } from '../sharing/candidates'
 import { ArrowLeft, ArrowRight, CarFront, Heart } from 'lucide-react'
 import { useRef } from 'react'
 import type { WebSpot } from '../domain/webSearch'
+import { sameWebSpot } from '../domain/webSearch'
+import { mergePlace } from '../domain/placeIdentity'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../state/AppState'
 import { useWebSearch } from '../state/WebSearchState'
@@ -22,18 +24,25 @@ import { WebSpotImage, WebSpotSource, WebSpotStatus, searchDate } from '../compo
 export function WebSpotDetail() {
   const { id } = useParams()
   const { state, update, storageProtected } = useApp()
-  const { result, toggleSaved } = useWebSearch()
+  const { result, toggleSaved, savedSpots } = useWebSearch()
   const navigate = useNavigate()
   const location = useLocation()
   const back = useBack(location.state?.tab === 'saved' ? '/saved' : '/discover')
   // Keep this view usable after removing a saved item, until leaving the screen.
-  const found = result?.spots.find((s) => s.id === id)
-  const stored = state.savedWebSpots.find((s) => s.id === id)
-  const current = location.state?.tab === 'saved' ? (stored ?? found) : (found ?? stored)
-  const last = useRef<WebSpot | null>(null)
-  if (current) last.current = current
-  const spot = current ?? (last.current?.id === id ? last.current : null)
-  const saved = state.savedWebSpots.some((s) => s.id === id)
+  const original = state.savedWebSpots.find((s) => s.id === id)
+  const found = result?.spots.find((s) => s.id === id || (original && sameWebSpot(s, original)))
+  const stored = savedSpots.find((s) => s.id === id || (original && sameWebSpot(s, original)))
+  const current =
+    stored && found
+      ? mergePlace(
+          location.state?.tab === 'saved' ? stored : found,
+          location.state?.tab === 'saved' ? found : stored,
+        )
+      : (stored ?? found)
+  const last = useRef<{ id: string | undefined; spot: WebSpot } | null>(null)
+  if (current) last.current = { id, spot: current }
+  const spot = current ?? (last.current && last.current.id === id ? last.current.spot : null)
+  const saved = Boolean(spot && state.savedWebSpots.some((s) => sameWebSpot(s, spot)))
   if (!spot)
     return (
       <div className="screen">

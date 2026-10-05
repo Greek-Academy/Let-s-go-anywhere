@@ -18,7 +18,7 @@ import { WebSpotImage, WebSpotStatus, WebSpotSource } from '../components/WebSpo
 export function Saved() {
   const { outings, stations } = useContent()
   const { state, update, toggleEvent, toast, storageProtected } = useApp()
-  const { toggleSaved } = useWebSearch()
+  const { toggleSaved, savedSpots } = useWebSearch()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const current = params.get('type') === 'cars' ? 'cars' : 'events'
@@ -51,8 +51,7 @@ export function Saved() {
             selected={current === 'events'}
             onClick={() => setParams({ type: 'events' }, { replace: true })}
           >
-            お出かけ{' '}
-            <span>{eventList.length + state.links.length + state.savedWebSpots.length}</span>
+            お出かけ <span>{eventList.length + state.links.length + savedSpots.length}</span>
           </Chip>
           <Chip
             selected={current === 'cars'}
@@ -90,12 +89,12 @@ export function Saved() {
                 </article>
               ))}
             </div>
-            {state.savedWebSpots.length > 0 && (
+            {savedSpots.length > 0 && (
               <>
                 <h2 className="saved-subheading">Webで見つけた候補</h2>
                 <p className="small muted">この端末に保存した、内容未確認の候補です。</p>
                 <div className="saved-list">
-                  {state.savedWebSpots.map((spot) => (
+                  {savedSpots.map((spot) => (
                     <div key={spot.id} className="saved-web-spot">
                       <article className="saved-outing">
                         <button
@@ -156,7 +155,7 @@ export function Saved() {
                 ))}
               </>
             )}
-            {eventList.length + state.links.length + state.savedWebSpots.length === 0 && (
+            {eventList.length + state.links.length + savedSpots.length === 0 && (
               <EmptyState
                 icon={Heart}
                 title="最初の「行きたい」を見つけよう"

@@ -3,6 +3,7 @@ import { mkdir, writeFile, unlink, realpath } from 'node:fs/promises'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { createInitialState } from '../../../src/state/model'
+import { parseWebSearchResult } from '../../../src/domain/webSearch'
 const first = 'サンプル01・小さな喫茶店'
 async function enter(page: Page) {
   const s = createInitialState()
@@ -156,4 +157,128 @@ test('Mac内の比較結果・台帳は開発サーバーの直接URLから配�
   } finally {
     await unlink(file)
   }
+})
+
+test('住所表記が違う旧保存を1枚にまとめ、両社の出典・保存解除・好みの変更を維持する', async ({
+  page,
+}) => {
+  const query = { region: '京都府', theme: 'カフェ' }
+  const spots = [
+    {
+      name: '茂庵',
+      area: '左京区 吉田山付近',
+      sourceUrl: 'https://ja.kyoto.travel/tourism/single01.php?category_id=4&tourism_id=2861',
+    },
+    {
+      name: '茂庵',
+      area: '京都市左京区吉田神楽岡町8',
+      sourceUrl: 'https://icotto.jp/presses/18579',
+    },
+  ].map((s, i) => ({
+    ...s,
+    summary: '操作検証用の説明',
+    matchReason: `操作検証用の理由${i}`,
+    verification: 'unconfirmed',
+    tags: ['カフェ', '自然'],
+    recommendations: [
+      {
+        provider: i ? 'anthropic' : 'openai',
+        sourceUrl: s.sourceUrl,
+        reason: `操作検証用の理由${i}`,
+      },
+    ],
+  }))
+  const response = {
+    kind: 'comparison',
+    mode: 'live',
+    query,
+    spots,
+    duplicates: 0,
+    omitted: 0,
+    retrievedAt: '2026-10-05T00:00:00.000Z',
+    reports: ['openai', 'anthropic'].map((provider) => ({
+      provider,
+      model: 'test',
+      state: 'completed',
+      count: 1,
+      omitted: 0,
+      elapsedMs: 1,
+      usage: null,
+      error: null,
+    })),
+  }
+  const old = await parseWebSearchResult(response, query)
+  const state = createInitialState()
+  state.onboarded = true
+  state.savedWebSpots = old.spots.map((s) => ({ ...s, likedFor: ['自然'] }))
+  await page.addInitScript((initial) => {
+    if (!localStorage.getItem('driveplus.mock.v1'))
+      localStorage.setItem('driveplus.mock.v1', JSON.stringify(initial))
+  }, state)
+  let searches = 0
+  await page.route('**/api/spot-search/compare', (r) => {
+    searches++
+    return r.abort()
+  })
+  await page.route('**/api/spot-search/comparison-status', (r) =>
+    r.fulfill({
+      json: {
+        demo: false,
+        configured: true,
+        busy: false,
+        maxAttempts: 1,
+        attempts: [{}],
+        token: 'a'.repeat(64),
+      },
+    }),
+  )
+  await page.route('**/api/spot-search/comparison-result', (r) =>
+    r.fulfill({
+      json: {
+        ...response,
+        spots: [{ ...spots[0], recommendations: spots.flatMap((s) => s.recommendations) }],
+        duplicates: 1,
+      },
+    }),
+  )
+  await page.goto('/#/saved')
+  await expect(page.locator('.saved-web-spot')).toHaveCount(1)
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem('driveplus.mock.v1')!).savedWebSpots.length,
+    ),
+  ).toBe(2)
+  await page.locator('.saved-outing').getByRole('button').first().click()
+  await expect(page.getByRole('heading', { name: 'OpenAIの提案理由' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Claudeの提案理由' })).toBeVisible()
+  await page.getByRole('button', { name: 'このいいねを好み順に使わない', exact: true }).click()
+  expect(
+    await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('driveplus.mock.v1')!).savedWebSpots.map(
+        (s: { likedFor: string[] }) => s.likedFor,
+      ),
+    ),
+  ).toEqual([[], []])
+  await page.getByRole('button', { name: '自然', exact: true }).click()
+  await page.getByRole('navigation').getByRole('button', { name: '見つける', exact: true }).click()
+  await page.getByRole('button', { name: '前回の比較結果を開く（無料）', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(1)
+  await expect(page.getByRole('button', { name: '茂庵を保存解除', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await page.getByRole('button', { name: '好みに寄せたおすすめ', exact: true }).click()
+  await expect(page.locator('.preference-summary')).toContainText('自然（1件）')
+  // An old bookmark still works after the search result has one canonical card.
+  await page.evaluate((id) => {
+    location.hash = `/web-spots/${id}`
+  }, old.spots[1].id)
+  await expect(page.getByRole('heading', { name: 'OpenAIの提案理由' })).toBeVisible()
+  await page.getByRole('button', { name: '行きたいから外す', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '茂庵', exact: true })).toBeVisible()
+  await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
+  await expect(page.locator('.saved-web-spot')).toHaveCount(0)
+  await page.reload()
+  await expect(page.locator('.saved-web-spot')).toHaveCount(0)
+  expect(searches).toBe(0)
 })

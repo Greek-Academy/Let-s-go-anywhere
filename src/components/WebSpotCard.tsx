@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Heart, ImageOff, MapPin, ExternalLink } from 'lucide-react'
 import type { WebSpot } from '../domain/webSearch'
+import { sameWebSpot } from '../domain/webSearch'
 import { useApp } from '../state/AppState'
 import { useWebSearch } from '../state/WebSearchState'
 import { ExternalModal } from './ExternalLinkModal'
@@ -69,7 +70,7 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
   const navigate = useNavigate()
   const { state, storageProtected } = useApp()
   const { toggleSaved } = useWebSearch()
-  const saved = state.savedWebSpots.some((s) => s.id === spot.id)
+  const saved = state.savedWebSpots.some((s) => sameWebSpot(s, spot))
   return (
     <article className="event-card web-spot-card">
       <button
