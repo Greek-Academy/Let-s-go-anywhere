@@ -4823,3 +4823,113 @@ small {
   font-size: 10px;
   pointer-events: none;
 }
+
+/* Two-provider discovery follows the existing soft teal cards and mobile spacing. */
+.web-search-method {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.web-search-method select {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 8px;
+  border: 1px solid #d9e9e2;
+  border-radius: 12px;
+  background: #f5f9f7;
+  color: #365951;
+  font: inherit;
+}
+.recommendation-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 10px 0;
+}
+.recommendation-feedback {
+  border-top: 1px solid #e8efeb;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+.recommendation-feedback .chip {
+  font-size: 11px;
+  min-height: 34px;
+  padding: 7px 10px;
+}
+.recommendation-feedback .text-button {
+  margin-top: 8px;
+  line-height: 1.7;
+  text-align: left;
+}
+.comparison-order {
+  display: flex;
+  gap: 6px;
+  margin: 18px 0 8px;
+}
+.comparison-order .chip {
+  flex: 1;
+  font-size: 12px;
+  padding: 12px 5px;
+  line-height: 1.5;
+  white-space: normal;
+}
+.comparison-providers {
+  margin: 16px 0;
+}
+.comparison-providers .chip {
+  font-size: 12px;
+}
+.preference-summary {
+  background: #edf7f2;
+  color: #38685b;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 10px 0;
+}
+.preference-summary p {
+  margin: 4px 0 0;
+}
+.comparison-explanation,
+.comparison-metrics {
+  background: #f6f8f5;
+  border: 1px solid #e2eae3;
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 10px 0 18px;
+}
+.comparison-explanation summary,
+.comparison-metrics summary {
+  cursor: pointer;
+  color: #396458;
+  font-weight: 600;
+}
+.comparison-metric {
+  border-bottom: 1px solid #dde8e1;
+  padding: 12px 0;
+}
+.comparison-metric h3 {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+.recommendation-reason {
+  border-left: 3px solid #aed8c9;
+  padding: 0 0 0 12px;
+  margin: 16px 0;
+}
+.recommendation-reason h3 {
+  font-size: 13px;
+  color: #4c7166;
+}
+.web-source {
+  overflow-wrap: anywhere;
+  text-align: left;
+  max-width: 100%;
+}

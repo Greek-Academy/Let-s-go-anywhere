@@ -41,6 +41,7 @@ import type { ConditionFilter } from '../domain/tripConditions'
 
 import { ArrivalTeaser } from './Arrival'
 import { EventCard } from '../components/Cards'
+import type { SearchMethod } from '../state/WebSearchState'
 import { useWebSearch } from '../state/WebSearchState'
 import { WebSearchResults } from '../components/WebSearchResults'
 import {
@@ -166,6 +167,7 @@ export function Discover() {
   const now = useContentTime()
   const { state, update } = useApp()
   const web = useWebSearch()
+  const { method: searchMethod, setMethod: setSearchMethod } = web
   const navigate = useNavigate()
   const [conditionsOpen, setConditionsOpen] = useState(false)
   const [sns, setSns] = useState(false)
@@ -262,7 +264,7 @@ export function Discover() {
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            void web.search({ region: selectedRegion, theme: search, category, tag })
+            void web.search({ region: selectedRegion, theme: search, category, tag }, searchMethod)
           }}
         >
           <div className="discover-search-row">
@@ -283,6 +285,18 @@ export function Discover() {
               onClick={() => setFilter(true)}
             />
           </div>
+          <label className="web-search-method">
+            探し方
+            <select
+              aria-label="検索方法"
+              value={searchMethod}
+              onChange={(e) => setSearchMethod(e.target.value as SearchMethod)}
+              disabled={web.loading}
+            >
+              <option value="comparison">OpenAI・Claudeで比較</option>
+              <option value="legacy">京都市の公式観光サイト（従来の検索）</option>
+            </select>
+          </label>
           <PrimaryButton
             type="submit"
             icon={Search}
@@ -292,8 +306,20 @@ export function Discover() {
             {web.loading ? '候補を探しています…' : 'Webで候補を探す'}
           </PrimaryButton>
           <p className="small muted web-search-hint">
-            京都府内のうち京都市の常設スポットが対象です。実検索ではAPIを1回利用します。
+            {searchMethod === 'comparison'
+              ? 'お店・常設スポットを2社で調べます。合計15〜20件が目標です。比較はまず1回、各社API1回・Web検索最大2回。'
+              : '京都府内のうち京都市の常設スポットが対象です。実検索ではAPIを1回利用します。'}
           </p>
+          {searchMethod === 'comparison' && (
+            <button
+              type="button"
+              className="text-button centered"
+              disabled={web.loading}
+              onClick={() => void web.restoreComparison()}
+            >
+              前回の比較結果を開く（無料）
+            </button>
+          )}
         </form>
         <button
           className="condition-edit-button discovery-conditions"

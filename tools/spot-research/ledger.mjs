@@ -12,7 +12,8 @@ import { randomUUID } from 'node:crypto'
 import { MAX_ATTEMPTS, PilotError } from './core.mjs'
 
 export class Ledger {
-  constructor(directory) {
+  constructor(directory, maxAttempts = MAX_ATTEMPTS) {
+    this.maxAttempts = maxAttempts
     this.directory = directory
     this.file = join(directory, 'usage.json')
   }
@@ -22,7 +23,7 @@ export class Ledger {
       if (
         value.version !== 1 ||
         !Array.isArray(value.attempts) ||
-        value.attempts.length > MAX_ATTEMPTS ||
+        value.attempts.length > this.maxAttempts ||
         !value.attempts.every(
           (a) => typeof a.id === 'string' && ['reserved', 'completed', 'failed'].includes(a.state),
         )
@@ -65,10 +66,10 @@ export class Ledger {
   }
   reserve() {
     return this.update((data) => {
-      if (data.attempts.length >= MAX_ATTEMPTS)
+      if (data.attempts.length >= this.maxAttempts)
         throw new PilotError(
           'limit',
-          '今回の実検索は3回までです。結果を確認してから次の検証を決めます。',
+          `今回の実検索は${this.maxAttempts}回までです。結果を確認してから次の検証を決めます。`,
           429,
         )
       const id = randomUUID()

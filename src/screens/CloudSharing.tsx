@@ -1,3 +1,4 @@
+import { groupPlaces } from '../domain/placeIdentity'
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Check, Copy, Heart, Link2, Plus, RefreshCw, Settings, Share2, Users } from 'lucide-react'
@@ -1096,7 +1097,7 @@ function AddCloudCandidate({
     [inputError, setInputError] = useState('')
   const options = [
     ...outings.filter((o) => state.savedEvents.includes(o.id)).map((o) => fromOuting(o)),
-    ...state.savedWebSpots.map(fromWebSpot),
+    ...groupPlaces(state.savedWebSpots).map(fromWebSpot),
     ...state.links.map((l) => fromLink(l)),
   ]
   return (

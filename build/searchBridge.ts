@@ -15,9 +15,13 @@ export function searchBridge(port = 4181): Plugin {
     const host = req.headers.host ?? ''
     if (!/^(localhost|127\.0\.0\.1):\d+$/.test(host))
       return send(403, { error: 'Web検索はMacのlocalhostから確認してください。' })
-    if (path !== '/api/spot-search/status' && path !== '/api/spot-search/search')
+    const endpoint = path?.replace('/api/spot-search/', '')
+    if (
+      !endpoint ||
+      !['status', 'search', 'comparison-status', 'comparison-result', 'compare'].includes(endpoint)
+    )
       return send(404, { error: '見つかりません。' })
-    const search = path.endsWith('/search')
+    const search = ['search', 'compare'].includes(endpoint)
     if (req.method !== (search ? 'POST' : 'GET'))
       return send(405, { error: 'この操作は利用できません。' })
     if (
@@ -38,7 +42,7 @@ export function searchBridge(port = 4181): Plugin {
         }
         body = Buffer.concat(chunks).toString('utf8')
       }
-      const response = await fetch(`${backend}/api/${search ? 'search' : 'status'}`, {
+      const response = await fetch(`${backend}/api/${endpoint}`, {
         method: req.method,
         headers: search
           ? {
@@ -49,7 +53,12 @@ export function searchBridge(port = 4181): Plugin {
                   ? req.headers['x-pilot-token']
                   : '',
             }
-          : {},
+          : {
+              'X-Pilot-Token':
+                typeof req.headers['x-pilot-token'] === 'string'
+                  ? req.headers['x-pilot-token']
+                  : '',
+            },
         body,
         redirect: 'error',
         signal: AbortSignal.timeout(125_000),

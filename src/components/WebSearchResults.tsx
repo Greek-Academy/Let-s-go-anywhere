@@ -1,3 +1,4 @@
+import { ComparisonResults } from './ComparisonResults'
 import { useWebSearch } from '../state/WebSearchState'
 import { useApp } from '../state/AppState'
 import { WebSpotCard } from './WebSpotCard'
@@ -18,7 +19,7 @@ export function WebSearchResults({
   const { state } = useApp()
   const changed =
     result &&
-    (region !== '京都府' ||
+    ((result.kind === 'comparison' ? region !== result.query.region : region !== '京都府') ||
       theme.trim() !== result.query.theme ||
       !['おすすめ', 'スポット'].includes(category) ||
       !!tag)
@@ -44,7 +45,7 @@ export function WebSearchResults({
         <p className="small muted">
           {status.demo
             ? '架空サンプルで接続を確認中です。実検索・API費用は発生しません。'
-            : `実検索 ${status.attempts.length} / ${status.maxAttempts} 回。再読み込み・保存・詳細表示では検索しません。`}
+            : `${status.kind === 'comparison' ? '比較検索' : '実検索'} ${status.attempts.length} / ${status.maxAttempts} 回。再読み込み・保存・詳細表示では検索しません。`}
         </p>
       )}
       <p className="small muted">
@@ -60,7 +61,9 @@ export function WebSearchResults({
               入力条件が変わっています。下は前回の検索結果です。新しい条件を検索ボタンで送信してください。
             </p>
           )}
-          {result.spots.length ? (
+          {result.kind === 'comparison' ? (
+            <ComparisonResults result={result} />
+          ) : result.spots.length ? (
             <>
               <SectionHeading
                 title={`${result.spots.length}件の候補が見つかりました`}

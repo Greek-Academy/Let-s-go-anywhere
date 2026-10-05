@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import { privateDevelopmentFiles } from './build/privateFiles.ts'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -20,6 +21,7 @@ export default defineConfig(({ command }) => ({
     },
   },
   server: {
+    fs: { deny: privateDevelopmentFiles },
     host: '127.0.0.1',
     port: 4180,
     strictPort: true,

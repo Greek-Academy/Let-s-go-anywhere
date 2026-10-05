@@ -42,6 +42,7 @@ async function enter(page: Page, region = '京都府') {
       localStorage.setItem('driveplus.mock.v1', JSON.stringify(state))
   }, initial)
   await page.goto('/#/discover')
+  await page.getByLabel('検索方法', { exact: true }).selectOption('legacy')
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill(query.theme)
 }
 test.afterEach(async ({ page }, info) => {
@@ -78,6 +79,7 @@ test('実サーバーの無料モードを経由し、出典・保存・詳細�
   await expect(page.getByText('情報の確認日ではありません', { exact: false })).toBeVisible()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(3)
+  await expect(page.getByLabel('検索方法', { exact: true })).toHaveValue('legacy')
   await expect(page.getByRole('textbox', { name: 'お出かけを検索' })).toHaveValue(query.theme)
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Webで見つけた候補' })).toBeVisible()

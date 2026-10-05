@@ -1,3 +1,4 @@
+import { groupPlaces } from '../domain/placeIdentity'
 import { useEffect, useState } from 'react'
 import { firebasePilot } from '../firebase/config'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -423,7 +424,7 @@ function AddSharedCandidate({ listId, onClose }: { listId: string; onClose: () =
                 state.savedEvents.includes(o.id) && evaluateOuting(o, now).state !== 'withdrawn',
             )
             .map((o) => fromOuting(o, now)),
-          ...state.savedWebSpots.map(fromWebSpot),
+          ...groupPlaces(state.savedWebSpots).map(fromWebSpot),
           ...state.links.map((l) => fromLink(l)),
         ]
       : []

@@ -18,6 +18,7 @@ import {
   SOURCE_DOMAINS,
 } from './core.mjs'
 import { Ledger } from './ledger.mjs'
+import { createComparison } from '../spot-comparison/service.mjs'
 import { sampleResponse } from './sample.mjs'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
@@ -30,12 +31,21 @@ const assets = new Map([
 export function createPilot({
   demo = false,
   apiKey = '',
+  anthropicApiKey = '',
   directory = resolve(root, '.local-research'),
   fetcher = fetch,
   timeoutMs = 120_000,
 } = {}) {
   const token = randomBytes(32).toString('hex')
   const ledger = new Ledger(directory)
+  const comparison = createComparison({
+    demo,
+    apiKey,
+    anthropicApiKey,
+    directory: resolve(directory, 'comparison-v1'),
+    fetcher,
+    timeoutMs,
+  })
   let busy = false
   const server = createServer(async (req, res) => {
     const origin = `http://127.0.0.1:${server.address().port}`
@@ -75,7 +85,14 @@ export function createPilot({
           attempts: demo ? [] : ledger.read().attempts,
         })
       }
-      if (req.method !== 'POST' || path !== '/api/search')
+      if (req.method === 'GET' && path === '/api/comparison-status')
+        return send(200, { ...comparison.status(), token })
+      if (req.method === 'GET' && path === '/api/comparison-result') {
+        if (req.headers['x-pilot-token'] !== token)
+          throw new PilotError('origin', '検証画面を開き直してください。', 403)
+        return send(200, comparison.lastResult())
+      }
+      if (req.method !== 'POST' || !['/api/search', '/api/compare'].includes(path))
         return send(404, { error: '見つかりません。' })
       if (
         req.headers.origin !== origin ||
@@ -97,6 +114,7 @@ export function createPilot({
       } catch {
         throw new PilotError('input', '入力を読み取れませんでした。')
       }
+      if (path === '/api/compare') return send(200, await comparison.search(input))
       const query = validateQuery(input)
       if (!demo && !apiKey)
         throw new PilotError(
@@ -178,17 +196,17 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const port = portIndex >= 0 ? Number(process.argv[portIndex + 1]) : 4181
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid port')
   let apiKey = ''
+  let anthropicApiKey = ''
   if (!demo) {
     try {
-      apiKey =
-        parseEnv(
-          readFileSync(resolve(root, '.env.research.local'), 'utf8'),
-        ).OPENAI_API_KEY?.trim() ?? ''
+      const env = parseEnv(readFileSync(resolve(root, '.env.research.local'), 'utf8'))
+      apiKey = env.OPENAI_API_KEY?.trim() ?? ''
+      anthropicApiKey = env.ANTHROPIC_API_KEY?.trim() ?? ''
     } catch (error) {
       if (error.code !== 'ENOENT') throw new Error('Cannot read local key file')
     }
   }
-  createPilot({ demo, apiKey }).listen(port, '127.0.0.1', () => {
+  createPilot({ demo, apiKey, anthropicApiKey }).listen(port, '127.0.0.1', () => {
     console.log(
       `Drive+ ${demo ? '架空サンプル（通信なし）' : '実検索の検証'}: http://127.0.0.1:${port}`,
     )
