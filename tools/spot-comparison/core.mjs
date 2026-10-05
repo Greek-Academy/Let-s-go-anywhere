@@ -145,6 +145,31 @@ export function comparisonUsage(provider, response) {
   }
 }
 
+function parseCandidateJson(raw, provider) {
+  const text = raw.trim()
+  // Claude can return a short preamble before its final fenced JSON, despite
+  // the instruction. Accept one complete block, never guess between payloads
+  // or repair malformed/truncated JSON with another model request.
+  if (provider === 'anthropic' && !text.startsWith('{')) {
+    const blocks = [...text.matchAll(/(?:^|\n)```(?:json)?[ \t]*\r?\n([\s\S]*?)\r?\n```/gu)]
+    if (blocks.length !== 1) throw new Error('Expected one JSON block')
+    const block = blocks[0]
+    const before = text.slice(0, block.index)
+    const after = text.slice(block.index + block[0].length)
+    if (/[{}]/u.test(before) || before.includes('```') || after.trim())
+      throw new Error('Ambiguous JSON answer')
+    return JSON.parse(block[1])
+  }
+  return JSON.parse(text)
+}
+
+function candidateText(value) {
+  if (typeof value !== 'string') return value
+  // These are presentation markers, not proof of a source. The exact public
+  // sourceUrl must still match the provider's web-search results below.
+  return value.replace(/<cite index=["']\d+-\d+["']>|<\/cite>/gu, '').trim()
+}
+
 export function parseComparisonResponse(provider, response) {
   let raw = '',
     searched = false
@@ -195,12 +220,7 @@ export function parseComparisonResponse(provider, response) {
   if (!searched) throw new PilotError('no_search', 'Web検索の実行を確認できませんでした。', 502)
   let parsed
   try {
-    parsed = JSON.parse(
-      raw
-        .trim()
-        .replace(/^```(?:json)?\s*/u, '')
-        .replace(/\s*```$/u, ''),
-    )
+    parsed = parseCandidateJson(raw, provider)
     if (!Array.isArray(parsed.spots) || parsed.spots.length > 10) throw new Error()
   } catch {
     throw new PilotError(
@@ -212,14 +232,18 @@ export function parseComparisonResponse(provider, response) {
   const spots = []
   for (const s of parsed.spots) {
     const url = sourceUrl(s?.sourceUrl)
+    const fields = Object.fromEntries(
+      ['name', 'area', 'summary', 'matchReason'].map((key) => [key, candidateText(s?.[key])]),
+    )
     if (
       !s ||
       !['name', 'area', 'summary', 'matchReason'].every(
         (k) =>
-          typeof s[k] === 'string' &&
-          s[k].trim() &&
-          s[k].length <= 300 &&
-          !/[\u0000-\u001f\u007f]/u.test(s[k]),
+          typeof fields[k] === 'string' &&
+          fields[k] &&
+          fields[k].length <= 300 &&
+          !/[\u0000-\u001f\u007f]/u.test(fields[k]) &&
+          !/<\/?[a-z]/iu.test(fields[k]),
       ) ||
       !url ||
       !sources.has(url) ||
@@ -229,14 +253,11 @@ export function parseComparisonResponse(provider, response) {
     )
       continue
     spots.push({
-      name: s.name.trim(),
-      area: s.area.trim(),
-      summary: s.summary.trim(),
-      matchReason: s.matchReason.trim(),
+      ...fields,
       sourceUrl: url,
       tags: [...new Set(s.tags)],
       verification: 'unconfirmed',
-      recommendations: [{ provider, sourceUrl: url, reason: s.matchReason.trim() }],
+      recommendations: [{ provider, sourceUrl: url, reason: fields.matchReason }],
     })
   }
   return { spots, omitted: parsed.spots.length - spots.length }

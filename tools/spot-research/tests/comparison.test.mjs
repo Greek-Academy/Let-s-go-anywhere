@@ -92,6 +92,38 @@ test('Claude pause_turn, search errors and invalid JSON fail without continuing;
   original.content[2].text = '```json\n{"spots":[]}\n```'
   assert.deepEqual(parseComparisonResponse('anthropic', original), { spots: [], omitted: 0 })
 })
+test('Claude preamble and inline citation markers are parsed locally, retaining source validation', () => {
+  const response = comparisonSample('anthropic', query)
+  const data = JSON.parse(response.content[2].text)
+  data.spots[0].summary = '<cite index="1-2">架空の庭に面したカフェ</cite>。'
+  data.spots[1].sourceUrl = 'https://invented-shop.example.com/unverified'
+  response.content[2].text = `候補をまとめました。\n\n\`\`\`json\n${JSON.stringify(data)}\n\`\`\``
+  const result = parseComparisonResponse('anthropic', response)
+  assert.equal(result.spots.length, 9)
+  assert.equal(result.omitted, 1)
+  assert.equal(result.spots[0].summary, '架空の庭に面したカフェ。')
+  assert.equal(result.spots[0].sourceUrl, data.spots[0].sourceUrl)
+  assert.equal(result.spots[0].verification, 'unconfirmed')
+})
+test('Claude malformed, multiple or ambiguous blocks fail; arbitrary markup is not displayed', () => {
+  const response = comparisonSample('anthropic', query)
+  for (const text of [
+    '説明\n```json\n{"spots": [}\n```',
+    '```json\n{"spots": []}\n```\n```json\n{"spots": []}\n```',
+    '{"spots": []}\n```json\n{"spots": []}\n```',
+    '```json\n{"spots": []}\n```\n追加のJSON: {"spots": []}',
+  ]) {
+    response.content[2].text = text
+    assert.throws(() => parseComparisonResponse('anthropic', response), /回答形式/)
+  }
+  const clean = comparisonSample('anthropic', query)
+  const data = JSON.parse(clean.content[2].text)
+  data.spots[0].summary = '<script>unexpected markup</script>'
+  clean.content[2].text = JSON.stringify(data)
+  const parsed = parseComparisonResponse('anthropic', clean)
+  assert.equal(parsed.spots.length, 9)
+  assert.equal(parsed.omitted, 1)
+})
 test('combine preserves both reasons, keeps same-page different shops and distinct branches', () => {
   const results = ['openai', 'anthropic'].map((p) =>
     parseComparisonResponse(p, comparisonSample(p, query)),
