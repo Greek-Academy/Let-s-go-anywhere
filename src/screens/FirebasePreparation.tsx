@@ -165,7 +165,11 @@ export default function FirebasePreparation({
             </h1>
             <aside className="sharing-demo">
               <strong>
-                {firebasePilot?.mode === 'emulator' ? 'ローカル接続テスト' : 'Firebase接続の検証版'}
+                {firebasePilot?.mode === 'emulator'
+                  ? 'ローカル接続テスト'
+                  : purpose === 'search'
+                    ? '招待された方のAI検索テスト'
+                    : 'Firebase接続の検証版'}
               </strong>
               <p>
                 {purpose === 'search'
