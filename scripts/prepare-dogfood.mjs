@@ -29,12 +29,15 @@ if (
 
 const privateDir = resolve('.local-research/public-search')
 mkdirSync(privateDir, { recursive: true, mode: 0o700 })
-const codePath = resolve(privateDir, 'participation-code.txt')
+const sourcePrivateDir = resolve(source, '.local-research/public-search')
+mkdirSync(sourcePrivateDir, { recursive: true, mode: 0o700 })
+const codePath = resolve(sourcePrivateDir, 'participation-code.txt')
 if (!existsSync(codePath))
   writeFileSync(codePath, randomBytes(32).toString('base64url') + '\n', { mode: 0o600, flag: 'wx' })
 const code = readFileSync(codePath, 'utf8').trim()
 if (!/^[A-Za-z0-9_-]{43}$/.test(code))
   throw new Error('Invalid saved participation code. Do not silently replace it.')
+writeFileSync(resolve(privateDir, 'participation-code.txt'), code + '\n', { mode: 0o600 })
 writeFileSync(
   resolve(privateDir, 'secrets.json'),
   JSON.stringify({

@@ -58,7 +58,7 @@ DRIVEPLUS_SEARCH_ORIGIN=https://driveplus-search-pilot.実際のサブドメイ�
 npm run dogfood:prepare -- /Users/seyamayoshihiko/Desktop/letsgoanywhere
 ```
 
-設定元には `.env.dogfood.local` も必要です。接続設定・Secret用JSON・参加コードはGit対象外で作られます。既存の参加コードは再利用し、勝手に再発行しません。`tools/public-search/wrangler.local.json` は初期状態で検索停止です。
+設定元には `.env.dogfood.local` も必要です。接続設定・Secret用JSON・参加コードはGit対象外で作られます。参加コードの原本は設定元ディレクトリの `.local-research/public-search/participation-code.txt` に置きます。別の作業ブランチでもこの原本を再利用し、勝手に再発行しません。`tools/public-search/wrangler.local.json` は初期状態で検索停止です。
 
 ```bash
 npx wrangler d1 migrations apply driveplus-search-pilot --remote --config tools/public-search/wrangler.local.json
