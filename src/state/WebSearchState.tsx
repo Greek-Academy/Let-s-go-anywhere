@@ -187,9 +187,11 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       setStatus(config)
       if (!config.configured)
         throw new Error(
-          method === 'comparison'
-            ? '比較検索にはOpenAI・Anthropic両方のAPIキーが必要です。Macの .env.research.local を設定して検索サーバーを再起動してください。'
-            : 'APIキーが未設定です。Macの .env.research.local を設定して検索サーバーを再起動してください。',
+          publicSearchOrigin
+            ? '検索サービスの接続準備中です。案内した担当者にお知らせください。'
+            : method === 'comparison'
+              ? '比較検索にはOpenAI・Anthropic両方のAPIキーが必要です。Macの .env.research.local を設定して検索サーバーを再起動してください。'
+              : 'APIキーが未設定です。Macの .env.research.local を設定して検索サーバーを再起動してください。',
         )
       if (publicSearchOrigin && config.enabled === false)
         throw new Error('新しい検索は現在停止しています。前回の結果は開けます。')
