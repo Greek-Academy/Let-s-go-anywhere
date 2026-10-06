@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import { resolvePublicSearch } from './build/publicSearch.ts'
 import { privateDevelopmentFiles } from './build/privateFiles.ts'
 import { searchBridge } from './build/searchBridge.ts'
 import { previewCsp, resolvePreviewConfig } from './build/preview.ts'
@@ -25,16 +26,23 @@ export default defineConfig(({ mode, command }) => {
     ),
   }
   const firebase = resolveFirebasePilot(mode, environment)
-  const csp = firebase
-    ? previewCsp.replace('connect-src ', `connect-src ${firebaseConnectSources(firebase)} `)
+  const publicSearch = resolvePublicSearch(mode, environment)
+  const searchCsp = publicSearch
+    ? previewCsp.replace('connect-src ', `connect-src ${publicSearch} `)
     : previewCsp
+  const csp = firebase
+    ? searchCsp.replace('connect-src ', `connect-src ${firebaseConnectSources(firebase)} `)
+    : searchCsp
   const config = resolvePreviewConfig({
     ...environment,
   })
   return {
     // No arbitrary VITE_* values are exposed to browser code. This preview needs no API keys.
     envPrefix: 'DRIVEPLUS_PUBLIC_',
-    define: { __FIREBASE_PILOT__: JSON.stringify(firebase) },
+    define: {
+      __FIREBASE_PILOT__: JSON.stringify(firebase),
+      __PUBLIC_SEARCH_ORIGIN__: JSON.stringify(publicSearch),
+    },
     build: {
       sourcemap: false,
       outDir: firebase
@@ -82,6 +90,7 @@ export default defineConfig(({ mode, command }) => {
                   schemaVersion: 1,
                   ...config,
                   ...(firebase ? { cloudPilot: firebase.mode } : {}),
+                  ...(publicSearch ? { publicSearchOrigin: publicSearch } : {}),
                   ...revision(),
                   builtAt: new Date().toISOString(),
                 },

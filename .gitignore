@@ -33,3 +33,11 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 .firebase/
+
+# Local Worker build, emulation state, and secrets.
+.worker-build/
+.wrangler/
+.dev.vars*
+wrangler.local.json
+dogfood-test-results/
+dogfood-playwright-report/

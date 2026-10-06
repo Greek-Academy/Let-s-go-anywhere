@@ -1,3 +1,4 @@
+import { publicSearchOrigin } from '../domain/publicSearchConfig'
 import { ShareCandidateButton } from '../sharing/components'
 import { fromOuting } from '../sharing/candidates'
 import { ExternalModal } from '../components/ExternalLinkModal'
@@ -261,6 +262,19 @@ export function Discover() {
               ? '地域で絞り込まずに表示します。'
               : '出発エリアとは別に、目的地の地域を指定しています。'}
         </p>
+        {publicSearchOrigin && (
+          <div className="notice">
+            <strong>招待された方のAI検索テスト</strong>
+            <p>1人1回・全員で3回まで。ログインと参加コードが必要です。</p>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => navigate('/search/access')}
+            >
+              AI検索の参加・ログイン
+            </button>
+          </div>
+        )}
         <form
           onSubmit={(event) => {
             event.preventDefault()
@@ -294,7 +308,9 @@ export function Discover() {
               disabled={web.loading}
             >
               <option value="comparison">OpenAI・Claudeで比較</option>
-              <option value="legacy">京都市の公式観光サイト（従来の検索）</option>
+              {!publicSearchOrigin && (
+                <option value="legacy">京都市の公式観光サイト（従来の検索）</option>
+              )}
             </select>
           </label>
           <PrimaryButton
@@ -307,7 +323,9 @@ export function Discover() {
           </PrimaryButton>
           <p className="small muted web-search-hint">
             {searchMethod === 'comparison'
-              ? 'お店・常設スポットを2社で調べます。合計15〜20件が目標です。比較はまず1回、各社API1回・Web検索最大2回。'
+              ? publicSearchOrigin
+                ? '地域・希望を2社へ送信して調べます。1人1回・全員で3回まで。失敗も回数に含み、再表示は無料です。'
+                : 'お店・常設スポットを2社で調べます。合計15〜20件が目標です。比較はまず1回、各社API1回・Web検索最大2回。'
               : '京都府内のうち京都市の常設スポットが対象です。実検索ではAPIを1回利用します。'}
           </p>
           {searchMethod === 'comparison' && (

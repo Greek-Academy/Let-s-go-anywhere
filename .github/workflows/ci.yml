@@ -41,6 +41,15 @@ jobs:
       - name: Install Japanese fonts
         run: sudo apt-get install --no-install-recommends -y fonts-noto-cjk
       - run: npm run test:firebase:ui
+      - run: npm run test:dogfood
+      - name: Upload public test browser report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dogfood-report
+          path: dogfood-playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Upload Firebase pilot browser report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -89,6 +98,9 @@ jobs:
 
       - name: Validate national station import guards (offline)
         run: node --test scripts/import-stations.test.mjs
+
+      - name: Test public search limits with local D1 and fake providers
+        run: npm run test:public-search
 
       - name: Test search pilot with fake provider only
         run: npm run test:research
