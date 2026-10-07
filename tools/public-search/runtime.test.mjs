@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare'
 import { comparisonSample } from '../spot-comparison/sample.mjs'
 
-test('built Worker runs with real local D1 and never exceeds three slots across concurrent requests', async () => {
+test('built Worker runs with real local D1 and allows repeat searches across web and native while preserving account isolation', async () => {
   let paid = 0
   const code = 'T'.repeat(43)
   const mf = new Miniflare(
@@ -52,6 +52,11 @@ test('built Worker runs with real local D1 and never exceeds three slots across 
         ' ',
       ),
     )
+    await db.exec(
+      readFileSync(new URL('./migrations/0002_repeat_search.sql', import.meta.url), 'utf8')
+        .replace(/--[^\n]*/g, '')
+        .replaceAll('\n', ' '),
+    )
     const send = (uid, path = 'compare', origin = 'https://driveplus-fbc33.web.app') => {
       const claims = {
         sub: uid,
@@ -85,21 +90,21 @@ test('built Worker runs with real local D1 and never exceeds three slots across 
     const successes = results.flatMap((r, i) => (r.status === 200 ? [i] : []))
     assert.equal(
       successes.length,
-      3,
+      8,
       JSON.stringify(
         await Promise.all(
           results.map(async (r) => ({ status: r.status, body: await r.clone().text() })),
         ),
       ),
     )
-    assert.equal(results.filter((r) => r.status === 429).length, 5)
-    assert.equal(paid, 6)
+    assert.equal(results.filter((r) => r.status === 429).length, 0)
+    assert.equal(paid, 16)
     const owner = `user${successes[0]}`
     assert.equal((await (await send(owner, 'comparison-result')).json()).spots.length, 18)
     assert.equal(await (await send('outsider', 'comparison-result')).json(), null)
-    assert.equal((await send(owner)).status, 429)
-    assert.equal((await send(owner, 'compare', 'capacitor://localhost')).status, 429)
-    assert.equal(paid, 6)
+    assert.equal((await send(owner)).status, 200)
+    assert.equal((await send(owner, 'compare', 'capacitor://localhost')).status, 200)
+    assert.equal(paid, 20)
   } finally {
     await mf.dispose()
   }

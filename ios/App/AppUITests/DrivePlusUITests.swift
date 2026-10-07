@@ -5,6 +5,50 @@ import CoreLocation
 /// Run on a dedicated simulator; this flow changes sample data.
 final class DrivePlusUITests: XCTestCase {
 
+    /// Dedicated simulator, Firebase build; stays signed out and never calls a paid API.
+    @MainActor
+    func testGenreSearchControls() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let exact = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            let button = exact.exists ? exact : controls.matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
+            for _ in 0..<12 {
+                if button.isHittable { break }
+                web.swipeUp()
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("見つける")
+        tap("探す地域を変更")
+        tap("出発エリアと同じ都道府県")
+        tap("この地域で探す")
+        tap("お出かけの絞り込み")
+        tap("自然")
+        tap("この条件で表示")
+        XCTAssertTrue(web.staticTexts["Web検索の希望：自然"].waitForExistence(timeout: 10))
+        tap("Webで候補を探す")
+        let loginRequired = web.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "メール確認と参加コードの入力をしてください")).firstMatch
+        XCTAssertTrue(loginRequired.waitForExistence(timeout: 15), "Genre-only input must pass validation and reach the login guard")
+        for _ in 0..<3 { web.swipeDown() }
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "genre-only-native"
+        shot.lifetime = .keepAlways
+        add(shot)
+        tap("学ぶ")
+        tap("見つける")
+    }
+
     /// Bundled Firebase/AI-search build. Does not log in or spend a search attempt.
     @MainActor
     func testPublicSearchLoginEntry() throws {

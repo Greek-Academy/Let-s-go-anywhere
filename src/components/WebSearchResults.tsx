@@ -1,3 +1,4 @@
+import { searchTheme } from '../domain/searchTheme'
 import { ComparisonResults } from './ComparisonResults'
 import { useWebSearch } from '../state/WebSearchState'
 import { useApp } from '../state/AppState'
@@ -20,9 +21,8 @@ export function WebSearchResults({
   const changed =
     result &&
     ((result.kind === 'comparison' ? region !== result.query.region : region !== '京都府') ||
-      theme.trim() !== result.query.theme ||
-      !['おすすめ', 'スポット'].includes(category) ||
-      !!tag)
+      searchTheme(theme, tag) !== result.query.theme ||
+      !['おすすめ', 'スポット'].includes(category))
   return (
     <section className="web-search-results" aria-label="Web検索の結果" aria-busy={loading}>
       <div className="web-result-heading">
@@ -45,7 +45,9 @@ export function WebSearchResults({
         <p className="small muted">
           {status.demo
             ? '架空サンプルで接続を確認中です。実検索・API費用は発生しません。'
-            : `${status.kind === 'comparison' ? '比較検索' : '実検索'} ${status.attempts.length} / ${status.maxAttempts} 回。再読み込み・保存・詳細表示では検索しません。`}
+            : status.maxAttempts === null
+              ? `これまでの検索：${status.attemptCount}回。回数上限なし。新しい検索にはAPI料金がかかります。`
+              : `${status.kind === 'comparison' ? '比較検索' : '実検索'} ${status.attempts.length} / ${status.maxAttempts} 回。再読み込み・保存・詳細表示では検索しません。`}
         </p>
       )}
       <p className="small muted">

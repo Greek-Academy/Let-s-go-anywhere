@@ -2,7 +2,7 @@ import { PilotError } from '../spot-research/core.mjs'
 import { validateComparisonQuery } from '../spot-comparison/core.mjs'
 import { runComparison } from '../spot-comparison/providers.mjs'
 
-export const GLOBAL_LIMIT = 3
+const SEARCH_LEASE = 130_000
 const TTL = 7 * 24 * 60 * 60 * 1000
 const PROJECT = 'driveplus-fbc33'
 const ORIGINS = new Set([
@@ -156,26 +156,26 @@ export function createPublicSearch({ fetcher = fetch, now = Date.now } = {}) {
         const time = now()
         const owner = await authenticate(request, env, fetcher, time)
         await env.DB.prepare(
-          'UPDATE attempts SET result = NULL WHERE result IS NOT NULL AND created_at <= ?',
+          'UPDATE attempts SET result = NULL WHERE result IS NOT NULL AND result_created_at <= ?',
         )
           .bind(time - TTL)
           .run()
         const attempt = await env.DB.prepare(
-          'SELECT created_at, state, result FROM attempts WHERE owner = ?',
+          'SELECT created_at, state, result, attempt_count FROM attempts WHERE owner = ?',
         )
           .bind(owner)
           .first()
         if (url.pathname.endsWith('/comparison-status')) {
-          const count = await env.DB.prepare('SELECT COUNT(*) AS count FROM attempts').first()
           return json({
             kind: 'comparison',
             demo: false,
             configured: Boolean(env.OPENAI_API_KEY && env.ANTHROPIC_API_KEY),
             enabled: env.SEARCH_ENABLED === 'true',
-            busy: attempt?.state === 'reserved' && time - attempt.created_at < 130_000,
-            maxAttempts: 1,
+            busy: attempt?.state === 'reserved' && time - attempt.created_at < SEARCH_LEASE,
+            maxAttempts: null,
+            attemptCount: attempt?.attempt_count ?? 0,
             attempts: attempt ? [{ state: attempt.state }] : [],
-            globalRemaining: Math.max(0, GLOBAL_LIMIT - count.count),
+            globalRemaining: null,
             hasResult: Boolean(attempt?.result),
           })
         }
@@ -190,20 +190,21 @@ export function createPublicSearch({ fetcher = fetch, now = Date.now } = {}) {
         if (!request.headers.get('Content-Type')?.startsWith('application/json'))
           throw new PilotError('type', '入力形式を確認してください。', 415)
         const query = validateComparisonQuery(await limitedJson(request, 2048))
-        // One SQLite statement: global check + reservation are atomic across Worker instances.
+        // Atomically acquire one in-flight request per account; sequential searches have no cap.
+        // Keep the last restorable result and its original expiry while the new request runs.
         const reserved = await env.DB.prepare(
-          `INSERT INTO attempts (owner, request_id, created_at, state)
-          SELECT ?, ?, ?, 'reserved' WHERE (SELECT COUNT(*) FROM attempts) < ?
-          ON CONFLICT(owner) DO NOTHING RETURNING request_id`,
+          `INSERT INTO attempts (owner, request_id, created_at, state, attempt_count)
+          VALUES (?, ?, ?, 'reserved', 1)
+          ON CONFLICT(owner) DO UPDATE SET
+            request_id = excluded.request_id, created_at = excluded.created_at,
+            state = 'reserved', attempt_count = attempts.attempt_count + 1
+          WHERE attempts.state != 'reserved' OR attempts.created_at <= ?
+          RETURNING request_id`,
         )
-          .bind(owner, crypto.randomUUID(), time, GLOBAL_LIMIT)
+          .bind(owner, crypto.randomUUID(), time, time - SEARCH_LEASE)
           .first()
         if (!reserved)
-          throw new PilotError(
-            'limit',
-            '今回は1人1回・全員で3回までです。前回の比較結果は無料で開けます。',
-            429,
-          )
+          throw new PilotError('busy', '別の検索を実行中です。完了してから操作してください。', 409)
         let result
         try {
           result = await runComparison({
@@ -220,20 +221,33 @@ export function createPublicSearch({ fetcher = fetch, now = Date.now } = {}) {
             },
           })
         } catch {
-          await env.DB.prepare("UPDATE attempts SET state = 'failed' WHERE owner = ?")
-            .bind(owner)
+          await env.DB.prepare(
+            "UPDATE attempts SET state = 'failed' WHERE owner = ? AND request_id = ?",
+          )
+            .bind(owner, reserved.request_id)
             .run()
           throw new PilotError(
             'failed',
-            '検索を完了できませんでした。回数は消費済みです。自動の再検索はしません。',
+            '検索を完了できませんでした。料金が発生する場合があります。自動の再検索はしません。',
             502,
           )
         }
         const state = result.reports.every((r) => r.state === 'completed') ? 'completed' : 'failed'
         await env.DB.prepare(
-          'UPDATE attempts SET state = ?, result = ? WHERE owner = ? AND request_id = ?',
+          `UPDATE attempts SET state = ?,
+           result = CASE WHEN ? THEN ? ELSE result END,
+           result_created_at = CASE WHEN ? THEN ? ELSE result_created_at END
+           WHERE owner = ? AND request_id = ?`,
         )
-          .bind(state, JSON.stringify(result), owner, reserved.request_id)
+          .bind(
+            state,
+            result.spots.length > 0 ? 1 : 0,
+            JSON.stringify(result),
+            result.spots.length > 0 ? 1 : 0,
+            time,
+            owner,
+            reserved.request_id,
+          )
           .run()
         return json(result)
       } catch (error) {
@@ -250,7 +264,7 @@ export function createPublicSearch({ fetcher = fetch, now = Date.now } = {}) {
     },
     async scheduled(_event, env) {
       await env.DB.prepare(
-        'UPDATE attempts SET result = NULL WHERE result IS NOT NULL AND created_at <= ?',
+        'UPDATE attempts SET result = NULL WHERE result IS NOT NULL AND result_created_at <= ?',
       )
         .bind(now() - TTL)
         .run()
