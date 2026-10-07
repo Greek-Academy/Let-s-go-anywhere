@@ -215,3 +215,56 @@ test('CORS preflight permits only expected method and headers without authentica
   assert.equal((await f.app.fetch(request('DELETE'), f.env)).status, 403)
   assert.equal(f.calls.length, 0)
 })
+
+test('bundled iOS and web share account quota, restore and authentication requirements', async () => {
+  const f = fixture()
+  const native = { Origin: 'capacitor://localhost' }
+  const preflight = await f.app.fetch(
+    new Request('https://worker.example/api/spot-search/compare', {
+      method: 'OPTIONS',
+      headers: {
+        ...native,
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'authorization,content-type,x-test-code',
+      },
+    }),
+    f.env,
+  )
+  assert.equal(preflight.status, 204)
+  assert.equal(preflight.headers.get('Access-Control-Allow-Origin'), native.Origin)
+  assert.equal(
+    (
+      await f.send('owner', 'comparison-status', {
+        headers: { ...native, Authorization: '' },
+      })
+    ).status,
+    401,
+  )
+  assert.equal(
+    (
+      await f.send('owner', 'comparison-status', {
+        headers: { ...native, 'X-Test-Code': 'wrong' },
+      })
+    ).status,
+    403,
+  )
+  for (const Origin of [
+    'null',
+    'http://localhost',
+    'https://localhost',
+    'capacitor://evil.example',
+  ]) {
+    const r = await f.send('owner', 'comparison-status', { headers: { Origin } })
+    assert.equal(r.status, 403)
+    assert.equal(r.headers.get('Access-Control-Allow-Origin'), null)
+  }
+  assert.equal(f.paid().length, 0)
+  const result = await f.send('owner', 'compare', { headers: native })
+  assert.equal(result.status, 200)
+  assert.equal(result.headers.get('Access-Control-Allow-Origin'), native.Origin)
+  assert.deepEqual(await (await f.send('owner', 'comparison-result')).json(), await result.json())
+  assert.equal((await f.send('owner')).status, 429)
+  assert.equal((await f.send('owner', 'compare', { headers: native })).status, 429)
+  assert.equal((await (await f.send('other', 'comparison-status')).json()).globalRemaining, 2)
+  assert.equal(f.paid().length, 2)
+})

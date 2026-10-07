@@ -5,6 +5,45 @@ import CoreLocation
 /// Run on a dedicated simulator; this flow changes sample data.
 final class DrivePlusUITests: XCTestCase {
 
+    /// Bundled Firebase/AI-search build. Does not log in or spend a search attempt.
+    @MainActor
+    func testPublicSearchLoginEntry() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let button = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
+            for _ in 0..<12 {
+                if button.isHittable { break }
+                web.swipeUp()
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("見つける")
+        tap("AI検索の参加・ログイン")
+        XCTAssertTrue(web.textFields["メールアドレス"].waitForExistence(timeout: 15))
+        XCTAssertTrue(web.secureTextFields["パスワード"].waitForExistence(timeout: 15))
+        tap("新規登録")
+        XCTAssertTrue(web.staticTexts["8文字以上で設定してください。"].waitForExistence(timeout: 10))
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "public-search-native-login"
+        shot.lifetime = .keepAlways
+        add(shot)
+        web.swipeDown()
+        tap("戻る")
+        tap("学ぶ")
+        tap("見つける")
+    }
+
     /// Firebase build only. Checks the real WKWebView entry without submitting credentials.
     @MainActor
     func testCloudSharingLoginEntry() throws {

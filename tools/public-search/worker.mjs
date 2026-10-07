@@ -8,6 +8,9 @@ const PROJECT = 'driveplus-fbc33'
 const ORIGINS = new Set([
   'https://driveplus-fbc33.web.app',
   'https://driveplus-fbc33.firebaseapp.com',
+  // Bundled Capacitor iOS app (default scheme/host), not a LAN development server.
+  // Origin is only a CORS boundary: verified Firebase auth + invite are still required.
+  'capacitor://localhost',
 ])
 const PREFIX = '/api/spot-search/'
 const codePattern = /^[A-Za-z0-9_-]{43}$/

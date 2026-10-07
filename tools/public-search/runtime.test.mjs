@@ -52,7 +52,7 @@ test('built Worker runs with real local D1 and never exceeds three slots across 
         ' ',
       ),
     )
-    const send = (uid, path = 'compare') => {
+    const send = (uid, path = 'compare', origin = 'https://driveplus-fbc33.web.app') => {
       const claims = {
         sub: uid,
         aud: 'driveplus-fbc33',
@@ -63,7 +63,7 @@ test('built Worker runs with real local D1 and never exceeds three slots across 
       return mf.dispatchFetch(`https://example.com/api/spot-search/${path}`, {
         method: path === 'compare' ? 'POST' : 'GET',
         headers: {
-          Origin: 'https://driveplus-fbc33.web.app',
+          Origin: origin,
           'Content-Type': 'application/json',
           Authorization: `Bearer header.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.signature`,
           'X-Test-Code': code,
@@ -73,7 +73,15 @@ test('built Worker runs with real local D1 and never exceeds three slots across 
           : {}),
       })
     }
-    const results = await Promise.all(Array.from({ length: 8 }, (_, i) => send(`user${i}`)))
+    const results = await Promise.all(
+      Array.from({ length: 8 }, (_, i) =>
+        send(
+          `user${i}`,
+          'compare',
+          i % 2 ? 'capacitor://localhost' : 'https://driveplus-fbc33.web.app',
+        ),
+      ),
+    )
     const successes = results.flatMap((r, i) => (r.status === 200 ? [i] : []))
     assert.equal(
       successes.length,
@@ -90,6 +98,7 @@ test('built Worker runs with real local D1 and never exceeds three slots across 
     assert.equal((await (await send(owner, 'comparison-result')).json()).spots.length, 18)
     assert.equal(await (await send('outsider', 'comparison-result')).json(), null)
     assert.equal((await send(owner)).status, 429)
+    assert.equal((await send(owner, 'compare', 'capacitor://localhost')).status, 429)
     assert.equal(paid, 6)
   } finally {
     await mf.dispose()
