@@ -36,7 +36,7 @@ final class DrivePlusUITests: XCTestCase {
         tap("お出かけの絞り込み")
         tap("自然")
         tap("この条件で表示")
-        XCTAssertTrue(web.staticTexts["Web検索の希望：自然"].waitForExistence(timeout: 10))
+        XCTAssertTrue(web.staticTexts["選択中：自然。追加の希望は任意です。"].waitForExistence(timeout: 10))
         tap("Webで候補を探す")
         let loginRequired = web.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "メール確認と参加コードの入力をしてください")).firstMatch
         XCTAssertTrue(loginRequired.waitForExistence(timeout: 15), "Genre-only input must pass validation and reach the login guard")

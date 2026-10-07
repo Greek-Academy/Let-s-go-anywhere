@@ -264,7 +264,7 @@ export function Discover() {
               : '出発エリアとは別に、目的地の地域を指定しています。'}
         </p>
         {publicSearchOrigin && (
-          <div className="notice">
+          <div className="notice discover-search-invitation">
             <strong>招待された方のAI検索テスト</strong>
             <p>ログインと参加コードで利用できます。新しい検索にはAPI料金がかかります。</p>
             <button
