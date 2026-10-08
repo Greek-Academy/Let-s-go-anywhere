@@ -39,7 +39,13 @@
     "test:firebase:rules": "firebase emulators:exec --only firestore --project demo-driveplus \"node --test --test-concurrency=1 firebase/tests/*.test.mjs\"",
     "test:firebase:ui": "firebase emulators:exec --only auth,firestore --project demo-driveplus \"playwright test --config playwright.firebase.config.ts\"",
     "firebase:login": "firebase login",
-    "ios:copy:firebase": "npm run build:firebase && DRIVEPLUS_IOS_VARIANT=firebase cap copy ios"
+    "ios:copy:firebase": "npm run build:firebase && DRIVEPLUS_IOS_VARIANT=firebase cap copy ios",
+    "cloudflare:login": "wrangler login",
+    "build:search-worker": "WRANGLER_SEND_METRICS=false wrangler deploy --config tools/public-search/wrangler.json --dry-run --outdir .worker-build",
+    "test:public-search": "npm run build:search-worker && node --test tools/public-search/*.test.mjs",
+    "test:dogfood": "firebase emulators:exec --only auth --project demo-driveplus \"playwright test --config playwright.dogfood.config.ts\"",
+    "dogfood:prepare": "node scripts/prepare-dogfood.mjs",
+    "dogfood:hosting": "node scripts/prepare-dogfood-hosting.mjs"
   },
   "dependencies": {
     "@capacitor/app": "8.1.1",
@@ -69,9 +75,11 @@
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^6.1.1",
     "firebase-tools": "15.32.1",
+    "miniflare": "5.20261001.0-alpha",
     "prettier": "3.9.6",
     "typescript": "~5.9.2",
-    "vite": "^8.3.0"
+    "vite": "^8.3.0",
+    "wrangler": "4.147.0"
   },
   "overrides": {
     "xcode": {

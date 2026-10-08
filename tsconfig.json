@@ -30,6 +30,7 @@
     "playwright.research.config.ts",
     "playwright.discovery-search.config.ts",
     "playwright.firebase.config.ts",
+    "playwright.dogfood.config.ts",
     "firebase/browser"
   ]
 }

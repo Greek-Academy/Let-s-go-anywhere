@@ -34,9 +34,11 @@ const sessionOf = (user: User | null): Session | null =>
 
 export default function FirebasePreparation({
   shared = false,
+  purpose = 'sharing',
   children,
 }: {
   shared?: boolean
+  purpose?: 'sharing' | 'search'
   children?: (uid: string, busy: boolean) => ReactNode
 }) {
   const [{ auth }] = useState(getFirebaseClient)
@@ -136,24 +138,45 @@ export default function FirebasePreparation({
 
   return (
     <div className="screen firebase-preparation">
-      <Header back title={shared ? '行きたいを共有' : '共有の準備'} />
+      <Header
+        back
+        title={
+          purpose === 'search' ? 'AI検索の参加・ログイン' : shared ? '行きたいを共有' : '共有の準備'
+        }
+      />
       <div className="page-pad">
-        {(!shared || !session?.verified) && (
+        {((!shared && purpose !== 'search') || !session?.verified) && (
           <>
             <p className="eyebrow teal">OUR NEXT DAY OFF</p>
             <h1>
-              一緒に出かける、
-              <br />
-              その前に。
+              {purpose === 'search' ? (
+                <>
+                  次の休日を、
+                  <br />
+                  一緒に探そう。
+                </>
+              ) : (
+                <>
+                  一緒に出かける、
+                  <br />
+                  その前に。
+                </>
+              )}
             </h1>
             <aside className="sharing-demo">
               <strong>
-                {firebasePilot?.mode === 'emulator' ? 'ローカル接続テスト' : 'Firebase接続の検証版'}
+                {firebasePilot?.mode === 'emulator'
+                  ? 'ローカル接続テスト'
+                  : purpose === 'search'
+                    ? '招待された方のAI検索テスト'
+                    : 'Firebase接続の検証版'}
               </strong>
               <p>
-                {shared
-                  ? '招待した相手と、選んだ候補だけを共有します。参加にはメール確認と作成者の承認が必要です。'
-                  : '自分だけの準備リストです。共有に使う場合は、共有リスト画面で名前と色を選んでコピーできます。'}
+                {purpose === 'search'
+                  ? '招待された方のAI検索テストです。メール確認と参加コードで利用できます。'
+                  : shared
+                    ? '招待した相手と、選んだ候補だけを共有します。参加にはメール確認と作成者の承認が必要です。'
+                    : '自分だけの準備リストです。共有に使う場合は、共有リスト画面で名前と色を選んでコピーできます。'}
               </p>
             </aside>
           </>
@@ -172,7 +195,9 @@ export default function FirebasePreparation({
         {ready && !session && (
           <>
             <p className="body-copy">
-              共有に使うアカウントを用意します。個人の保存や学習記録は自動で送信されません。
+              {purpose === 'search'
+                ? '共有機能と同じアカウントでログインできます。初めての方は新規登録してください。'
+                : '共有に使うアカウントを用意します。個人の保存や学習記録は自動で送信されません。'}
             </p>
             <div className="sharing-actors" aria-label="アカウント操作">
               <Chip
@@ -290,7 +315,10 @@ export default function FirebasePreparation({
               <>
                 <h2>メールアドレスを確認しましょう</h2>
                 <p className="body-copy">
-                  確認メールのリンクを開き、ここへ戻って下のボタンを押してください。確認が終わるまで、リストの保存・取得は行いません。
+                  確認メールのリンクを開き、ここへ戻って下のボタンを押してください。確認が終わるまで、
+                  {purpose === 'search'
+                    ? 'AI検索はできません。'
+                    : 'リストの保存・取得は行いません。'}
                 </p>
                 <PrimaryButton
                   disabled={busy}

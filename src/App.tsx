@@ -1,5 +1,6 @@
 import { SharingProvider } from './sharing/SharingProvider'
 import { lazy, Suspense } from 'react'
+import { publicSearchOrigin } from './domain/publicSearchConfig'
 import { firebasePilot } from './firebase/config'
 import {
   SharedListHub,
@@ -32,6 +33,7 @@ import { LearningNotes } from './screens/LearningNotes'
 import { LearningColumnDetail } from './screens/LearningColumns'
 import { AppSettings, LearningHistory, Profile, ProfileEdit, Reflection } from './screens/Profile'
 
+const SearchAccess = lazy(() => import('./screens/SearchAccess'))
 const CloudSharing = lazy(() => import('./screens/CloudSharing'))
 const FirebasePreparation = lazy(() => import('./screens/FirebasePreparation'))
 
@@ -62,6 +64,24 @@ function AppRoutes() {
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/onboarding/:step" element={<Onboarding />} />
         <Route path="/discover" element={<Discover />} />
+        <Route
+          path="/search/access"
+          element={
+            firebasePilot && publicSearchOrigin && !memoryOnly ? (
+              <Suspense
+                fallback={
+                  <p className="page-pad" role="status">
+                    読み込み中…
+                  </p>
+                }
+              >
+                <SearchAccess />
+              </Suspense>
+            ) : (
+              <Navigate to="/discover" replace />
+            )
+          }
+        />
         <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/web-spots/:id" element={<WebSpotDetail />} />
         <Route path="/events/:id/arrival" element={<Arrival />} />

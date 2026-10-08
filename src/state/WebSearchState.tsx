@@ -1,10 +1,11 @@
-import { createContext, useContext, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { parseWebSearchResult, sameWebSpot } from '../domain/webSearch'
 import { groupPlaces } from '../domain/placeIdentity'
 import type { WebSearchResult, WebSpot } from '../domain/webSearch'
 import { useApp } from './AppState'
 import { prefectures } from '../data/regions'
+import { publicSearchOrigin } from '../domain/publicSearchConfig'
 import { isNativeApp } from '../platform/runtime'
 
 interface SearchDraft {
@@ -22,7 +23,9 @@ interface SearchStatus {
   kind?: 'comparison'
   demo: boolean
   configured: boolean
-  token: string
+  token?: string
+  enabled?: boolean
+  globalRemaining?: number
   busy: boolean
   maxAttempts: number
   attempts: unknown[]
@@ -47,6 +50,13 @@ const Context = createContext<SearchContext | null>(null)
 const unavailable =
   'Web検索はMacの開発画面で確認できます。このiPhone版・静的プレビューには検索サーバーをまだ接続していません。'
 
+async function requestApi(path: string, options: RequestInit = {}) {
+  if (publicSearchOrigin) {
+    const { publicSearchFetch } = await import('../firebase/publicSearch')
+    return publicSearchFetch(path.replace('/api/spot-search/', ''), options)
+  }
+  return fetch(path, options)
+}
 async function json(response: Response): Promise<unknown> {
   if (!response.headers.get('content-type')?.includes('application/json'))
     throw new Error('検索サーバーから結果を受け取れませんでした。接続を確認してください。')
@@ -62,8 +72,13 @@ function readStatus(value: unknown, method: SearchMethod): SearchStatus {
     typeof s.demo !== 'boolean' ||
     typeof s.configured !== 'boolean' ||
     typeof s.busy !== 'boolean' ||
-    typeof s.token !== 'string' ||
-    !/^[a-f0-9]{64}$/.test(s.token) ||
+    (publicSearchOrigin
+      ? typeof s.enabled !== 'boolean' ||
+        !Number.isInteger(s.globalRemaining) ||
+        s.globalRemaining! < 0 ||
+        s.globalRemaining! > 3 ||
+        s.demo
+      : typeof s.token !== 'string' || !/^[a-f0-9]{64}$/.test(s.token)) ||
     s.maxAttempts !== (method === 'comparison' ? 1 : 3) ||
     !Array.isArray(s.attempts) ||
     s.attempts.length > s.maxAttempts
@@ -84,6 +99,24 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   const running = useRef(false)
   const sequence = useRef(0)
   const controller = useRef<AbortController | null>(null)
+  useEffect(() => {
+    if (!publicSearchOrigin) return
+    const clear = () => {
+      sequence.current++
+      controller.current?.abort()
+      running.current = false
+      setLoading(false)
+      setResult(null)
+      setStatus(null)
+      setError('')
+      setActive(false)
+    }
+    window.addEventListener('driveplus-search-session-change', clear)
+    return () => {
+      window.removeEventListener('driveplus-search-session-change', clear)
+      controller.current?.abort()
+    }
+  }, [])
   const showSamples = () => {
     sequence.current++
     controller.current?.abort()
@@ -99,12 +132,17 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     setResult(null)
     setStatus(null)
     if (
-      !import.meta.env.DEV ||
-      isNativeApp ||
       memoryOnly ||
-      !['localhost', '127.0.0.1'].includes(location.hostname)
+      (!publicSearchOrigin &&
+        (!import.meta.env.DEV ||
+          isNativeApp ||
+          !['localhost', '127.0.0.1'].includes(location.hostname)))
     ) {
       setError(unavailable)
+      return
+    }
+    if (publicSearchOrigin && method !== 'comparison') {
+      setError('公開テストはOpenAI・Claudeの比較検索を選んでください。')
       return
     }
     if (method === 'legacy' && draft.region !== '京都府') {
@@ -142,17 +180,23 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     let sent = false
     try {
       const config = readStatus(
-        await json(await fetch(statusPath, { signal: abort.signal, cache: 'no-store' })),
+        await json(await requestApi(statusPath, { signal: abort.signal, cache: 'no-store' })),
         method,
       )
       if (request !== sequence.current) return
       setStatus(config)
       if (!config.configured)
         throw new Error(
-          method === 'comparison'
-            ? '比較検索にはOpenAI・Anthropic両方のAPIキーが必要です。Macの .env.research.local を設定して検索サーバーを再起動してください。'
-            : 'APIキーが未設定です。Macの .env.research.local を設定して検索サーバーを再起動してください。',
+          publicSearchOrigin
+            ? '検索サービスの接続準備中です。案内した担当者にお知らせください。'
+            : method === 'comparison'
+              ? '比較検索にはOpenAI・Anthropic両方のAPIキーが必要です。Macの .env.research.local を設定して検索サーバーを再起動してください。'
+              : 'APIキーが未設定です。Macの .env.research.local を設定して検索サーバーを再起動してください。',
         )
+      if (publicSearchOrigin && config.enabled === false)
+        throw new Error('新しい検索は現在停止しています。前回の結果は開けます。')
+      if (publicSearchOrigin && config.globalRemaining === 0 && !config.attempts.length)
+        throw new Error('公開テスト全体の3回を使い切りました。今回は検索を終了しています。')
       if (config.busy) throw new Error('別の検索を実行中です。完了してから操作してください。')
       if (!config.demo && config.attempts.length >= config.maxAttempts)
         throw new Error(
@@ -160,10 +204,13 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
         )
       sent = true
       const response = await json(
-        await fetch(`/api/spot-search/${method === 'comparison' ? 'compare' : 'search'}`, {
+        await requestApi(`/api/spot-search/${method === 'comparison' ? 'compare' : 'search'}`, {
           method: 'POST',
           signal: abort.signal,
-          headers: { 'Content-Type': 'application/json', 'X-Pilot-Token': config.token },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(!publicSearchOrigin ? { 'X-Pilot-Token': config.token! } : {}),
+          },
           body: JSON.stringify(query),
         }),
       )
@@ -192,7 +239,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
           try {
             const updated = readStatus(
               await json(
-                await fetch(statusPath, {
+                await requestApi(statusPath, {
                   cache: 'no-store',
                   signal: AbortSignal.timeout(5000),
                 }),
@@ -216,10 +263,11 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     setActive(true)
     setError('')
     if (
-      !import.meta.env.DEV ||
-      isNativeApp ||
       memoryOnly ||
-      !['localhost', '127.0.0.1'].includes(location.hostname)
+      (!publicSearchOrigin &&
+        (!import.meta.env.DEV ||
+          isNativeApp ||
+          !['localhost', '127.0.0.1'].includes(location.hostname)))
     ) {
       setError(unavailable)
       return
@@ -233,7 +281,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     try {
       const config = readStatus(
         await json(
-          await fetch('/api/spot-search/comparison-status', {
+          await requestApi('/api/spot-search/comparison-status', {
             cache: 'no-store',
             signal: abort.signal,
           }),
@@ -243,14 +291,18 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       if (request !== sequence.current) return
       setStatus(config)
       const response = await json(
-        await fetch('/api/spot-search/comparison-result', {
-          headers: { 'X-Pilot-Token': config.token },
+        await requestApi('/api/spot-search/comparison-result', {
+          headers: { ...(!publicSearchOrigin ? { 'X-Pilot-Token': config.token! } : {}) },
           cache: 'no-store',
           signal: abort.signal,
         }),
       )
       if (!response)
-        throw new Error('前回の比較結果はまだありません。検索を実行すると、このMacで開き直せます。')
+        throw new Error(
+          publicSearchOrigin
+            ? '開ける結果がありません。まだ検索していない、検索を完了できなかった、または7日間の保存期間を過ぎた可能性があります。'
+            : '前回の比較結果はまだありません。検索を実行すると、このMacで開き直せます。',
+        )
       const candidate = response as { query?: { region?: unknown; theme?: unknown } }
       if (typeof candidate.query?.region !== 'string' || typeof candidate.query?.theme !== 'string')
         throw new Error('保存された検索条件を確認できません。')
