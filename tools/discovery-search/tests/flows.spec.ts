@@ -117,7 +117,7 @@ test('未対応地域・空欄・イベントでは検索しない', async ({ pa
   await page.getByRole('button', { name: 'この地域で探す', exact: true }).click()
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('')
   await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('1〜80文字')
+  await expect(page.getByRole('alert')).toContainText('ジャンルを選ぶか')
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill(query.theme)
   await page.getByRole('button', { name: 'イベント', exact: true }).click()
   await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()

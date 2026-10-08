@@ -9,6 +9,10 @@ const code = 'T'.repeat(43)
 const query = { region: '京都府', theme: '自然とカフェ' }
 const origin = 'https://driveplus-fbc33.web.app'
 const sql = readFileSync(new URL('./migrations/0001_attempts.sql', import.meta.url), 'utf8')
+const repeatMigration = readFileSync(
+  new URL('./migrations/0002_repeat_search.sql', import.meta.url),
+  'utf8',
+)
 const clock = Date.now()
 function token(uid, changes = {}, time = clock) {
   return `header.${Buffer.from(
@@ -25,6 +29,7 @@ function token(uid, changes = {}, time = clock) {
 function fixture(options = {}) {
   const database = new DatabaseSync(':memory:')
   database.exec(sql)
+  database.exec(repeatMigration)
   const db = {
     prepare(sql) {
       let values = []
@@ -110,9 +115,11 @@ test('authenticated comparison, private free restore, no key leakage or extra AI
   assert.equal(await (await f.send('other', 'comparison-result')).json(), null)
   const status = await (await f.send('owner', 'comparison-status')).json()
   assert.equal(status.attempts.length, 1)
-  assert.equal(status.globalRemaining, 2)
-  assert.equal((await f.send('owner')).status, 429)
-  assert.equal(f.paid().length, 2)
+  assert.equal(status.globalRemaining, null)
+  assert.equal(status.maxAttempts, null)
+  assert.equal(status.attemptCount, 1)
+  assert.equal((await f.send('owner')).status, 200)
+  assert.equal(f.paid().length, 4)
   assert(!JSON.stringify(result).includes('private-'))
   for (const { url, init } of f.paid()) {
     const body = JSON.parse(init.body)
@@ -124,17 +131,19 @@ test('authenticated comparison, private free restore, no key leakage or extra AI
   assert.equal(r.headers.get('Cache-Control'), 'no-store')
 })
 
-test('global limit is three across 20 concurrent accounts, and one per account', async () => {
-  const f = fixture({ wait: () => new Promise((r) => setTimeout(r, 5)) })
-  const responses = await Promise.all(Array.from({ length: 20 }, (_, i) => f.send(`user-${i}`)))
-  assert.equal(responses.filter((r) => r.status === 200).length, 3)
-  assert.equal(responses.filter((r) => r.status === 429).length, 17)
-  assert.equal(f.paid().length, 6)
-  assert.equal(f.database.prepare('SELECT COUNT(*) AS n FROM attempts').get().n, 3)
-  const g = fixture()
+test('no lifetime cap across accounts or repeat searches; concurrent same-account requests share a lock', async () => {
+  const f = fixture({ wait: () => new Promise((r) => setTimeout(r, 10)) })
+  const responses = await Promise.all(Array.from({ length: 8 }, (_, i) => f.send(`user-${i}`)))
+  assert.equal(responses.filter((r) => r.status === 200).length, 8)
+  for (let i = 0; i < 5; i++) assert.equal((await f.send('user-0')).status, 200)
+  assert.equal(f.paid().length, 26)
+  const g = fixture({ wait: () => new Promise((r) => setTimeout(r, 20)) })
   const same = await Promise.all(Array.from({ length: 10 }, () => g.send('same')))
   assert.equal(same.filter((r) => r.status === 200).length, 1)
+  assert.equal(same.filter((r) => r.status === 409).length, 9)
   assert.equal(g.paid().length, 2)
+  assert.equal((await g.send('same')).status, 200)
+  assert.equal((await (await g.send('same', 'comparison-status')).json()).attemptCount, 2)
 })
 
 test('Firebase verification, audience, expiry, email, revocation and disabled account all fail closed', async () => {
@@ -174,19 +183,20 @@ test('invitation, origin, malformed input and paused search never use AI', async
   assert.equal(f.database.prepare('SELECT COUNT(*) AS n FROM attempts').get().n, 0)
 })
 
-test('provider failures consume the slot, partial success and size limits do not retry', async () => {
+test('provider failures are counted, preserve manual retry and never retry automatically', async () => {
   for (const options of [{ fail: 'both' }, { fail: 'anthropic' }, { large: true }]) {
     const f = fixture(options)
     const result = await (await f.send('owner')).json()
     assert.equal(result.spots.length, options.fail === 'anthropic' ? 10 : 0)
-    assert.equal((await f.send('owner')).status, 429)
     assert.equal(f.paid().length, 2)
+    assert.equal((await f.send('owner')).status, 200)
+    assert.equal(f.paid().length, 4)
     assert(!JSON.stringify(result).includes('secret-provider-body'))
     assert.equal(f.database.prepare('SELECT state FROM attempts').get().state, 'failed')
   }
 })
 
-test('seven-day expiry removes results, preserves consumed quota, stop switch allows restore', async () => {
+test('seven-day expiry removes results, preserves count, stop switch allows restore', async () => {
   const f = fixture()
   await f.send('owner')
   f.env.SEARCH_ENABLED = 'false'
@@ -195,8 +205,8 @@ test('seven-day expiry removes results, preserves consumed quota, stop switch al
   await f.app.scheduled({}, f.env)
   assert.equal(await (await f.send('owner', 'comparison-result')).json(), null)
   f.env.SEARCH_ENABLED = 'true'
-  assert.equal((await f.send('owner')).status, 429)
-  assert.equal(f.paid().length, 2)
+  assert.equal((await f.send('owner')).status, 200)
+  assert.equal(f.paid().length, 4)
   assert.equal(f.database.prepare('SELECT COUNT(*) AS n FROM attempts').get().n, 1)
 })
 
@@ -216,7 +226,7 @@ test('CORS preflight permits only expected method and headers without authentica
   assert.equal(f.calls.length, 0)
 })
 
-test('bundled iOS and web share account quota, restore and authentication requirements', async () => {
+test('bundled iOS and web share repeat count, restore and authentication requirements', async () => {
   const f = fixture()
   const native = { Origin: 'capacitor://localhost' }
   const preflight = await f.app.fetch(
@@ -263,8 +273,66 @@ test('bundled iOS and web share account quota, restore and authentication requir
   assert.equal(result.status, 200)
   assert.equal(result.headers.get('Access-Control-Allow-Origin'), native.Origin)
   assert.deepEqual(await (await f.send('owner', 'comparison-result')).json(), await result.json())
-  assert.equal((await f.send('owner')).status, 429)
-  assert.equal((await f.send('owner', 'compare', { headers: native })).status, 429)
-  assert.equal((await (await f.send('other', 'comparison-status')).json()).globalRemaining, 2)
-  assert.equal(f.paid().length, 2)
+  assert.equal((await f.send('owner')).status, 200)
+  assert.equal((await f.send('owner', 'compare', { headers: native })).status, 200)
+  assert.equal((await (await f.send('owner', 'comparison-status')).json()).attemptCount, 3)
+  assert.equal(f.paid().length, 6)
+})
+
+test('migration preserves existing result and original expiry; failed searches do not extend it', async () => {
+  const db = new DatabaseSync(':memory:')
+  db.exec(sql)
+  db.prepare('INSERT INTO attempts VALUES (?, ?, ?, ?, ?)').run(
+    'legacy',
+    'old-request',
+    clock,
+    'completed',
+    '{"old":true}',
+  )
+  db.exec(repeatMigration)
+  const old = db.prepare('SELECT * FROM attempts').get()
+  assert.equal(old.attempt_count, 1)
+  assert.equal(old.result_created_at, clock)
+  assert.equal(old.result, '{"old":true}')
+  db.close()
+  const options = {}
+  const f = fixture(options)
+  const original = await (await f.send('owner')).json()
+  options.fail = 'both'
+  f.setTime(clock + 6 * 86400_000)
+  await f.send('owner')
+  assert.deepEqual(await (await f.send('owner', 'comparison-result')).json(), original)
+  f.setTime(clock + 7 * 86400_000)
+  await f.app.scheduled({}, f.env)
+  assert.equal(await (await f.send('owner', 'comparison-result')).json(), null)
+  assert.equal((await (await f.send('owner', 'comparison-status')).json()).attemptCount, 2)
+})
+
+test('expired in-flight lease can recover; late result cannot overwrite a newer request', async () => {
+  let unblock
+  const options = {
+    wait: () =>
+      new Promise((r) => {
+        unblock = r
+      }),
+  }
+  // Hold both providers with the same gate.
+  const gate = new Promise((r) => {
+    unblock = r
+  })
+  options.wait = () => gate
+  const f = fixture(options)
+  const first = f.send('owner', 'compare', { query: { ...query, theme: '古い希望' } })
+  while (f.paid().length < 2) await new Promise((r) => setTimeout(r, 1))
+  assert.equal((await (await f.send('owner', 'comparison-status')).json()).busy, true)
+  f.setTime(clock + 130_001)
+  options.wait = undefined
+  await f.send('owner', 'compare', { query: { ...query, theme: '新しい希望' } })
+  unblock()
+  await first
+  assert.equal(
+    (await (await f.send('owner', 'comparison-result')).json()).query.theme,
+    '新しい希望',
+  )
+  assert.equal((await (await f.send('owner', 'comparison-status')).json()).attemptCount, 2)
 })

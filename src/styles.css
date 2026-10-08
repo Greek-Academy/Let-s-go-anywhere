@@ -3700,6 +3700,13 @@ small {
 .web-search-submit {
   margin-top: 10px;
 }
+.discover-search-invitation {
+  display: block;
+}
+.discover-search-invitation p {
+  margin: 6px 0;
+}
+
 .web-search-hint {
   margin: 8px 0 16px;
   line-height: 1.7;

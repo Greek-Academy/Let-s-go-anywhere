@@ -1,3 +1,4 @@
+import { discoveryTags, searchTheme } from '../domain/searchTheme'
 import { publicSearchOrigin } from '../domain/publicSearchConfig'
 import { ShareCandidateButton } from '../sharing/components'
 import { fromOuting } from '../sharing/candidates'
@@ -263,9 +264,9 @@ export function Discover() {
               : '出発エリアとは別に、目的地の地域を指定しています。'}
         </p>
         {publicSearchOrigin && (
-          <div className="notice">
+          <div className="notice discover-search-invitation">
             <strong>招待された方のAI検索テスト</strong>
-            <p>1人1回・全員で3回まで。ログインと参加コードが必要です。</p>
+            <p>ログインと参加コードで利用できます。新しい検索にはAPI料金がかかります。</p>
             <button
               type="button"
               className="text-button"
@@ -299,6 +300,15 @@ export function Discover() {
               onClick={() => setFilter(true)}
             />
           </div>
+          <p className="small muted" aria-live="polite">
+            {tag
+              ? `選択中：${tag}。追加の希望は任意です。`
+              : 'ジャンルを選ぶか、気になる場所や、したいことを入力してください。'}{' '}
+            検索条件は合わせて80文字まで。
+          </p>
+          {!!searchTheme(search, tag) && (
+            <p className="small muted">Web検索の希望：{searchTheme(search, tag)}</p>
+          )}
           <label className="web-search-method">
             探し方
             <select
@@ -324,7 +334,7 @@ export function Discover() {
           <p className="small muted web-search-hint">
             {searchMethod === 'comparison'
               ? publicSearchOrigin
-                ? '地域・希望を2社へ送信して調べます。1人1回・全員で3回まで。失敗も回数に含み、再表示は無料です。'
+                ? '地域・ジャンル・追加の希望を2社へ送信します。検索回数の上限はありません。新しい検索は有料、前回結果の再表示は無料です。'
                 : 'お店・常設スポットを2社で調べます。合計15〜20件が目標です。比較はまず1回、各社API1回・Web検索最大2回。'
               : '京都府内のうち京都市の常設スポットが対象です。実検索ではAPIを1回利用します。'}
           </p>
@@ -536,8 +546,11 @@ export function Discover() {
       {filter && (
         <BottomSheet title="お出かけの絞り込み" onClose={() => setFilter(false)}>
           <h3>どんな休日にしたい？</h3>
+          <p className="small muted">
+            選んだジャンルはWeb検索にも使います。文章を入力すると、追加の希望として一緒に送ります。
+          </p>
           <div className="chips wrap filter-chips">
-            {['', '自然', 'グルメ', '温泉', 'アウトドア', '季節イベント', '買い物'].map((t) => (
+            {['', ...discoveryTags].map((t) => (
               <Chip key={t} selected={tag === t} onClick={() => setFilterState({ tag: t })}>
                 {t || 'すべて'}
               </Chip>

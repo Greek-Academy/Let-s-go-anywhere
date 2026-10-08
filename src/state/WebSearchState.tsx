@@ -5,6 +5,7 @@ import { groupPlaces } from '../domain/placeIdentity'
 import type { WebSearchResult, WebSpot } from '../domain/webSearch'
 import { useApp } from './AppState'
 import { prefectures } from '../data/regions'
+import { searchTheme, searchThemeError } from '../domain/searchTheme'
 import { publicSearchOrigin } from '../domain/publicSearchConfig'
 import { isNativeApp } from '../platform/runtime'
 
@@ -25,9 +26,10 @@ interface SearchStatus {
   configured: boolean
   token?: string
   enabled?: boolean
-  globalRemaining?: number
+  globalRemaining?: number | null
+  attemptCount?: number
   busy: boolean
-  maxAttempts: number
+  maxAttempts: number | null
   attempts: unknown[]
 }
 interface SearchContext {
@@ -74,14 +76,15 @@ function readStatus(value: unknown, method: SearchMethod): SearchStatus {
     typeof s.busy !== 'boolean' ||
     (publicSearchOrigin
       ? typeof s.enabled !== 'boolean' ||
-        !Number.isInteger(s.globalRemaining) ||
-        s.globalRemaining! < 0 ||
-        s.globalRemaining! > 3 ||
+        s.globalRemaining !== null ||
+        s.maxAttempts !== null ||
+        !Number.isSafeInteger(s.attemptCount) ||
+        s.attemptCount! < 0 ||
         s.demo
       : typeof s.token !== 'string' || !/^[a-f0-9]{64}$/.test(s.token)) ||
-    s.maxAttempts !== (method === 'comparison' ? 1 : 3) ||
+    (!publicSearchOrigin && s.maxAttempts !== (method === 'comparison' ? 1 : 3)) ||
     !Array.isArray(s.attempts) ||
-    s.attempts.length > s.maxAttempts
+    s.attempts.length > (s.maxAttempts ?? 1)
   )
     throw new Error('検索の利用状態を確認できません。自動では再検索しません。')
   return { ...s, ...(method === 'comparison' ? { kind: 'comparison' as const } : {}) }
@@ -158,15 +161,14 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       setError('比較検索は探す地域を都道府県で選んでください。')
       return
     }
-    const theme = draft.theme.trim()
-    if (!theme || theme.length > 80 || /[\u0000-\u001f\u007f]/u.test(theme)) {
-      setError('気になる場所や、したいことを1〜80文字で入力してください。')
+    const theme = searchTheme(draft.theme, draft.tag)
+    const inputError = searchThemeError(draft.theme, draft.tag)
+    if (inputError) {
+      setError(inputError)
       return
     }
-    if (!['おすすめ', 'スポット'].includes(draft.category) || draft.tag) {
-      setError(
-        'Web検索は常設スポットが対象です。「おすすめ」か「スポット」を選び、興味の絞り込みを解除してください。希望は検索欄へ入力できます。',
-      )
+    if (!['おすすめ', 'スポット'].includes(draft.category)) {
+      setError('Web検索は常設スポットが対象です。「おすすめ」か「スポット」を選んでください。')
       return
     }
     const query = { region: method === 'comparison' ? draft.region! : '京都市', theme }
@@ -195,10 +197,12 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
         )
       if (publicSearchOrigin && config.enabled === false)
         throw new Error('新しい検索は現在停止しています。前回の結果は開けます。')
-      if (publicSearchOrigin && config.globalRemaining === 0 && !config.attempts.length)
-        throw new Error('公開テスト全体の3回を使い切りました。今回は検索を終了しています。')
       if (config.busy) throw new Error('別の検索を実行中です。完了してから操作してください。')
-      if (!config.demo && config.attempts.length >= config.maxAttempts)
+      if (
+        !config.demo &&
+        config.maxAttempts !== null &&
+        config.attempts.length >= config.maxAttempts
+      )
         throw new Error(
           `今回の${method === 'comparison' ? '比較検索は1回' : '実検索は3回'}までです。取得済みの「行きたい」は引き続き確認できます。`,
         )

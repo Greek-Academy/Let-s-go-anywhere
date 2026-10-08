@@ -61,7 +61,12 @@ export async function joinPublicSearch(code: string) {
     })
     const data = await response.json()
     if (!response.ok) throw new Error(data.error ?? '参加状態を確認できません。')
-    return data as { globalRemaining: number; attempts: unknown[]; enabled: boolean }
+    return data as {
+      globalRemaining: null
+      attemptCount: number
+      attempts: unknown[]
+      enabled: boolean
+    }
   } catch (error) {
     grant = null
     throw error
