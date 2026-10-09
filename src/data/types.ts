@@ -59,6 +59,7 @@ export interface LearningContent {
   pages: { title: string; text: string }[]
 }
 export interface UserProfile {
+  stationId?: string | null
   name: string
   area: string
   companion: string

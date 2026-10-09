@@ -1,3 +1,4 @@
+import { railStation, stationRegion } from './railStations'
 import { decodeTags, decodeRecommendations, decodeReports } from './recommendations'
 import type { Recommendation, ProviderReport } from './recommendations'
 import { outboundHttpsUrl, researchSourceUrl } from './externalLinks'
@@ -19,7 +20,7 @@ export interface WebSpot {
 }
 export interface WebSearchResult {
   spots: WebSpot[]
-  query: { region: string; theme: string }
+  query: { region: string; theme: string; stationId?: string }
   retrievedAt: string
   mode: 'live' | 'sample'
   omitted: number
@@ -114,14 +115,18 @@ export function decodeSavedWebSpots(value: unknown): WebSpot[] {
 
 export async function parseWebSearchResult(
   value: unknown,
-  expected: { region: string; theme: string },
+  expected: { region: string; theme: string; stationId?: string },
 ): Promise<WebSearchResult> {
   const data = record(value)
   const query = record(data.query)
   if (
     (data.kind !== 'comparison' && query.region !== '京都市') ||
     query.region !== expected.region ||
-    query.theme !== expected.theme
+    query.theme !== expected.theme ||
+    (expected.stationId !== undefined && query.stationId !== expected.stationId) ||
+    (query.stationId !== undefined &&
+      (!railStation(query.stationId) ||
+        query.region !== stationRegion(railStation(query.stationId)!)))
   )
     throw new Error('検索条件と結果が一致しません。再検索は自動では行いません。')
   if (
@@ -172,7 +177,11 @@ export async function parseWebSearchResult(
   }
   return {
     spots,
-    query: { region: shortText(query.region, 40), theme: shortText(query.theme, 80) },
+    query: {
+      region: shortText(query.region, 120),
+      theme: shortText(query.theme, 80),
+      ...(typeof query.stationId === 'string' ? { stationId: query.stationId } : {}),
+    },
     retrievedAt,
     mode,
     omitted: Number(data.omitted) + data.spots.length - spots.length,

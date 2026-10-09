@@ -4,7 +4,7 @@ import { createServer } from 'node:http'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { extname, join, resolve, sep } from 'node:path'
-import { showAllRegions } from './helpers/discovery'
+import { showUnscopedSamples } from './helpers/discovery'
 
 test('a verified release restores the same origin after a failed deployment and keeps saved choices', async ({
   page,
@@ -77,7 +77,7 @@ test('a verified release restores the same origin after a failed deployment and 
     await page.goto(origin + '/#/welcome')
     await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
     // The saved sample is in Yamanashi; the initial discovery scope is Tokyo.
-    await showAllRegions(page)
+    await showUnscopedSamples(page)
     await page.getByRole('button', { name: '湖畔のオータム花火を保存', exact: true }).click()
     await page
       .getByRole('navigation')

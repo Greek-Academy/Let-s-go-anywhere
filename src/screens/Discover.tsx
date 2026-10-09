@@ -27,7 +27,8 @@ import {
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { normalizeSavedUrl, savedUrlKey } from '../domain/savedUrls'
 import { inDiscoveryRegion, resolveDiscoveryRegion } from '../domain/discoveryRegion'
-import { prefectures } from '../data/regions'
+import { railStation, stationLabel, stationRegion } from '../domain/railStations'
+import { StationPicker } from '../components/StationPicker'
 import { DiscoveryRegionSheet } from '../components/DiscoveryRegionSheet'
 
 import type { Outing } from '../data/types'
@@ -165,7 +166,7 @@ export function SnsSheet({ onClose }: { onClose: () => void }) {
   )
 }
 export function Discover() {
-  const { outings, tripFacts } = useContent()
+  const { outings, tripFacts, source } = useContent()
   const now = useContentTime()
   const { state, update } = useApp()
   const web = useWebSearch()
@@ -177,20 +178,27 @@ export function Discover() {
   const [reason, setReason] = useState<Outing | null>(null)
   const [areaOpen, setAreaOpen] = useState(false)
   const [regionOpen, setRegionOpen] = useState(false)
-  const [areaDraft, setAreaDraft] = useState(state.profile.area)
+  const [areaDraft, setAreaDraft] = useState<string | null>(state.profile.stationId ?? null)
   const { category, search, tag, region } = state.discover
   const setFilterState = (value: Partial<typeof state.discover>) =>
     update((s) => ({ ...s, discover: { ...s.discover, ...value } }))
   const conditionsActive = hasConditions(state.searchConditions)
   const matchResults = (id: string) =>
     evaluateConditions(state.searchConditions, tripFacts[id], state.profile.area)
-  const selectedRegion = resolveDiscoveryRegion(region, state.profile.area)
-  const regionLabel = selectedRegion === 'all' ? 'すべての地域' : (selectedRegion ?? '地域を選択')
-  const recommendable = outings.filter((o) => evaluateOuting(o, now).recommendable)
-  const availableRegions = prefectures.filter((name) =>
-    recommendable.some((o) => o.prefecture === name),
+  const selectedStation = resolveDiscoveryRegion(
+    region,
+    state.profile.stationId,
+    state.discover.stationId,
   )
-  const regionalOutings = recommendable.filter((o) => inDiscoveryRegion(o, selectedRegion))
+  const selectedRegion = selectedStation ? stationRegion(selectedStation) : null
+  const regionLabel = selectedRegion ?? '駅を選択'
+  const originStation = railStation(state.profile.stationId)
+  const recommendable = outings.filter((o) => evaluateOuting(o, now).recommendable)
+  const regionalOutings = selectedStation
+    ? recommendable.filter((o) => inDiscoveryRegion(o, selectedStation, source === 'sample'))
+    : source === 'sample'
+      ? recommendable
+      : []
   const candidates = regionalOutings
     .filter(
       (o) =>
@@ -227,12 +235,14 @@ export function Discover() {
           aria-describedby="discovery-origin-label"
           data-focus-key="discover-origin"
           onClick={() => {
-            setAreaDraft(state.profile.area)
+            setAreaDraft(state.profile.stationId ?? null)
             setAreaOpen(true)
           }}
         >
           <MapPin size={14} />
-          <span id="discovery-origin-label">出発：{state.profile.area || '未設定'}</span>
+          <span id="discovery-origin-label">
+            出発：{originStation ? stationLabel(originStation) : '最寄駅を選択'}
+          </span>
           <ChevronDown size={13} />
         </button>
         <div className="discover-title">
@@ -255,13 +265,12 @@ export function Discover() {
           <ChevronDown size={15} />
         </button>
         <p className="discovery-region-caption">
-          {region === 'origin'
-            ? selectedRegion === null
-              ? '都道府県を指定して、お出かけ先を探せます。'
-              : '出発エリアと同じ都道府県から探しています。'
-            : region === 'all'
-              ? '地域で絞り込まずに表示します。'
-              : '出発エリアとは別に、目的地の地域を指定しています。'}
+          {selectedStation
+            ? region === 'origin'
+              ? '出発駅の周辺から探しています。'
+              : '出発駅とは別の駅周辺を探しています。'
+            : '候補から駅を選んでください。以前の地域設定から駅を推測することはありません。'}
+          {selectedStation && ' 駅周辺約2kmが目安です。実際の距離は未確認です。'}
         </p>
         {publicSearchOrigin && (
           <div className="notice discover-search-invitation">
@@ -279,7 +288,20 @@ export function Discover() {
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            void web.search({ region: selectedRegion, theme: search, category, tag }, searchMethod)
+            void web.search(
+              {
+                region:
+                  searchMethod === 'legacy'
+                    ? (selectedStation?.prefecture ??
+                      (region === '京都府' ? '京都府' : selectedRegion))
+                    : selectedRegion,
+                stationId: selectedStation?.id,
+                theme: search,
+                category,
+                tag,
+              },
+              searchMethod,
+            )
           }}
         >
           <div className="discover-search-row">
@@ -334,7 +356,7 @@ export function Discover() {
           <p className="small muted web-search-hint">
             {searchMethod === 'comparison'
               ? publicSearchOrigin
-                ? '地域・ジャンル・追加の希望を2社へ送信します。検索回数の上限はありません。新しい検索は有料、前回結果の再表示は無料です。'
+                ? '探す駅・駅の代表位置・ジャンル・追加の希望を2社へ送信します。検索回数の上限はありません。新しい検索は有料、前回結果の再表示は無料です。'
                 : 'お店・常設スポットを2社で調べます。合計15〜20件が目標です。比較はまず1回、各社API1回・Web検索最大2回。'
               : '京都府内のうち京都市の常設スポットが対象です。実検索ではAPIを1回利用します。'}
           </p>
@@ -398,31 +420,41 @@ export function Discover() {
           ))}
         </div>
         {web.active ? (
-          <WebSearchResults region={selectedRegion} theme={search} category={category} tag={tag} />
+          <WebSearchResults
+            stationId={selectedStation?.id}
+            region={selectedRegion}
+            theme={search}
+            category={category}
+            tag={tag}
+          />
         ) : (
           <>
             <SampleNote>
               {category === '今週末'
                 ? '今週末に期間が重なる架空のイベントです。'
-                : 'お出かけ情報はすべてサンプルです。'}
+                : selectedStation
+                  ? 'お出かけ情報はすべてサンプルです。駅周辺への配置も操作確認用です。'
+                  : '以下は操作確認用のサンプルです。探したい駅の検索結果ではありません。'}
             </SampleNote>
             <p className="discovery-result-count" role="status">
               {selectedRegion === null
-                ? '探す地域が未選択です'
+                ? '探したい駅を選んでください'
                 : `${regionLabel}の候補：${filtered.length}件`}
             </p>
             {filtered.length > 0 && (
               <SectionHeading
                 title={
-                  tag
-                    ? `${tag}を楽しむ休日`
-                    : category === 'おすすめ'
-                      ? 'あなたへのおすすめ'
-                      : category === '今週末'
-                        ? '今週末の楽しみ'
-                        : category === 'イベント'
-                          ? '季節のイベント'
-                          : 'いつか行きたいスポット'
+                  !selectedStation
+                    ? '使い方を試せるサンプル'
+                    : tag
+                      ? `${tag}を楽しむ休日`
+                      : category === 'おすすめ'
+                        ? 'あなたへのおすすめ'
+                        : category === '今週末'
+                          ? '今週末の楽しみ'
+                          : category === 'イベント'
+                            ? '季節のイベント'
+                            : 'いつか行きたいスポット'
                 }
                 subtitle={
                   state.profile.interests.length && category === 'おすすめ'
@@ -455,29 +487,17 @@ export function Discover() {
                     icon={MapPin}
                     title={
                       selectedRegion === null
-                        ? '探す地域を選んでください'
-                        : selectedRegion === 'all'
-                          ? 'いま表示できる候補がありません'
-                          : 'この地域の候補はまだありません'
+                        ? '探したい駅を選んでください'
+                        : 'この駅周辺のサンプルはまだありません'
                     }
                     description={
                       selectedRegion === null
-                        ? '出発エリアの都道府県を判別できません。目的地の地域を選んで探せます。'
-                        : selectedRegion === 'all'
-                          ? '掲載状態や期間を確認して表示できるお出かけサンプルがありません。保存した候補は「行きたい」で確認できます。'
-                          : `${regionLabel}で、いま表示できるお出かけサンプルはありません。探す地域を変えても出発地はそのままです。`
+                        ? '最寄駅や、お出かけ先の駅を入力して候補から選べます。保存した候補はそのまま残っています。'
+                        : `${regionLabel}の候補は「Webで候補を探す」で検索できます。保存した候補は「行きたい」から確認できます。`
                     }
                     action="探す地域を選び直す"
                     onAction={() => setRegionOpen(true)}
                   />
-                  {selectedRegion !== 'all' && (
-                    <PrimaryButton
-                      variant="ghost"
-                      onClick={() => setFilterState({ region: 'all' })}
-                    >
-                      すべての地域から探す
-                    </PrimaryButton>
-                  )}
                 </div>
               ) : (
                 <EmptyState
@@ -537,9 +557,9 @@ export function Discover() {
       {regionOpen && (
         <DiscoveryRegionSheet
           value={region}
-          origin={state.profile.area}
-          available={availableRegions}
-          onSave={(region) => setFilterState({ region })}
+          originId={state.profile.stationId}
+          stationId={state.discover.stationId}
+          onSave={(region, stationId) => setFilterState({ region, stationId })}
           onClose={() => setRegionOpen(false)}
         />
       )}
@@ -594,23 +614,25 @@ export function Discover() {
       )}
       {areaOpen && (
         <BottomSheet title="出発エリアを変更" onClose={() => setAreaOpen(false)}>
-          <label className="field-label">
-            駅名・地域名
-            <input
-              value={areaDraft}
-              onChange={(e) => setAreaDraft(e.target.value)}
-              maxLength={80}
-              placeholder="例：東京都 渋谷駅周辺"
-            />
-          </label>
+          <StationPicker label="出発する最寄駅" value={areaDraft} onChange={setAreaDraft} />
+          {!railStation(state.profile.stationId) && !!state.profile.area && (
+            <p className="small muted">
+              以前の設定：{state.profile.area}。候補から駅を選ぶと更新されます。
+            </p>
+          )}
           <p className="body-copy">
-            手動の指定だけで利用できます。都道府県名から入力すると、同じ都道府県のお出かけを探せます。
-            {region !== 'origin' && '現在指定している「探す地域」は変わりません。'}
+            位置情報の許可は不要です。
+            {region !== 'origin' && '別に指定している探したい駅は変わりません。'}
           </p>
           <PrimaryButton
-            disabled={!areaDraft.trim()}
+            disabled={!railStation(areaDraft)}
             onClick={() => {
-              update((s) => ({ ...s, profile: { ...s.profile, area: areaDraft.trim() } }))
+              const station = railStation(areaDraft)
+              if (!station) return
+              update((s) => ({
+                ...s,
+                profile: { ...s.profile, stationId: station.id, area: stationRegion(station) },
+              }))
               setAreaOpen(false)
             }}
           >

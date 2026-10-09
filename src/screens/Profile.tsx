@@ -1,3 +1,5 @@
+import { StationPicker } from '../components/StationPicker'
+import { railStation, stationRegion } from '../domain/railStations'
 import { groupPlaces } from '../domain/placeIdentity'
 import { useSharing } from '../sharing/SharingProvider'
 import { firebasePilot } from '../firebase/config'
@@ -146,7 +148,7 @@ export function ProfileEdit() {
             e.preventDefault()
             update((s) => ({
               ...s,
-              profile: { ...draft, area: draft.area.trim() || '東京・渋谷駅周辺' },
+              profile: { ...draft, area: draft.area.trim() },
             }))
             toast('プロフィールを保存しました')
             navigate('/profile')
@@ -160,14 +162,21 @@ export function ProfileEdit() {
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
             />
           </label>
-          <label className="field-label">
-            出発エリア
-            <input
-              value={draft.area}
-              onChange={(e) => setDraft({ ...draft, area: e.target.value })}
-              placeholder="東京・渋谷駅周辺"
-            />
-          </label>
+          <StationPicker
+            label="出発する最寄駅"
+            value={draft.stationId}
+            onChange={(stationId) => {
+              const station = railStation(stationId)
+              setDraft({
+                ...draft,
+                stationId,
+                ...(station ? { area: stationRegion(station) } : {}),
+              })
+            }}
+          />
+          {!draft.stationId && !!draft.area && (
+            <p className="small muted">以前の設定：{draft.area}。駅を選ぶと更新されます。</p>
+          )}
           <label className="field-label">
             一緒に出かけたい人
             <select

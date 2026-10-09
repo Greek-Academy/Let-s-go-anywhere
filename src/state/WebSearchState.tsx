@@ -4,12 +4,13 @@ import { parseWebSearchResult, sameWebSpot } from '../domain/webSearch'
 import { groupPlaces } from '../domain/placeIdentity'
 import type { WebSearchResult, WebSpot } from '../domain/webSearch'
 import { useApp } from './AppState'
-import { prefectures } from '../data/regions'
+import { railStation, stationRegion } from '../domain/railStations'
 import { searchTheme, searchThemeError } from '../domain/searchTheme'
 import { publicSearchOrigin } from '../domain/publicSearchConfig'
 import { isNativeApp } from '../platform/runtime'
 
 interface SearchDraft {
+  stationId?: string | null
   region: string | null
   theme: string
   category: string
@@ -156,9 +157,10 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     }
     if (
       method === 'comparison' &&
-      (!draft.region || !prefectures.some((p) => p === draft.region))
+      (!railStation(draft.stationId) ||
+        draft.region !== stationRegion(railStation(draft.stationId)!))
     ) {
-      setError('比較検索は探す地域を都道府県で選んでください。')
+      setError('探したい駅を入力して、候補から選んでください。')
       return
     }
     const theme = searchTheme(draft.theme, draft.tag)
@@ -171,7 +173,11 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       setError('Web検索は常設スポットが対象です。「おすすめ」か「スポット」を選んでください。')
       return
     }
-    const query = { region: method === 'comparison' ? draft.region! : '京都市', theme }
+    const query = {
+      region: method === 'comparison' ? draft.region! : '京都市',
+      theme,
+      ...(method === 'comparison' ? { stationId: draft.stationId! } : {}),
+    }
     const statusPath = `/api/spot-search/${method === 'comparison' ? 'comparison-status' : 'status'}`
     running.current = true
     setLoading(true)
