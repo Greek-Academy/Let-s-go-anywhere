@@ -4959,6 +4959,16 @@ small {
   border-radius: 15px;
   background: white;
 }
+.station-clear {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  min-height: 36px;
+  color: var(--teal);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
 .station-options li {
   display: flex;
   gap: 10px;

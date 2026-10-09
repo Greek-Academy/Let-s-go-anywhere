@@ -34,13 +34,16 @@ final class DrivePlusUITests: XCTestCase {
         tap("別の駅の周辺")
         let stationInput = web.textFields["探したい駅"]
         XCTAssertTrue(stationInput.waitForExistence(timeout: 10))
+        if web.buttons["探したい駅をクリア"].exists { tap("探したい駅をクリア") }
         stationInput.tap()
-        if let text = stationInput.value as? String, text != "例：新宿、しんじゅく" {
-            stationInput.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: text.count))
-        }
         stationInput.typeText("しんじゅく")
         let stationOption = web.otherElements.matching(NSPredicate(format: "label BEGINSWITH %@", "新宿駅（東京都）")).firstMatch
         XCTAssertTrue(stationOption.waitForExistence(timeout: 10))
+        let visibleAboveKeyboard = NSPredicate { _, _ in
+            stationOption.isHittable && stationOption.frame.maxY <= app.keyboards.firstMatch.frame.minY
+        }
+        expectation(for: visibleAboveKeyboard, evaluatedWith: stationOption)
+        waitForExpectations(timeout: 10)
         let candidates = XCTAttachment(screenshot: app.screenshot())
         candidates.name = "station-autocomplete-native"
         candidates.lifetime = .keepAlways
@@ -458,10 +461,8 @@ final class DrivePlusUITests: XCTestCase {
         tap("別の駅の周辺")
         let stationInput = web.textFields["探したい駅"]
         XCTAssertTrue(stationInput.waitForExistence(timeout: 10))
+        if web.buttons["探したい駅をクリア"].exists { tap("探したい駅をクリア") }
         stationInput.tap()
-        if let text = stationInput.value as? String, text != "例：新宿、しんじゅく" {
-            stationInput.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: text.count))
-        }
         stationInput.typeText("河口湖")
         let stationOption = web.otherElements.matching(NSPredicate(format: "label BEGINSWITH %@", "河口湖駅（山梨県）")).firstMatch
         XCTAssertTrue(stationOption.waitForExistence(timeout: 10))

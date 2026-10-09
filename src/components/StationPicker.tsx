@@ -1,5 +1,5 @@
-import { useEffect, useId, useState } from 'react'
-import { Check, Search, TrainFront } from 'lucide-react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { Check, Search, TrainFront, X } from 'lucide-react'
 import { findRailStations, railStation, stationLabel } from '../domain/railStations'
 
 /** A selection is an ID from the catalog, never arbitrary text or a guessed station. */
@@ -17,7 +17,34 @@ export function StationPicker({
   const [text, setText] = useState(selected?.name ?? '')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
+  const container = useRef<HTMLDivElement>(null)
   const results = findRailStations(text)
+  const hasResults = results.length > 0
+  useEffect(() => {
+    if (!open) return
+    const reveal = () => {
+      const picker = container.current
+      const first = picker?.querySelector('[role="option"]')
+      if (!picker?.contains(document.activeElement) || !first) return
+      const viewport = window.visualViewport
+      const scrollArea = picker.closest('.overlay-content, #app-scroll')?.getBoundingClientRect()
+      const bottom = Math.min(
+        viewport ? viewport.height + viewport.offsetTop : window.innerHeight,
+        scrollArea?.bottom ?? Infinity,
+      )
+      if (first.getBoundingClientRect().bottom > bottom - 12)
+        picker.scrollIntoView({ block: 'start', inline: 'nearest' })
+    }
+    const frame = requestAnimationFrame(reveal)
+    // The native keyboard shrinks WKWebView after focus; keep suggestions above it.
+    window.visualViewport?.addEventListener('resize', reveal)
+    window.addEventListener('resize', reveal)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.visualViewport?.removeEventListener('resize', reveal)
+      window.removeEventListener('resize', reveal)
+    }
+  }, [open, hasResults])
   useEffect(() => {
     if (open && active >= 0)
       document.getElementById(`${id}-${active}`)?.scrollIntoView({ block: 'nearest' })
@@ -30,7 +57,7 @@ export function StationPicker({
     onChange(stationId)
   }
   return (
-    <div className="station-picker">
+    <div className="station-picker" ref={container}>
       <label className="field-label" htmlFor={id}>
         {label}
       </label>
@@ -75,6 +102,22 @@ export function StationPicker({
             }
           }}
         />
+        {!!text && (
+          <button
+            type="button"
+            className="station-clear"
+            aria-label={`${label}をクリア`}
+            onClick={() => {
+              setText('')
+              setOpen(true)
+              setActive(-1)
+              onChange(null)
+              document.getElementById(id)?.focus()
+            }}
+          >
+            <X size={17} aria-hidden="true" />
+          </button>
+        )}
       </div>
       {selected && !open && (
         <p className="station-selected">

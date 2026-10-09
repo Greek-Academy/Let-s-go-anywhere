@@ -81,6 +81,10 @@ test('same-name stations have prefectures and lines; changing text invalidates t
   ).toBeVisible()
   await expect(page.getByRole('button', { name: 'この駅の周辺で探す', exact: true })).toBeDisabled()
   await expect(page.getByText('すべての地域', { exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: '探したい駅をクリア', exact: true }).click()
+  await expect(input).toHaveValue('')
+  await expect(input).toBeFocused()
+  await expect(page.getByRole('dialog').getByRole('option')).toHaveCount(0)
 })
 test('keyboard, narrow phone, attribution and no external autocomplete traffic', async ({
   page,
@@ -128,4 +132,21 @@ test('legacy region preferences survive without reassigning saved data to an arb
   expect((await readState(page)).memo.questions).toBe('残しておく学習メモ')
   expect((await readState(page)).savedEvents).toEqual(['fuji'])
   expect((await readState(page)).profile.area).toBe('東京都')
+})
+
+test('a reduced phone viewport keeps the first station suggestion visible while typing', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 420 })
+  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('combobox', { name: '探したい駅' }).fill('しんじゅく')
+  await expect(page.getByRole('option').filter({ hasText: /^新宿駅（東京都）/ })).toBeInViewport({
+    ratio: 1,
+  })
+  await page
+    .getByRole('option')
+    .filter({ hasText: /^新宿駅（東京都）/ })
+    .click()
+  await page.getByRole('button', { name: 'この駅の周辺で探す', exact: true }).click()
+  await expect(page.locator('.discovery-region-button')).toContainText('新宿駅')
 })
