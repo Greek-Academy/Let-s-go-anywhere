@@ -1,6 +1,6 @@
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
-import { showAllRegions } from './helpers/discovery'
+import { showUnscopedSamples, chooseStation } from './helpers/discovery'
 
 test.beforeEach(async ({ page }) => {
   await page.clock.install({ time: new Date('2026-09-16T03:00:00Z') })
@@ -29,11 +29,11 @@ test('three-question onboarding supports back, multiple interests, tabs and relo
 }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'はじめる', exact: true }).click()
-  await page.getByRole('textbox', { name: '出発エリア' }).fill('東京・新宿駅周辺')
+  await chooseStation(page, '出発する最寄駅', 'しんじゅく', '新宿駅（東京都）')
   await page.getByRole('button', { name: '次へ', exact: true }).click()
   await page.getByRole('button', { name: /恋人・パートナー/ }).click()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
-  await expect(page.getByRole('textbox', { name: '出発エリア' })).toHaveValue('東京・新宿駅周辺')
+  await expect(page.getByRole('combobox', { name: '出発する最寄駅' })).toHaveValue('新宿')
   await page.getByRole('button', { name: '次へ', exact: true }).click()
   await expect(page.getByRole('button', { name: /恋人・パートナー/ })).toHaveAttribute(
     'aria-pressed',
@@ -53,7 +53,8 @@ test('three-question onboarding supports back, multiple interests, tabs and relo
   await page.reload()
   const state = await readState(page)
   expect(state.profile).toMatchObject({
-    area: '東京・新宿駅周辺',
+    area: '東京都 新宿駅周辺',
+    stationId: '1130208',
     companion: '恋人・パートナー',
     interests: ['自然', '温泉'],
   })
@@ -65,7 +66,7 @@ test('saved outings stay synchronized; back restores scroll; unverified SNS stay
   page,
 }) => {
   await enter(page)
-  await showAllRegions(page)
+  await showUnscopedSamples(page)
   await page.getByRole('button', { name: '湖畔のオータム花火を保存', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await page.getByRole('button', { name: /開催予定（サンプル） 湖畔のオータム花火/ }).click()

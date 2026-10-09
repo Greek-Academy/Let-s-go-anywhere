@@ -51,7 +51,13 @@ export interface AppState {
     selected: string | null
     offset: { x: number; y: number }
   }
-  discover: { category: string; search: string; tag: string; region: DiscoveryRegion }
+  discover: {
+    category: string
+    search: string
+    tag: string
+    region: DiscoveryRegion
+    stationId?: string | null
+  }
   /** Retired filters retained only for v1 storage compatibility. */
   schoolFilters: { area: string; practice: string; budget: string; vehicle: string }
   settings: { largeText: boolean; reducedMotion: boolean }
@@ -63,7 +69,7 @@ export const createInitialState = (): AppState => ({
   conditionFilter: 'all',
   outingConditions: {},
   onboarded: false,
-  profile: { ...userProfile, interests: [] },
+  profile: { ...userProfile, area: '', stationId: null, interests: [] },
   savedEvents: [],
   savedWebSpots: [],
   savedStations: [],
@@ -85,7 +91,7 @@ export const createInitialState = (): AppState => ({
     selected: null,
     offset: { x: 0, y: 0 },
   },
-  discover: { category: 'おすすめ', search: '', tag: '', region: 'origin' },
+  discover: { category: 'おすすめ', search: '', tag: '', region: 'origin', stationId: null },
   schoolFilters: { area: 'すべて', practice: 'すべて', budget: 'すべて', vehicle: 'すべて' },
   settings: { largeText: false, reducedMotion: false },
 })

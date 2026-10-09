@@ -78,6 +78,7 @@ export function CarSearch() {
           <button
             type="button"
             className="text-button car-use-origin"
+            disabled={!state.profile.area.trim()}
             onClick={() => change({ area: state.profile.area })}
           >
             <MapPin size={14} />

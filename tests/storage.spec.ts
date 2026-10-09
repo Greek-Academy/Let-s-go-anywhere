@@ -7,7 +7,13 @@ function sample() {
   return {
     ...createInitialState(),
     onboarded: true,
-    profile: { name: '確認用', area: '横浜', companion: '友人', interests: ['自然'] },
+    profile: {
+      name: '確認用',
+      area: '横浜',
+      stationId: null,
+      companion: '友人',
+      interests: ['自然'],
+    },
     savedEvents: ['fuji'],
     savedStations: ['times-shibuya'],
     learned: ['parking'],
