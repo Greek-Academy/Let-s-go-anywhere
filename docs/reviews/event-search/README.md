@@ -20,3 +20,5 @@
 ![イベントの候補カード](event-card.png)
 
 ![イベント詳細の開催情報](event-detail.png)
+
+![iPhone 17のWKWebViewで日付を選択（未ログイン・有料検索なし）](event-native.png)
