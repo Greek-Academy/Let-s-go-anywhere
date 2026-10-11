@@ -103,7 +103,7 @@ export function Saved() {
                             navigate(`/web-spots/${spot.id}`, { state: { tab: 'saved' } })
                           }
                         >
-                          <WebSpotImage />
+                          <WebSpotImage spot={spot} compact />
                           <span>
                             <WebSpotStatus spot={spot} />
                             <strong>{spot.name}</strong>
