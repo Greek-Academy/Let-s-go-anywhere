@@ -1,7 +1,9 @@
+import { withoutSearchCoordinates } from '../../src/domain/discoveryLocation.ts'
 import { PilotError } from '../spot-research/core.mjs'
 import { validateComparisonQuery } from '../spot-comparison/core.mjs'
 import { runComparison } from '../spot-comparison/providers.mjs'
 
+const MAX_ATTEMPTS = 5
 const SEARCH_LEASE = 130_000
 const TTL = 7 * 24 * 60 * 60 * 1000
 const PROJECT = 'driveplus-fbc33'
@@ -172,7 +174,7 @@ export function createPublicSearch({ fetcher = fetch, now = Date.now } = {}) {
             configured: Boolean(env.OPENAI_API_KEY && env.ANTHROPIC_API_KEY),
             enabled: env.SEARCH_ENABLED === 'true',
             busy: attempt?.state === 'reserved' && time - attempt.created_at < SEARCH_LEASE,
-            maxAttempts: null,
+            maxAttempts: MAX_ATTEMPTS,
             attemptCount: attempt?.attempt_count ?? 0,
             attempts: attempt ? [{ state: attempt.state }] : [],
             globalRemaining: null,
@@ -190,7 +192,7 @@ export function createPublicSearch({ fetcher = fetch, now = Date.now } = {}) {
         if (!request.headers.get('Content-Type')?.startsWith('application/json'))
           throw new PilotError('type', '入力形式を確認してください。', 415)
         const query = validateComparisonQuery(await limitedJson(request, 2048))
-        // Atomically acquire one in-flight request per account; sequential searches have no cap.
+        // Atomically enforce the lifetime cap and acquire one in-flight request per account.
         // Keep the last restorable result and its original expiry while the new request runs.
         const reserved = await env.DB.prepare(
           `INSERT INTO attempts (owner, request_id, created_at, state, attempt_count)
@@ -198,13 +200,23 @@ export function createPublicSearch({ fetcher = fetch, now = Date.now } = {}) {
           ON CONFLICT(owner) DO UPDATE SET
             request_id = excluded.request_id, created_at = excluded.created_at,
             state = 'reserved', attempt_count = attempts.attempt_count + 1
-          WHERE attempts.state != 'reserved' OR attempts.created_at <= ?
+          WHERE attempts.attempt_count < ? AND (attempts.state != 'reserved' OR attempts.created_at <= ?)
           RETURNING request_id`,
         )
-          .bind(owner, crypto.randomUUID(), time, time - SEARCH_LEASE)
+          .bind(owner, crypto.randomUUID(), time, MAX_ATTEMPTS, time - SEARCH_LEASE)
           .first()
-        if (!reserved)
+        if (!reserved) {
+          const latest = await env.DB.prepare('SELECT attempt_count FROM attempts WHERE owner = ?')
+            .bind(owner)
+            .first()
+          if (latest?.attempt_count >= MAX_ATTEMPTS)
+            throw new PilotError(
+              'limit',
+              'AI検索は1アカウント累計5回までです。上限に達しました。前回の結果・保存した候補は引き続き確認できます。',
+              429,
+            )
           throw new PilotError('busy', '別の検索を実行中です。完了してから操作してください。', 409)
+        }
         let result
         try {
           result = await runComparison({
@@ -242,7 +254,7 @@ export function createPublicSearch({ fetcher = fetch, now = Date.now } = {}) {
           .bind(
             state,
             result.spots.length > 0 ? 1 : 0,
-            JSON.stringify(result),
+            JSON.stringify(withoutSearchCoordinates(result)),
             result.spots.length > 0 ? 1 : 0,
             time,
             owner,

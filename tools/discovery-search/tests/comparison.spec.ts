@@ -287,3 +287,53 @@ test('住所表記が違う旧保存を1枚にまとめ、両社の出典・保�
   await expect(page.locator('.saved-web-spot')).toHaveCount(0)
   expect(searches).toBe(0)
 })
+
+test('current point + genre reaches comparison, restores without coordinates, saves and never overwrites departure station', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'geolocation', {
+      value: {
+        getCurrentPosition(success: (x: unknown) => void) {
+          success({
+            timestamp: Date.now(),
+            coords: { latitude: 35.690921, longitude: 139.700258, accuracy: 20 },
+          })
+        },
+      },
+    })
+  })
+  const bodies: unknown[] = []
+  page.on('request', (r) => {
+    if (r.url().endsWith('/api/spot-search/compare')) bodies.push(r.postDataJSON())
+  })
+  await enter(page)
+  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: /現在地の周辺/ }).click()
+  await page.getByRole('button', { name: '現在地を取得して設定', exact: true }).click()
+  await expect(page.locator('#discovery-region-label')).toHaveText('取得した現在地の周辺')
+  expect(bodies).toHaveLength(0)
+  await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('')
+  await page.getByRole('button', { name: 'お出かけの絞り込み', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '自然', exact: true }).click()
+  await page.getByRole('button', { name: 'この条件で表示', exact: true }).click()
+  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(18)
+  expect(bodies).toEqual([
+    { location: { lat: 35.691, lng: 139.7 }, region: '取得した現在地の周辺', theme: '自然' },
+  ])
+  await expect(page.getByText(/下は前回の検索結果です/)).toHaveCount(0)
+  await page.getByRole('button', { name: `${first}を保存`, exact: true }).click()
+  await page.getByRole('button', { name: '前回の比較結果を開く（無料）', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(18)
+  await expect(page.getByText(/下は前回の検索結果です/)).toBeVisible()
+  expect(bodies).toHaveLength(1)
+  const storage = await page.evaluate(() => localStorage.getItem('driveplus.mock.v1')!)
+  expect(storage).not.toContain('35.691')
+  expect(storage).not.toContain('139.7')
+  expect(JSON.parse(storage).discover.stationId).toBe('1130208')
+  await page.reload()
+  await page.getByRole('button', { name: '前回の比較結果を開く（無料）', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(18)
+  expect(bodies).toHaveLength(1)
+})

@@ -1,3 +1,5 @@
+import { LOCATION_REGION, sameCenter, validDiscoveryCenter } from './discoveryLocation'
+import type { DiscoveryCenter } from './discoveryLocation'
 import { railStation, stationRegion } from './railStations'
 import { decodeTags, decodeRecommendations, decodeReports } from './recommendations'
 import type { Recommendation, ProviderReport } from './recommendations'
@@ -20,7 +22,13 @@ export interface WebSpot {
 }
 export interface WebSearchResult {
   spots: WebSpot[]
-  query: { region: string; theme: string; stationId?: string }
+  query: {
+    region: string
+    theme: string
+    stationId?: string
+    location?: DiscoveryCenter
+    locationSearch?: true
+  }
   retrievedAt: string
   mode: 'live' | 'sample'
   omitted: number
@@ -115,11 +123,24 @@ export function decodeSavedWebSpots(value: unknown): WebSpot[] {
 
 export async function parseWebSearchResult(
   value: unknown,
-  expected: { region: string; theme: string; stationId?: string },
+  expected: { region: string; theme: string; stationId?: string; location?: DiscoveryCenter },
 ): Promise<WebSearchResult> {
   const data = record(value)
   const query = record(data.query)
   if (
+    (expected.location !== undefined &&
+      (!validDiscoveryCenter(query.location) || !sameCenter(query.location, expected.location))) ||
+    (query.location !== undefined &&
+      (!validDiscoveryCenter(query.location) ||
+        query.region !== LOCATION_REGION ||
+        query.stationId !== undefined ||
+        data.kind !== 'comparison')) ||
+    (query.locationSearch !== undefined &&
+      (query.locationSearch !== true ||
+        query.region !== LOCATION_REGION ||
+        query.stationId !== undefined ||
+        query.location !== undefined ||
+        data.kind !== 'comparison')) ||
     (data.kind !== 'comparison' && query.region !== '京都市') ||
     query.region !== expected.region ||
     query.theme !== expected.theme ||
@@ -181,6 +202,8 @@ export async function parseWebSearchResult(
       region: shortText(query.region, 120),
       theme: shortText(query.theme, 80),
       ...(typeof query.stationId === 'string' ? { stationId: query.stationId } : {}),
+      ...(validDiscoveryCenter(query.location) ? { location: query.location } : {}),
+      ...(query.locationSearch === true ? { locationSearch: true as const } : {}),
     },
     retrievedAt,
     mode,

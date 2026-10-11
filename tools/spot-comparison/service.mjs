@@ -1,3 +1,4 @@
+import { withoutSearchCoordinates } from '../../src/domain/discoveryLocation.ts'
 import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
@@ -81,11 +82,13 @@ export function createComparison({ demo, apiKey, anthropicApiKey, directory, fet
             { providers: reports },
             Date.now() - started,
           )
-        if (demo) sampleResult = result
+        if (demo) sampleResult = withoutSearchCoordinates(result)
         else {
           mkdirSync(directory, { recursive: true, mode: 0o700 })
           const temporary = join(directory, `result-${randomUUID()}.tmp`)
-          writeFileSync(temporary, JSON.stringify(result), { mode: 0o600 })
+          writeFileSync(temporary, JSON.stringify(withoutSearchCoordinates(result)), {
+            mode: 0o600,
+          })
           renameSync(temporary, resultFile)
         }
         return result

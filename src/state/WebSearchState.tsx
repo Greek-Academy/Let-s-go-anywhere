@@ -4,12 +4,20 @@ import { parseWebSearchResult, sameWebSpot } from '../domain/webSearch'
 import { groupPlaces } from '../domain/placeIdentity'
 import type { WebSearchResult, WebSpot } from '../domain/webSearch'
 import { useApp } from './AppState'
+import {
+  LOCATION_REGION,
+  validDiscoveryCenter,
+  withoutSearchCoordinates,
+} from '../domain/discoveryLocation'
+import type { DiscoveryCenter } from '../domain/discoveryLocation'
+import { useDiscoveryLocation } from './DiscoveryLocationState'
 import { railStation, stationRegion } from '../domain/railStations'
 import { searchTheme, searchThemeError } from '../domain/searchTheme'
 import { publicSearchOrigin } from '../domain/publicSearchConfig'
 import { isNativeApp } from '../platform/runtime'
 
 interface SearchDraft {
+  location?: DiscoveryCenter
   stationId?: string | null
   region: string | null
   theme: string
@@ -78,7 +86,7 @@ function readStatus(value: unknown, method: SearchMethod): SearchStatus {
     (publicSearchOrigin
       ? typeof s.enabled !== 'boolean' ||
         s.globalRemaining !== null ||
-        s.maxAttempts !== null ||
+        s.maxAttempts !== 5 ||
         !Number.isSafeInteger(s.attemptCount) ||
         s.attemptCount! < 0 ||
         s.demo
@@ -93,6 +101,8 @@ function readStatus(value: unknown, method: SearchMethod): SearchStatus {
 
 export function WebSearchProvider({ children }: { children: ReactNode }) {
   const { state, update, toast, memoryOnly, storageProtected } = useApp()
+  const gps = useDiscoveryLocation()
+  const locationRequest = useRef(false)
   const [method, setMethod] = useState<SearchMethod>('comparison')
   const [comparisonView, setView] = useState<ComparisonView>({ order: 'general', provider: 'all' })
   const [active, setActive] = useState(false)
@@ -104,11 +114,25 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   const sequence = useRef(0)
   const controller = useRef<AbortController | null>(null)
   useEffect(() => {
+    setResult((r) => (r ? withoutSearchCoordinates(r) : r))
+    if (locationRequest.current) {
+      sequence.current++
+      controller.current?.abort()
+      running.current = false
+      locationRequest.current = false
+      setLoading(false)
+      setError(
+        '現在地の利用を終了しました。送信済みの検索は回数に含まれます。前回の結果は無料で確認できます。',
+      )
+    }
+  }, [gps.fix])
+  useEffect(() => {
     if (!publicSearchOrigin) return
     const clear = () => {
       sequence.current++
       controller.current?.abort()
       running.current = false
+      locationRequest.current = false
       setLoading(false)
       setResult(null)
       setStatus(null)
@@ -125,6 +149,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     sequence.current++
     controller.current?.abort()
     running.current = false
+    locationRequest.current = false
     setLoading(false)
     setActive(false)
     setError('')
@@ -149,7 +174,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       setError('公開テストはOpenAI・Claudeの比較検索を選んでください。')
       return
     }
-    if (method === 'legacy' && draft.region !== '京都府') {
+    if (method === 'legacy' && (draft.location || draft.region !== '京都府')) {
       setError(
         'Web検索は京都市のみ対応しています。「探す地域」を京都府にすると、その中の京都市を検索します。',
       )
@@ -157,10 +182,16 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     }
     if (
       method === 'comparison' &&
-      (!railStation(draft.stationId) ||
-        draft.region !== stationRegion(railStation(draft.stationId)!))
+      (draft.location
+        ? !validDiscoveryCenter(draft.location) ||
+          draft.region !== LOCATION_REGION ||
+          !!draft.stationId
+        : !railStation(draft.stationId) ||
+          draft.region !== stationRegion(railStation(draft.stationId)!))
     ) {
-      setError('探したい駅を入力して、候補から選んでください。')
+      setError(
+        '探したい駅を入力して、候補から選んでください。現在地から探す場合は、位置を取得し直してください。',
+      )
       return
     }
     const theme = searchTheme(draft.theme, draft.tag)
@@ -176,9 +207,14 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     const query = {
       region: method === 'comparison' ? draft.region! : '京都市',
       theme,
-      ...(method === 'comparison' ? { stationId: draft.stationId! } : {}),
+      ...(method === 'comparison'
+        ? draft.location
+          ? { location: draft.location }
+          : { stationId: draft.stationId! }
+        : {}),
     }
     const statusPath = `/api/spot-search/${method === 'comparison' ? 'comparison-status' : 'status'}`
+    locationRequest.current = !!draft.location
     running.current = true
     setLoading(true)
     const request = ++sequence.current
@@ -207,10 +243,12 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       if (
         !config.demo &&
         config.maxAttempts !== null &&
-        config.attempts.length >= config.maxAttempts
+        (config.attemptCount ?? config.attempts.length) >= config.maxAttempts
       )
         throw new Error(
-          `今回の${method === 'comparison' ? '比較検索は1回' : '実検索は3回'}までです。取得済みの「行きたい」は引き続き確認できます。`,
+          publicSearchOrigin
+            ? 'AI検索は1アカウント累計5回までです。上限に達しました。前回の結果・保存した候補は引き続き確認できます。'
+            : `今回の${method === 'comparison' ? '比較検索は1回' : '実検索は3回'}までです。取得済みの「行きたい」は引き続き確認できます。`,
         )
       sent = true
       const response = await json(
@@ -263,6 +301,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
         }
         if (request === sequence.current) {
           running.current = false
+          locationRequest.current = false
           setLoading(false)
         }
       }

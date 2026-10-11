@@ -5,6 +5,66 @@ import CoreLocation
 /// Run on a dedicated simulator; this flow changes sample data.
 final class DrivePlusUITests: XCTestCase {
 
+    /// Dedicated simulator only. Uses a public landmark and stops at the login guard (no AI cost).
+    @MainActor
+    func testDiscoverCurrentLocation() throws {
+        continueAfterFailure = false
+        guard #available(iOS 16.4, *) else { throw XCTSkip("Requires location simulation") }
+        XCUIDevice.shared.location = XCUILocation(location: CLLocation(
+            coordinate: CLLocationCoordinate2D(latitude: 35.690921, longitude: 139.700258),
+            altitude: 0, horizontalAccuracy: 10, verticalAccuracy: 10, timestamp: Date()))
+        defer { XCUIDevice.shared.location = nil }
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let exact = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            let button = exact.exists ? exact : controls.matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
+            for _ in 0..<12 {
+                if button.isHittable { break }
+                web.swipeUp()
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("見つける")
+        tap("探す地域を変更")
+        tap("現在地の周辺")
+        let consent = XCTAttachment(screenshot: app.screenshot())
+        consent.name = "discover-location-consent"
+        consent.lifetime = .keepAlways
+        add(consent)
+        tap("現在地を取得して設定")
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let allow = springboard.buttons.matching(NSPredicate(
+            format: "label == %@ OR label == %@", "アプリの使用中は許可", "Allow While Using App")).firstMatch
+        if allow.waitForExistence(timeout: 5) { allow.tap() }
+        let point = web.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "取得した位置を起点に約2km")).firstMatch
+        XCTAssertTrue(point.waitForExistence(timeout: 30))
+        tap("お出かけの絞り込み")
+        if web.switches["自然"].value as? String != "1" { tap("自然") }
+        tap("この条件で表示")
+        tap("Webで候補を探す")
+        let login = web.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "メール確認と参加コードの入力をしてください")).firstMatch
+        XCTAssertTrue(login.waitForExistence(timeout: 15))
+        for _ in 0..<4 { web.swipeDown() }
+        let result = XCTAttachment(screenshot: app.screenshot())
+        result.name = "discover-location-native"
+        result.lifetime = .keepAlways
+        add(result)
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        XCTAssertFalse(web.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "取得した位置を起点に約2km")).firstMatch.exists)
+    }
+
     /// Dedicated simulator, Firebase build; stays signed out and never calls a paid API.
     @MainActor
     func testGenreSearchControls() throws {

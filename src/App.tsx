@@ -16,6 +16,7 @@ import type { ContentCatalog } from './content/catalog'
 import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { AppStateProvider, useApp } from './state/AppState'
 import { WebSearchProvider } from './state/WebSearchState'
+import { DiscoveryLocationProvider } from './state/DiscoveryLocationState'
 import { LocationSearchProvider } from './state/LocationSearchState'
 import { WebSpotDetail } from './screens/WebSpotDetail'
 import type { AppState } from './state/model'
@@ -171,15 +172,17 @@ export default function App({
   return (
     <ContentProvider catalog={catalog}>
       <AppStateProvider persistenceMode={persistence} initialState={initialState}>
-        <WebSearchProvider>
-          <LocationSearchProvider>
-            <SharingProvider>
-              <HashRouter>
-                <AppRoutes />
-              </HashRouter>
-            </SharingProvider>
-          </LocationSearchProvider>
-        </WebSearchProvider>
+        <DiscoveryLocationProvider>
+          <WebSearchProvider>
+            <LocationSearchProvider>
+              <SharingProvider>
+                <HashRouter>
+                  <AppRoutes />
+                </HashRouter>
+              </SharingProvider>
+            </LocationSearchProvider>
+          </WebSearchProvider>
+        </DiscoveryLocationProvider>
       </AppStateProvider>
     </ContentProvider>
   )
