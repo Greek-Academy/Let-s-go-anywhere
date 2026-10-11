@@ -78,15 +78,6 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
               </p>
             </div>
           )}
-          <details className="comparison-explanation">
-            <summary>いいねはどう使われる？</summary>
-            <p>
-              この端末の保存候補と、選んだ「好きなところ」を参考に並び替えます。ハートの解除で参考から外れます。押さなかった候補を嫌いとは判断しません。
-            </p>
-            <p>
-              特徴はAIによる分類です。価格帯は未確認のため使いません。好みの情報はAI・招待相手へ自動送信しません。この切り替えでAPI料金は発生しません。
-            </p>
-          </details>
         </>
       )}
       {isEvent && (

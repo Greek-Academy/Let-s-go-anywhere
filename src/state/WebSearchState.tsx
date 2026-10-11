@@ -27,7 +27,7 @@ interface SearchDraft {
   category: string
   tag: string
 }
-export type SearchMethod = 'comparison' | 'legacy'
+type SearchMethod = 'comparison' | 'legacy'
 export interface ComparisonView {
   order: 'general' | 'personal'
   provider: 'all' | 'openai' | 'anthropic'
@@ -46,8 +46,6 @@ interface SearchStatus {
 }
 interface SearchContext {
   savedSpots: WebSpot[]
-  method: SearchMethod
-  setMethod: (method: SearchMethod) => void
   comparisonView: ComparisonView
   setComparisonView: (patch: Partial<ComparisonView>) => void
   active: boolean
@@ -106,7 +104,6 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   const { state, update, toast, memoryOnly, storageProtected } = useApp()
   const gps = useDiscoveryLocation()
   const locationRequest = useRef(false)
-  const [method, setMethod] = useState<SearchMethod>('comparison')
   const [comparisonView, setView] = useState<ComparisonView>({ order: 'general', provider: 'all' })
   const [loading, setLoading] = useState(false)
   type ViewKey = 'places' | 'events'
@@ -184,7 +181,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     setActive(false)
     setError('')
   }
-  const search = async (draft: SearchDraft, method: SearchMethod = 'legacy') => {
+  const search = async (draft: SearchDraft, method: SearchMethod = 'comparison') => {
     if (running.current) return
     setActive(true)
     setError('')
@@ -439,8 +436,6 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     <Context.Provider
       value={{
         savedSpots: groupPlaces(state.savedWebSpots),
-        method,
-        setMethod,
         comparisonView,
         setComparisonView: (patch) => setView((v) => ({ ...v, ...patch })),
         active,

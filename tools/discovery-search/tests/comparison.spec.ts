@@ -37,10 +37,11 @@ test('2社の18候補→提案元フィルター→出典→保存→好み順�
     }
   })
   await enter(page)
-  await expect(page.getByLabel('検索方法', { exact: true })).toHaveValue('comparison')
+  await expect(page.getByLabel('検索方法', { exact: true })).toHaveCount(0)
   expect(requests).toBe(0)
   await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(18)
+  await expect(page.getByText('いいねはどう使われる？', { exact: true })).toHaveCount(0)
   await expect(page.getByText('重なった提案2件をまとめました。')).toBeVisible()
   await page.getByRole('button', { name: 'Claude 10', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
