@@ -31,8 +31,27 @@ final class DrivePlusUITests: XCTestCase {
         if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
         tap("見つける")
         tap("探す地域を変更")
-        tap("出発エリアと同じ都道府県")
-        tap("この地域で探す")
+        tap("別の駅の周辺")
+        let stationInput = web.textFields["探したい駅"]
+        XCTAssertTrue(stationInput.waitForExistence(timeout: 10))
+        if web.buttons["探したい駅をクリア"].exists { tap("探したい駅をクリア") }
+        stationInput.tap()
+        stationInput.typeText("しんじゅく")
+        let stationOption = web.otherElements.matching(NSPredicate(format: "label BEGINSWITH %@", "新宿駅（東京都）")).firstMatch
+        XCTAssertTrue(stationOption.waitForExistence(timeout: 10))
+        let visibleAboveKeyboard = NSPredicate { _, _ in
+            stationOption.isHittable && stationOption.frame.maxY <= app.keyboards.firstMatch.frame.minY
+        }
+        expectation(for: visibleAboveKeyboard, evaluatedWith: stationOption)
+        waitForExpectations(timeout: 10)
+        let candidates = XCTAttachment(screenshot: app.screenshot())
+        candidates.name = "station-autocomplete-native"
+        candidates.lifetime = .keepAlways
+        add(candidates)
+        stationOption.tap()
+        let done = app.buttons["完了"].exists ? app.buttons["完了"] : app.buttons["Done"]
+        if done.exists { done.tap() }
+        tap("この駅の周辺で探す")
         tap("お出かけの絞り込み")
         tap("自然")
         tap("この条件で表示")
@@ -439,8 +458,18 @@ final class DrivePlusUITests: XCTestCase {
         for tab in ["行きたい", "車を探す", "学ぶ", "見つける"] { tap(tab) }
         capture("02-discover")
         tap("探す地域を変更")
-        tap("すべての地域")
-        tap("この地域で探す")
+        tap("別の駅の周辺")
+        let stationInput = web.textFields["探したい駅"]
+        XCTAssertTrue(stationInput.waitForExistence(timeout: 10))
+        if web.buttons["探したい駅をクリア"].exists { tap("探したい駅をクリア") }
+        stationInput.tap()
+        stationInput.typeText("河口湖")
+        let stationOption = web.otherElements.matching(NSPredicate(format: "label BEGINSWITH %@", "河口湖駅（山梨県）")).firstMatch
+        XCTAssertTrue(stationOption.waitForExistence(timeout: 10))
+        stationOption.tap()
+        let stationDone = app.buttons["完了"].exists ? app.buttons["完了"] : app.buttons["Done"]
+        if stationDone.exists { stationDone.tap() }
+        tap("この駅の周辺で探す")
         let unsave = controls.matching(NSPredicate(format: "label == %@", "富士山と、湖畔の小さな旅を保存解除")).firstMatch
         if !unsave.exists { tap("富士山と、湖畔の小さな旅を保存") }
         tap("行きたい")

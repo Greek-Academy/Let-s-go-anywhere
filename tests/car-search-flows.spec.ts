@@ -1,5 +1,6 @@
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
+import { chooseStation } from './helpers/discovery'
 
 async function enter(page: Page) {
   await page.goto('/#/welcome')
@@ -102,6 +103,12 @@ test('changing category clears incompatible provider; empty area and narrow enla
 }) => {
   await page.setViewportSize({ width: 320, height: 568 })
   await enter(page)
+  await page.goto('/#/cars/search')
+  await expect(page.getByRole('button', { name: /出発エリアを使う/ })).toBeDisabled()
+  await page.goto('/#/discover')
+  await page.getByRole('button', { name: '出発エリアを変更', exact: true }).click()
+  await chooseStation(page, '出発する最寄駅', '新宿', '新宿駅（東京都）')
+  await page.getByRole('button', { name: '出発エリアを保存', exact: true }).click()
   await page.goto('/#/settings')
   await page.getByRole('switch', { name: /文字を少し大きくする/ }).check()
   await page.goto('/#/cars/search')
@@ -113,6 +120,7 @@ test('changing category clears incompatible provider; empty area and narrow enla
   await expect(page.getByRole('alert')).toHaveText('駅名・地域を入力してください。')
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.getByRole('button', { name: /出発エリアを使う/ }).click()
+  await expect(page.getByLabel('探す駅・地域', { exact: true })).toHaveValue('東京都 新宿駅周辺')
   await expect(page.getByRole('alert')).toHaveCount(0)
   await page.getByRole('button', { name: '外部地図で車を探す', exact: true }).click()
   await expect(page.getByRole('dialog')).toBeVisible()

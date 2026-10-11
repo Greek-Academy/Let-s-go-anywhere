@@ -113,9 +113,10 @@ test('invited tester logs in, searches, saves and ranks; logout/reload isolate p
   expect(calls).toHaveLength(0)
   await participate(page)
   await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
-  await page.getByRole('button', { name: /^地域を指定する/ }).click()
-  await page.getByLabel('目的地の都道府県').selectOption('京都府')
-  await page.getByRole('button', { name: 'この地域で探す' }).click()
+  await page.getByRole('button', { name: /別の駅の周辺/ }).click()
+  await page.getByRole('combobox', { name: '探したい駅' }).fill('きょうと')
+  await page.getByRole('option').filter({ hasText: '京都駅（京都府）' }).first().click()
+  await page.getByRole('button', { name: 'この駅の周辺で探す' }).click()
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('自然とカフェ')
   await page.getByRole('button', { name: 'Webで候補を探す' }).click()
   await expect(page.getByText('18件のお店・スポット候補', { exact: true })).toBeVisible()
@@ -161,7 +162,7 @@ test('invited tester logs in, searches, saves and ranks; logout/reload isolate p
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
 })
 
-test('Tokyo + genre searches without text; extra wish, changed genre and repeat requests use the actual conditions', async ({
+test('Shinjuku station + genre searches without text; extra wish, changed genre and repeat requests use the actual conditions', async ({
   page,
   context,
   request,
@@ -173,9 +174,10 @@ test('Tokyo + genre searches without text; extra wish, changed genre and repeat 
   await login(page, await account(request))
   await participate(page)
   await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
-  await page.getByRole('button', { name: /^地域を指定する/ }).click()
-  await page.getByLabel('目的地の都道府県').selectOption('東京都')
-  await page.getByRole('button', { name: 'この地域で探す' }).click()
+  await page.getByRole('button', { name: /別の駅の周辺/ }).click()
+  await page.getByRole('combobox', { name: '探したい駅' }).fill('しんじゅく')
+  await page.getByRole('option').filter({ hasText: '新宿駅（東京都）' }).first().click()
+  await page.getByRole('button', { name: 'この駅の周辺で探す' }).click()
   const input = page.getByRole('textbox', { name: 'お出かけを検索' })
   const submit = page.getByRole('button', { name: 'Webで候補を探す', exact: true })
   await input.fill('')
@@ -190,14 +192,16 @@ test('Tokyo + genre searches without text; extra wish, changed genre and repeat 
   await genre('自然')
   expect(queries).toHaveLength(0)
   await submit.click()
-  await expect(page.getByText('検索した条件：東京都 ／ 自然', { exact: true })).toBeVisible()
-  expect(queries).toEqual([{ region: '東京都', theme: '自然' }])
+  await expect(
+    page.getByText('検索した条件：東京都 新宿駅周辺 ／ 自然', { exact: true }),
+  ).toBeVisible()
+  expect(queries).toEqual([{ stationId: '1130208', region: '東京都 新宿駅周辺', theme: '自然' }])
   await expect(page.getByText(/下は前回の検索結果です/)).toHaveCount(0)
   await input.fill('静かな公園')
   await expect(page.getByText(/下は前回の検索結果です/)).toBeVisible()
   await submit.click()
   await expect(
-    page.getByText('検索した条件：東京都 ／ 自然 / 静かな公園', { exact: true }),
+    page.getByText('検索した条件：東京都 新宿駅周辺 ／ 自然 / 静かな公園', { exact: true }),
   ).toBeVisible()
   await expect(page.getByText(/下は前回の検索結果です/)).toHaveCount(0)
   await genre('温泉')
@@ -205,19 +209,19 @@ test('Tokyo + genre searches without text; extra wish, changed genre and repeat 
   await input.fill('日帰り')
   await submit.click()
   await expect(
-    page.getByText('検索した条件：東京都 ／ 温泉 / 日帰り', { exact: true }),
+    page.getByText('検索した条件：東京都 新宿駅周辺 ／ 温泉 / 日帰り', { exact: true }),
   ).toBeVisible()
   await genre('すべて')
   await input.fill('静かなカフェ')
   await submit.click()
   await expect(
-    page.getByText('検索した条件：東京都 ／ 静かなカフェ', { exact: true }),
+    page.getByText('検索した条件：東京都 新宿駅周辺 ／ 静かなカフェ', { exact: true }),
   ).toBeVisible()
   expect(queries).toEqual([
-    { region: '東京都', theme: '自然' },
-    { region: '東京都', theme: '自然 / 静かな公園' },
-    { region: '東京都', theme: '温泉 / 日帰り' },
-    { region: '東京都', theme: '静かなカフェ' },
+    { stationId: '1130208', region: '東京都 新宿駅周辺', theme: '自然' },
+    { stationId: '1130208', region: '東京都 新宿駅周辺', theme: '自然 / 静かな公園' },
+    { stationId: '1130208', region: '東京都 新宿駅周辺', theme: '温泉 / 日帰り' },
+    { stationId: '1130208', region: '東京都 新宿駅周辺', theme: '静かなカフェ' },
   ])
   await expect(page.getByText(/これまでの検索：4回。回数上限なし/)).toBeVisible()
   await page.getByRole('button', { name: '前回の比較結果を開く（無料）' }).click()

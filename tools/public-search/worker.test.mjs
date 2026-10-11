@@ -6,7 +6,7 @@ import { createPublicSearch } from './worker.mjs'
 import { comparisonSample } from '../spot-comparison/sample.mjs'
 
 const code = 'T'.repeat(43)
-const query = { region: '京都府', theme: '自然とカフェ' }
+const query = { stationId: '100216', region: '京都府 京都駅周辺', theme: '自然とカフェ' }
 const origin = 'https://driveplus-fbc33.web.app'
 const sql = readFileSync(new URL('./migrations/0001_attempts.sql', import.meta.url), 'utf8')
 const repeatMigration = readFileSync(

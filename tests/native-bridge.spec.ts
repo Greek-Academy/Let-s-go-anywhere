@@ -1,3 +1,4 @@
+import { chooseStation } from './helpers/discovery'
 import { expectMapStationCount } from './support/mapFixture'
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
@@ -165,12 +166,11 @@ test('native startup waits for saved data, serializes rapid edits, survives relo
   await expect(page.locator('.status-bar')).toBeHidden()
   await expect(page.locator('.prototype-label')).toBeHidden()
   await page.goto('/#/onboarding/1')
-  const name = page.getByRole('textbox', { name: '出発エリア' })
-  await name.fill('')
-  await name.pressSequentially('native rapid edits', { delay: 8 })
+  await chooseStation(page, '出発する最寄駅', 'しんじゅく', '新宿駅（東京都）')
+  await chooseStation(page, '出発する最寄駅', 'しぶや', '渋谷駅（東京都）')
   await expect
-    .poll(async () => JSON.parse((await nativeRaw(page))!).profile.area)
-    .toBe('native rapid edits')
+    .poll(async () => JSON.parse((await nativeRaw(page))!).profile.stationId)
+    .toBe('1130205')
   await expect(page.getByRole('alert')).toHaveCount(0)
   await page.reload()
   expect(JSON.parse((await nativeRaw(page))!).savedEvents).toEqual(['fuji'])
@@ -178,7 +178,7 @@ test('native startup waits for saved data, serializes rapid edits, survives relo
   await page.goto('/#/settings')
   await page.getByRole('button', { name: 'モックの保存データを削除' }).click()
   await page.getByRole('button', { name: 'キャンセル', exact: true }).click()
-  expect(JSON.parse((await nativeRaw(page))!).profile.area).toBe('native rapid edits')
+  expect(JSON.parse((await nativeRaw(page))!).profile.area).toBe('東京都 渋谷駅周辺')
   await page.getByRole('button', { name: 'モックの保存データを削除' }).click()
   await page.getByRole('button', { name: '削除して最初から始める' }).click()
   await expect(page).toHaveURL(/#\/welcome$/)
@@ -215,14 +215,14 @@ test('native write failure retains the previous record and an explicit retry sav
   const raw = JSON.stringify({ ...createInitialState(), onboarded: true })
   await bridge(page, raw)
   await page.goto('/#/onboarding/1')
-  await page.getByRole('textbox', { name: '出発エリア' }).waitFor()
+  await page.getByRole('combobox', { name: '出発する最寄駅' }).waitFor()
   await page.evaluate(() => {
     ;(window as unknown as { nativeTest: { failWrite: boolean } }).nativeTest.failWrite = true
   })
-  await page.getByRole('textbox', { name: '出発エリア' }).fill('京都')
+  await chooseStation(page, '出発する最寄駅', 'きょうと', '京都駅（京都府）')
   await expect(page.getByRole('alert')).toContainText('自動保存を停止')
   expect(await nativeRaw(page)).toBe(raw)
-  await page.getByRole('textbox', { name: '出発エリア' }).fill('京都駅周辺')
+  await chooseStation(page, '出発する最寄駅', 'かまくら', '鎌倉駅（神奈川県）')
   await page.getByRole('button', { name: '保存の状態を確認' }).click()
   await page.evaluate(() => {
     ;(window as unknown as { nativeTest: { failWrite: boolean } }).nativeTest.failWrite = false
@@ -231,7 +231,7 @@ test('native write failure retains the previous record and an explicit retry sav
   await expect(page.getByRole('alert')).toHaveCount(0)
   await expect
     .poll(async () => JSON.parse((await nativeRaw(page))!).profile.area)
-    .toBe('京都駅周辺')
+    .toBe('神奈川県 鎌倉駅周辺')
 })
 
 test('native external browser failures retain the app and retry only the confirmed personal URL', async ({

@@ -15,7 +15,7 @@ import {
   sourceUrl,
 } from '../../spot-comparison/core.mjs'
 import { comparisonSample } from '../../spot-comparison/sample.mjs'
-const query = { region: '京都府', theme: '自然とカフェ' }
+const query = { stationId: '100216', region: '京都府 京都駅周辺', theme: '自然とカフェ' }
 const directory = (t) => {
   const dir = mkdtempSync(join(tmpdir(), 'driveplus-comparison-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
@@ -323,4 +323,36 @@ test('HTTP demo goes through new origin/token guards and parser without a key or
   assert.equal(result.mode, 'sample')
   assert.equal(result.spots.length, 18)
   assert.equal(existsSync(join(dir, 'comparison-v1', 'usage.json')), false)
+})
+
+test('station scope is canonical on both providers; arbitrary coordinates, old prefectures and unknown IDs fail before API use', async (t) => {
+  const q = validateComparisonQuery({ stationId: '1130208', theme: '自然 / 静かな公園' })
+  assert.equal(q.region, '東京都 新宿駅周辺')
+  const o = buildComparisonRequest('openai', q),
+    a = buildComparisonRequest('anthropic', q)
+  const body = JSON.parse(o.input)
+  assert.deepEqual(body, JSON.parse(a.messages[0].content))
+  assert.equal(body.station.name, '新宿')
+  assert.equal(body.radiusMeters, 2000)
+  assert.ok(body.station.lines.length)
+  assert.ok(body.station.latitude > 35 && body.station.latitude < 36)
+  assert.match(o.instructions, /Do not widen to the entire prefecture/)
+  const invalid = [
+    { region: '東京都', theme: '自然' },
+    { stationId: 'unknown', theme: '自然' },
+    { ...q, region: '大阪府' },
+    { ...q, latitude: 0 },
+    { ...q, theme: 'x'.repeat(81) },
+  ]
+  let calls = 0
+  const api = createComparison({
+    ...options(t),
+    fetcher: () => {
+      calls++
+      throw new Error('Must not be called')
+    },
+  })
+  for (const input of invalid) await assert.rejects(api.search(input))
+  assert.equal(calls, 0)
+  assert.equal(api.status().attempts.length, 0)
 })

@@ -1,4 +1,6 @@
-import { ArrowLeft, ArrowRight, Check, MapPin, Search, Sparkles } from 'lucide-react'
+import { StationPicker } from '../components/StationPicker'
+import { railStation, stationRegion } from '../domain/railStations'
+import { ArrowLeft, ArrowRight, Check, MapPin, Sparkles } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../state/AppState'
 import { companions, interests } from '../data/options'
@@ -109,22 +111,26 @@ export function Onboarding() {
         </h1>
         <p className="body-copy">
           {step === 1
-            ? '出発エリアに合わせて、休日のヒントをお届け。'
+            ? '最寄駅を選ぶと、その周辺の休日のヒントを探せます。'
             : step === 2
               ? 'あなたらしいお出かけを見つけましょう。'
               : 'いくつ選んでも大丈夫。あとから変更できます。'}
         </p>
         {step === 1 && (
           <>
-            <label className="search-field onboarding-search">
-              <Search size={19} />
-              <input
-                aria-label="出発エリア"
-                placeholder="駅名・市区町村を入力"
-                value={profile.area}
-                onChange={(e) => setProfile({ area: e.target.value })}
-              />
-            </label>
+            <StationPicker
+              label="出発する最寄駅"
+              value={profile.stationId}
+              onChange={(stationId) => {
+                const station = railStation(stationId)
+                setProfile({ stationId, ...(station ? { area: stationRegion(station) } : {}) })
+              }}
+            />
+            {!profile.stationId && !!profile.area && (
+              <p className="small muted">
+                以前の設定：{profile.area}。候補から駅を選び直してください。
+              </p>
+            )}
             <div className="area-illustration" aria-hidden="true">
               <div className="area-grid" />
               <div className="area-park park-one" />
@@ -136,20 +142,6 @@ export function Onboarding() {
                 <MapPin size={39} fill="currentColor" />
               </span>
               <span className="area-tag">ここから、楽しみが広がる。</span>
-            </div>
-            <p className="field-caption">たとえば、こんなエリア</p>
-            <div className="chips wrap">
-              {['東京・渋谷駅周辺', '東京・新宿駅周辺', '神奈川・横浜駅周辺'].map((area) => (
-                <button
-                  className={`area-suggestion ${profile.area === area ? 'selected' : ''}`}
-                  key={area}
-                  onClick={() => setProfile({ area })}
-                >
-                  <MapPin size={14} />
-                  {area}
-                  {profile.area === area && <Check size={13} />}
-                </button>
-              ))}
             </div>
             <p className="muted small">位置情報の許可は必要ありません。</p>
           </>
@@ -204,7 +196,11 @@ export function Onboarding() {
         )}
       </div>
       <div className="onboarding-footer">
-        <PrimaryButton onClick={next} icon={ArrowRight}>
+        <PrimaryButton
+          onClick={next}
+          disabled={step === 1 && !railStation(profile.stationId)}
+          icon={ArrowRight}
+        >
           {step === 3 ? 'おすすめを見る' : '次へ'}
         </PrimaryButton>
         <button className="text-button skip-button" onClick={next}>

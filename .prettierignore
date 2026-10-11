@@ -10,3 +10,5 @@ review-test-results/
 
 # Generated ODbL geometry; keep compact for download and review.
 src/data/kyoto-basemap.geo.json
+# Generated attributed rail catalog; regenerate with scripts/import-rail-stations.py.
+src/data/rail-stations.json

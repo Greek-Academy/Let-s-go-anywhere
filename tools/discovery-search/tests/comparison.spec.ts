@@ -8,7 +8,8 @@ const first = 'サンプル01・小さな喫茶店'
 async function enter(page: Page) {
   const s = createInitialState()
   s.onboarded = true
-  s.discover.region = '東京都'
+  s.discover.region = 'station'
+  s.discover.stationId = '1130208'
   s.discover.search = '自然とカフェ'
   s.memo.questions = '共有しない不安のメモ'
   await page.addInitScript((initial) => {
@@ -28,7 +29,11 @@ test('2社の18候補→提案元フィルター→出典→保存→好み順�
   page.on('request', (r) => {
     if (r.url().endsWith('/api/spot-search/compare')) {
       requests++
-      expect(r.postDataJSON()).toEqual({ region: '東京都', theme: '自然とカフェ' })
+      expect(r.postDataJSON()).toEqual({
+        stationId: '1130208',
+        region: '東京都 新宿駅周辺',
+        theme: '自然とカフェ',
+      })
     }
   })
   await enter(page)

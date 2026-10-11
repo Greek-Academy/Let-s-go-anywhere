@@ -49,4 +49,4 @@ export const prefectures = [
   '沖縄県',
 ] as const
 export type Prefecture = (typeof prefectures)[number]
-export type DiscoveryRegion = 'origin' | 'all' | Prefecture
+export type DiscoveryRegion = 'origin' | 'station' | 'all' | Prefecture

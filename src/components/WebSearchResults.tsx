@@ -6,11 +6,13 @@ import { WebSpotCard } from './WebSpotCard'
 import { EmptyState, SectionHeading } from './ui'
 
 export function WebSearchResults({
+  stationId,
   region,
   theme,
   category,
   tag,
 }: {
+  stationId?: string
   region: string | null
   theme: string
   category: string
@@ -20,7 +22,8 @@ export function WebSearchResults({
   const { state } = useApp()
   const changed =
     result &&
-    ((result.kind === 'comparison' ? region !== result.query.region : region !== '京都府') ||
+    ((result.kind === 'comparison' && result.query.stationId !== stationId) ||
+      (result.kind === 'comparison' ? region !== result.query.region : region !== '京都府') ||
       searchTheme(theme, tag) !== result.query.theme ||
       !['おすすめ', 'スポット'].includes(category))
   return (
@@ -51,7 +54,7 @@ export function WebSearchResults({
         </p>
       )}
       <p className="small muted">
-        予算・帰宅時刻・避けたい運転場面への適合、距離・営業状況は未確認です。
+        予算・帰宅時刻・避けたい運転場面への適合、距離・営業状況は未確認です。駅周辺の約2kmは探索の目安で、範囲内であることを保証するものではありません。
       </p>
       {result && (
         <>

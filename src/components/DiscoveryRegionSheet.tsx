@@ -1,83 +1,65 @@
 import { useState } from 'react'
-import { prefectures } from '../data/regions'
-import type { DiscoveryRegion, Prefecture } from '../data/regions'
-import { originPrefecture } from '../domain/discoveryRegion'
+import type { DiscoveryRegion } from '../data/regions'
+import { railStation, stationLabel } from '../domain/railStations'
+import { StationPicker } from './StationPicker'
 import { BottomSheet, Choice, PrimaryButton } from './ui'
 
 export function DiscoveryRegionSheet({
   value,
-  origin,
-  available,
+  stationId,
+  originId,
   onSave,
   onClose,
 }: {
   value: DiscoveryRegion
-  origin: string
-  available: Prefecture[]
-  onSave: (value: DiscoveryRegion) => void
+  stationId?: string | null
+  originId?: string | null
+  onSave: (region: 'origin' | 'station', stationId: string | null) => void
   onClose: () => void
 }) {
-  const [draft, setDraft] = useState(value)
-  const samePrefecture = originPrefecture(origin)
-  const [chosen, setChosen] = useState<Prefecture>(
-    value !== 'origin' && value !== 'all' ? value : (samePrefecture ?? '東京都'),
+  const origin = railStation(originId)
+  const [mode, setMode] = useState<'origin' | 'station'>(
+    value === 'origin' && origin ? 'origin' : 'station',
   )
-  const specific = draft !== 'origin' && draft !== 'all'
+  const [chosen, setChosen] = useState<string | null>(railStation(stationId)?.id ?? null)
   return (
-    <BottomSheet title="探す地域を変更" onClose={onClose}>
+    <BottomSheet title="探す駅を変更" onClose={onClose}>
       <p className="body-copy">
-        お出かけ先の都道府県を選びます。出発地「{origin || '未設定'}」は変わりません。
+        お店やスポットを探したい駅を選びます。出発駅とは別に指定できます。
       </p>
       <div className="region-choices">
-        <Choice
-          title="出発エリアと同じ都道府県"
-          description={samePrefecture ?? '都道府県を判別できません。地域を指定して探せます。'}
-          selected={draft === 'origin'}
-          onClick={() => setDraft('origin')}
-        />
-        <Choice
-          title="地域を指定する"
-          description="行ってみたい都道府県から探す"
-          selected={specific}
-          onClick={() => setDraft(chosen)}
-        />
-        {specific && (
-          <label className="field-label region-select-field">
-            目的地の都道府県
-            <select
-              value={draft}
-              onChange={(e) => {
-                const next = e.target.value as Prefecture
-                setChosen(next)
-                setDraft(next)
-              }}
-            >
-              {prefectures.map((name) => (
-                <option key={name}>{name}</option>
-              ))}
-            </select>
-          </label>
+        {origin && (
+          <Choice
+            title="出発駅の周辺"
+            description={stationLabel(origin)}
+            selected={mode === 'origin'}
+            onClick={() => setMode('origin')}
+          />
+        )}
+        {!origin && (
+          <p className="small muted">出発駅はまだ未設定です。ここで探したい駅を指定できます。</p>
         )}
         <Choice
-          title="すべての地域"
-          description="地域で絞り込まず、掲載中の候補を見る"
-          selected={draft === 'all'}
-          onClick={() => setDraft('all')}
+          title="別の駅の周辺"
+          description="駅名を入力して選ぶ"
+          selected={mode === 'station'}
+          onClick={() => setMode('station')}
         />
+        {mode === 'station' && (
+          <StationPicker label="探したい駅" value={chosen} onChange={setChosen} />
+        )}
       </div>
-      <p className="small muted region-coverage">
-        {available.length
-          ? `いま表示できるサンプルの地域：${available.join('・')}。`
-          : 'いま表示できるサンプルはありません。'}
-        距離・所要時間・運転のしやすさで選ぶものではありません。
+      <p className="small muted">
+        駅周辺の約2kmを目安に探します。候補までの実際の距離・所要時間は未確認です。
       </p>
       <PrimaryButton
+        disabled={mode === 'origin' ? !origin : !railStation(chosen)}
         onClick={() => {
-          onSave(draft)
+          onSave(mode, mode === 'station' ? chosen : null)
           onClose()
         }}
       >
-        この地域で探す
+        この駅の周辺で探す
       </PrimaryButton>
     </BottomSheet>
   )

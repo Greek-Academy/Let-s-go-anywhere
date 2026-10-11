@@ -37,7 +37,8 @@ test('built Worker runs with real local D1 and allows repeat searches across web
         paid++
         return Response.json(
           comparisonSample(request.url.includes('openai') ? 'openai' : 'anthropic', {
-            region: '京都府',
+            stationId: '100216',
+            region: '京都府 京都駅周辺',
             theme: '自然とカフェ',
           }),
         )
@@ -74,7 +75,13 @@ test('built Worker runs with real local D1 and allows repeat searches across web
           'X-Test-Code': code,
         },
         ...(path === 'compare'
-          ? { body: JSON.stringify({ region: '京都府', theme: '自然とカフェ' }) }
+          ? {
+              body: JSON.stringify({
+                stationId: '100216',
+                region: '京都府 京都駅周辺',
+                theme: '自然とカフェ',
+              }),
+            }
           : {}),
       })
     }
