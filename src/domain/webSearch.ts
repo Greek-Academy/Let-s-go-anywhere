@@ -1,3 +1,5 @@
+import { decodeEventDates, decodeEventSchedule, sameEventDates } from './eventSearch'
+import type { EventDates, EventSchedule } from './eventSearch'
 import { LOCATION_REGION, sameCenter, validDiscoveryCenter } from './discoveryLocation'
 import type { DiscoveryCenter } from './discoveryLocation'
 import { railStation, stationRegion } from './railStations'
@@ -7,6 +9,7 @@ import { outboundHttpsUrl, researchSourceUrl } from './externalLinks'
 import { samePlace } from './placeIdentity'
 
 export interface WebSpot {
+  event?: EventSchedule
   id: string
   name: string
   area: string
@@ -23,6 +26,8 @@ export interface WebSpot {
 export interface WebSearchResult {
   spots: WebSpot[]
   query: {
+    purpose?: 'events'
+    eventDates?: EventDates
     region: string
     theme: string
     stationId?: string
@@ -74,6 +79,7 @@ export function decodeSavedWebSpots(value: unknown): WebSpot[] {
   return value.map((entry) => {
     const s = record(entry)
     const fields = [
+      'event',
       'id',
       'name',
       'area',
@@ -123,10 +129,20 @@ export function decodeSavedWebSpots(value: unknown): WebSpot[] {
 
 export async function parseWebSearchResult(
   value: unknown,
-  expected: { region: string; theme: string; stationId?: string; location?: DiscoveryCenter },
+  expected: WebSearchResult['query'],
 ): Promise<WebSearchResult> {
   const data = record(value)
   const query = record(data.query)
+  const dates = query.purpose === 'events' ? decodeEventDates(query.eventDates) : undefined
+  if (
+    (query.purpose !== undefined && query.purpose !== 'events') ||
+    (dates
+      ? query.theme !== 'イベント' || data.kind !== 'comparison'
+      : query.eventDates !== undefined) ||
+    expected.purpose !== query.purpose ||
+    !sameEventDates(expected.eventDates, dates)
+  )
+    throw new Error('イベントの検索条件と結果が一致しません。')
   if (
     (expected.location !== undefined &&
       (!validDiscoveryCenter(query.location) || !sameCenter(query.location, expected.location))) ||
@@ -170,6 +186,9 @@ export async function parseWebSearchResult(
     const s = record(entry)
     if (s.verification !== 'unconfirmed') throw new Error('検索結果の確認状態が不正です。')
     const metadata = comparisonMetadata(s)
+    if (Boolean(metadata?.event) !== Boolean(dates))
+      throw new Error('イベントの開催情報がありません。')
+    if (dates) decodeEventSchedule(s.event, dates)
     if ((data.kind === 'comparison') !== Boolean(metadata))
       throw new Error('検索方法と候補が一致しません。')
     const sourceUrl = (metadata ? outboundHttpsUrl : researchSourceUrl)(
@@ -199,6 +218,7 @@ export async function parseWebSearchResult(
   return {
     spots,
     query: {
+      ...(dates ? { purpose: 'events' as const, eventDates: dates } : {}),
       region: shortText(query.region, 120),
       theme: shortText(query.theme, 80),
       ...(typeof query.stationId === 'string' ? { stationId: query.stationId } : {}),
@@ -220,9 +240,10 @@ export async function parseWebSearchResult(
 
 function comparisonMetadata(
   s: Record<string, unknown>,
-): Pick<WebSpot, 'recommendations' | 'tags' | 'likedFor'> | undefined {
+): Pick<WebSpot, 'recommendations' | 'tags' | 'likedFor' | 'event'> | undefined {
   if (s.recommendations === undefined) {
-    if (s.tags !== undefined || s.likedFor !== undefined) throw new Error('提案元がありません。')
+    if (s.tags !== undefined || s.likedFor !== undefined || s.event !== undefined)
+      throw new Error('提案元がありません。')
     return undefined
   }
   const recommendations = decodeRecommendations(s.recommendations)
@@ -236,7 +257,12 @@ function comparisonMetadata(
     throw new Error('提案元と出典が一致しません。')
   const likedFor = s.likedFor === undefined ? undefined : decodeTags(s.likedFor)
   if (likedFor?.some((t) => !tags.includes(t))) throw new Error('好みの理由が不正です。')
-  return { recommendations, tags, ...(likedFor === undefined ? {} : { likedFor }) }
+  return {
+    ...(s.event === undefined ? {} : { event: decodeEventSchedule(s.event) }),
+    recommendations,
+    tags,
+    ...(likedFor === undefined ? {} : { likedFor }),
+  }
 }
 function comparisonIdentity(mode: string, s: Record<string, unknown>) {
   const norm = (v: unknown) =>
@@ -244,7 +270,8 @@ function comparisonIdentity(mode: string, s: Record<string, unknown>) {
       .normalize('NFKC')
       .toLowerCase()
       .replace(/[\s・「」『』]/gu, '')
-  return `${mode}:comparison:${norm(s.name)}|${norm(s.area)}`
+  const event = s.event === undefined ? undefined : decodeEventSchedule(s.event)
+  return `${mode}:comparison:${norm(s.name)}|${norm(s.area)}${event ? `|event:${event.startDate}:${event.endDate}:${norm(event.venue)}` : ''}`
 }
 function duplicateCount(v: unknown): number {
   if (!Number.isInteger(v) || Number(v) < 0 || Number(v) > 20)

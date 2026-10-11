@@ -200,12 +200,17 @@ const schema: Record<keyof AppState, Rule> = {
   discover: shape(
     {
       category: oneOf(['おすすめ', '今週末', 'イベント', 'スポット']),
+      eventSelection: shape({ mode: oneOf(['today', 'weekend', 'custom']), date: text }),
       search: text,
       tag: text,
       region: oneOf(['origin', 'station', 'all', ...prefectures]),
       stationId: nullable(id),
     },
-    { region: initial.discover.region, stationId: null },
+    {
+      region: initial.discover.region,
+      stationId: null,
+      eventSelection: { mode: 'today', date: '' },
+    },
   ),
   schoolFilters: shape({ area: text, practice: text, budget: text, vehicle: text }),
   settings: shape({ largeText: bool, reducedMotion: bool }, { ...initial.settings }),
@@ -236,6 +241,10 @@ export function decodeStoredState(raw: string | null): {
         problem = 'invalid'
       }
     }
+    if (state.discover.category === '今週末') {
+      state.discover.category = 'イベント'
+      state.discover.eventSelection = { mode: 'weekend', date: '' }
+    } else if (state.discover.category === 'スポット') state.discover.category = 'おすすめ'
     return { state, problem }
   } catch {
     return { state, problem: 'invalid' }

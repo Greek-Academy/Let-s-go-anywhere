@@ -19,9 +19,24 @@ export function comparisonSample(provider, query) {
       'アートのあるお店',
     ]
     return {
-      name: `サンプル${String(index + 1).padStart(2, '0')}・${kinds[index % 6]}`,
+      ...(query.purpose === 'events'
+        ? {
+            event: {
+              startDate: query.eventDates.start,
+              endDate: query.eventDates.end,
+              occursOn: [...new Set([query.eventDates.start, query.eventDates.end])],
+              venue: `架空の会場${index + 1}`,
+              timeText: '10:00〜16:00（架空）',
+              status: 'scheduled',
+            },
+          }
+        : {}),
+      name: `${query.purpose === 'events' ? 'イベント' : ''}サンプル${String(index + 1).padStart(2, '0')}・${query.purpose === 'events' ? ['週末マルシェ', '公園の音楽会', '郷土料理フェア', '街角の映画祭', 'お菓子づくり体験', '小さな作品展'][index % 6] : kinds[index % 6]}`,
       area: `${query.region}・架空のエリア`,
-      summary: 'お店選びの操作を確かめる架空の候補です。実在するお店の情報ではありません。',
+      summary:
+        query.purpose === 'events'
+          ? '日付からイベントを探す操作を確かめる架空の候補です。実在の催しではありません。'
+          : 'お店選びの操作を確かめる架空の候補です。実在するお店の情報ではありません。',
       matchReason: `${provider === 'openai' ? 'OpenAI' : 'Claude'}の提案例です。${kinds[index % 6]}を楽しむ休日を想定しています。`,
       sourceUrl: `https://example.com/shops/${index + 1}`,
       tags: tagSets[index % 6],

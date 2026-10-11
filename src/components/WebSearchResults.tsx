@@ -1,3 +1,5 @@
+import { sameEventDates, eventDatesLabel } from '../domain/eventSearch'
+import type { EventDates } from '../domain/eventSearch'
 import { sameCenter } from '../domain/discoveryLocation'
 import type { DiscoveryCenter } from '../domain/discoveryLocation'
 import { searchTheme } from '../domain/searchTheme'
@@ -8,6 +10,7 @@ import { WebSpotCard } from './WebSpotCard'
 import { EmptyState, SectionHeading } from './ui'
 
 export function WebSearchResults({
+  eventDates,
   stationId,
   location,
   region,
@@ -15,6 +18,7 @@ export function WebSearchResults({
   category,
   tag,
 }: {
+  eventDates?: EventDates | null
   stationId?: string
   location?: DiscoveryCenter
   region: string | null
@@ -30,8 +34,9 @@ export function WebSearchResults({
       !sameCenter(result.query.location, location) ||
       (result.kind === 'comparison' && result.query.stationId !== stationId) ||
       (result.kind === 'comparison' ? region !== result.query.region : region !== '京都府') ||
-      searchTheme(theme, tag) !== result.query.theme ||
-      !['おすすめ', 'スポット'].includes(category))
+      (category === 'イベント'
+        ? !sameEventDates(eventDates, result.query.eventDates)
+        : searchTheme(theme, tag) !== result.query.theme))
   return (
     <section className="web-search-results" aria-label="Web検索の結果" aria-busy={loading}>
       <div className="web-result-heading">
@@ -65,7 +70,10 @@ export function WebSearchResults({
       {result && (
         <>
           <p className="web-query-label">
-            検索した条件：{result.query.region} ／ {result.query.theme}
+            検索した条件：{result.query.region} ／{' '}
+            {result.query.eventDates
+              ? `イベント・${eventDatesLabel(result.query.eventDates)}（日本時間）`
+              : result.query.theme}
           </p>
           {changed && (
             <p className="notice" role="status">
@@ -98,7 +106,7 @@ export function WebSearchResults({
           )}
           {!!result.omitted && (
             <p className="small muted">
-              出典・形式・重複の確認で{result.omitted}件を除外しました。
+              出典・日付・形式・重複の確認で{result.omitted}件を除外しました。
             </p>
           )}
         </>

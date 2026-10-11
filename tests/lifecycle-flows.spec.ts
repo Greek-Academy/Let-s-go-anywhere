@@ -51,6 +51,7 @@ test('a passed end boundary updates open discovery and saved detail without chan
   await page.clock.setSystemTime(new Date('2026-09-19T11:00:00Z'))
   await page.clock.runFor(30_001)
   await expect(page.getByRole('button', { name: '湖畔のオータム花火の詳細を見る' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'イベント', exact: true }).click()
   await page.getByRole('button', { name: '今週末', exact: true }).click()
   await expect(page.locator('.event-card')).toHaveCount(1)
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()

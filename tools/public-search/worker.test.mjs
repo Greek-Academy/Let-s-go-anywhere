@@ -1,3 +1,4 @@
+import { eventDates, addDays } from '../../src/domain/eventSearch.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -64,7 +65,14 @@ function fixture(options = {}) {
     if (options.fail === provider || options.fail === 'both')
       return Response.json({ error: 'secret-provider-body' }, { status: 500 })
     if (options.large) return new Response('x'.repeat(1_048_577))
-    return Response.json(comparisonSample(provider, query))
+    const body = JSON.parse(init.body)
+    const input = JSON.parse(provider === 'openai' ? body.input : body.messages[0].content)
+    return Response.json(
+      comparisonSample(provider, {
+        ...query,
+        ...(input.purpose === 'events' ? { purpose: 'events', eventDates: input.eventDates } : {}),
+      }),
+    )
   }
   let time = clock
   const app = createPublicSearch({ fetcher, now: () => time })
@@ -399,4 +407,45 @@ test('expired in-flight lease can recover; late result cannot overwrite a newer 
     '新しい希望',
   )
   assert.equal((await (await f.send('owner', 'comparison-status')).json()).attemptCount, 2)
+})
+
+test('place/event searches share the original five-attempt counter; invalid dates cost nothing', async () => {
+  const f = fixture()
+  const dates = eventDates({ mode: 'today', date: '' })
+  const events = { ...query, theme: 'イベント', purpose: 'events', eventDates: dates }
+  assert.equal(
+    (
+      await f.send('mixed', 'compare', {
+        query: {
+          ...events,
+          eventDates: { start: addDays(dates.start, -1), end: addDays(dates.start, -1) },
+        },
+      })
+    ).status,
+    400,
+  )
+  assert.equal(f.paid().length, 0)
+  for (let i = 0; i < 5; i++) {
+    const result = await (
+      await f.send('mixed', 'compare', { query: i % 2 === 0 ? events : query })
+    ).json()
+    assert.equal(result.spots.length, 18)
+    assert.equal(Boolean(result.spots[0].event), i % 2 === 0)
+  }
+  assert.equal((await f.send('mixed')).status, 429)
+  assert.equal((await f.send('mixed', 'compare', { query: events })).status, 429)
+  assert.equal((await (await f.send('mixed', 'comparison-status')).json()).attemptCount, 5)
+  assert.equal((await (await f.send('mixed', 'comparison-result')).json()).query.purpose, 'events')
+  assert.equal(f.paid().length, 10)
+  const nearby = {
+    ...events,
+    stationId: undefined,
+    region: '取得した現在地の周辺',
+    location: { lat: 35.691, lng: 139.7 },
+  }
+  assert.equal((await f.send('gps-events', 'compare', { query: nearby })).status, 200)
+  const restored = await (await f.send('gps-events', 'comparison-result')).json()
+  assert.equal(restored.query.location, undefined)
+  assert.equal(restored.query.locationSearch, true)
+  assert.deepEqual(restored.query.eventDates, dates)
 })

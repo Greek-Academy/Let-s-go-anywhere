@@ -24,7 +24,11 @@ export function fromWebSpot(spot: WebSpot): Candidate {
     title: spot.name,
     area: spot.area,
     url: normalizeSavedUrl(spot.sourceUrl).url,
-    status: spot.mode === 'sample' ? '検索サンプル・内容未確認' : 'Web取得・内容未確認',
+    status:
+      (spot.mode === 'sample' ? '検索サンプル・内容未確認' : 'Web取得・内容未確認') +
+      (spot.event
+        ? `／開催予定 ${spot.event.startDate}〜${spot.event.endDate}・変更は出典で確認`
+        : ''),
     sample: spot.mode === 'sample',
     capturedAt: spot.retrievedAt,
   }

@@ -74,7 +74,7 @@ test('same-page filtering keeps focus, while profile navigation returns to the m
   page,
 }) => {
   await enter(page)
-  const filter = page.getByRole('button', { name: 'スポット', exact: true })
+  const filter = page.getByRole('button', { name: 'イベント', exact: true })
   await keyboardActivate(page, filter)
   await expect(filter).toBeFocused()
   await keyboardActivate(page, page.getByRole('button', { name: 'マイページを開く' }))

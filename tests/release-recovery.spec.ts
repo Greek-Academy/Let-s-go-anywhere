@@ -1,4 +1,4 @@
-import { expect, test } from './support/mapFixture'
+import { expect, test, mapPattern } from './support/mapFixture'
 import { spawnSync } from 'node:child_process'
 import { createServer } from 'node:http'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
@@ -71,7 +71,13 @@ test('a verified release restores the same origin after a failed deployment and 
     const external: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     page.on('request', (request) => {
-      if (new URL(request.url()).origin !== origin) external.push(request.url())
+      // mapFixture intercepts these URLs with synthetic tiles. Depending on render
+      // timing they can fire before leaving the car tab; they are not external traffic.
+      if (
+        new URL(request.url()).origin !== origin &&
+        !request.url().startsWith(mapPattern.slice(0, -2))
+      )
+        external.push(request.url())
     })
     await page.clock.install({ time: new Date('2026-09-16T03:00:00Z') })
     await page.goto(origin + '/#/welcome')

@@ -1,3 +1,4 @@
+import type { EventSelection } from '../domain/eventSearch'
 import { createRealMapState } from '../domain/realStations'
 import type { RealMapState } from '../domain/realStations'
 import { userProfile } from '../data/options'
@@ -53,6 +54,7 @@ export interface AppState {
   }
   discover: {
     category: string
+    eventSelection?: EventSelection
     search: string
     tag: string
     region: DiscoveryRegion
@@ -91,7 +93,14 @@ export const createInitialState = (): AppState => ({
     selected: null,
     offset: { x: 0, y: 0 },
   },
-  discover: { category: 'おすすめ', search: '', tag: '', region: 'origin', stationId: null },
+  discover: {
+    category: 'おすすめ',
+    search: '',
+    tag: '',
+    region: 'origin',
+    stationId: null,
+    eventSelection: { mode: 'today', date: '' },
+  },
   schoolFilters: { area: 'すべて', practice: 'すべて', budget: 'すべて', vehicle: 'すべて' },
   settings: { largeText: false, reducedMotion: false },
 })
