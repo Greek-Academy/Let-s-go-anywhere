@@ -5032,3 +5032,40 @@ small {
 .discovery-location-notice p + p {
   margin-top: 10px;
 }
+
+.event-date-picker {
+  margin: 18px 0 22px;
+  padding: 18px;
+  background: #f3f8f5;
+  border: 1px solid #dcebe4;
+  border-radius: 20px;
+}
+.event-date-picker h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  margin: 0 0 16px;
+}
+.event-date-picker .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.event-date-picker input[type='date'] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.web-event-schedule {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f0f7f4;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.web-event-schedule p {
+  margin: 3px 0;
+}

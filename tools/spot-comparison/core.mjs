@@ -1,3 +1,8 @@
+import {
+  decodeEventDates,
+  decodeEventSchedule,
+  eventDateError,
+} from '../../src/domain/eventSearch.ts'
 import { LOCATION_REGION, validDiscoveryCenter } from '../../src/domain/discoveryLocation.ts'
 import { isIP } from 'node:net'
 import {
@@ -22,7 +27,9 @@ export function validateComparisonQuery(input) {
     !input ||
     typeof input !== 'object' ||
     Array.isArray(input) ||
-    Object.keys(input).some((k) => !['stationId', 'location', 'region', 'theme'].includes(k)) ||
+    Object.keys(input).some(
+      (k) => !['stationId', 'location', 'region', 'theme', 'purpose', 'eventDates'].includes(k),
+    ) ||
     (input.location !== undefined
       ? !validDiscoveryCenter(input.location) ||
         input.stationId !== undefined ||
@@ -39,7 +46,21 @@ export function validateComparisonQuery(input) {
       'input',
       '探したい駅を選ぶか現在地を取得し、ジャンル・追加の希望を合わせて1〜80文字で指定してください。画面が古い場合は更新してください。',
     )
+  let eventDates
+  if (input.purpose === 'events') {
+    try {
+      eventDates = decodeEventDates(input.eventDates)
+    } catch {
+      throw new PilotError('input', 'イベントの日付を確認してください。')
+    }
+    const error = eventDateError(eventDates)
+    if (error || input.theme.trim() !== 'イベント')
+      throw new PilotError('input', error || 'イベントは地域と日付で検索します。')
+  } else if (input.purpose !== undefined || input.eventDates !== undefined) {
+    throw new PilotError('input', '検索の種類を確認してください。')
+  }
   return {
+    ...(eventDates ? { purpose: 'events', eventDates } : {}),
     ...(input.location
       ? { location: { lat: input.location.lat, lng: input.location.lng }, region: LOCATION_REGION }
       : { stationId: input.stationId, region: stationRegion(railStation(input.stationId)) }),
@@ -104,7 +125,7 @@ const schema = {
     },
   },
 }
-const instructions = `Search the web for existing shops or permanent places near the supplied Japanese search center (railway station or approximate current location) and matching the supplied interest.
+const baseInstructions = `Search the web for existing shops or permanent places near the supplied Japanese search center (railway station or approximate current location) and matching the supplied interest.
 For a station search, the station identity and representative coordinates come from a server catalog. Aim for places within approximately 2 km of that station. Do not widen to the entire prefecture or to a different same-named station if evidence is insufficient; return fewer or zero instead.
 Use the station name, prefecture and lines to disambiguate. A station reference or address on the cited source must support the vicinity; do not guess a distance, coordinates, a walking/driving time, or certify that a place is inside the radius. The radius is a search target, not verified geofencing.
 For a current-location search, use the supplied approximate coordinates as the center, not the nearest station. Use nearbyReference only as a geographic hint; it can be far away. Aim within approximately 2 km of the center; never widen to the reference station, entire city or prefecture to fill the list. If sources cannot establish the vicinity, return fewer or zero. Do not repeat the search-center coordinates in output text or URLs. Do not infer the user's home or personal details.
@@ -113,14 +134,46 @@ Prefer first-party shop/facility pages or official local tourism pages; use Japa
 Return short original descriptions supported by the cited page. Every place requires an exact sourceUrl actually returned by web search and name, area, summary, matchReason (each <=300 characters).
 Do not copy reviews or long passages, retrieve photos, or claim verified prices, opening hours, parking, availability, travel time, budget compliance, driving ability or safety. The user must check these separately.
 Classify with 0–3 tentative tags from ${JSON.stringify(tags)} only if supported by the description. Tags are AI classification, not verified attributes. Never infer a price range.
-The final answer must be a JSON object matching this schema, without introductory prose: ${JSON.stringify(schema)}. Include web citations as supported by the API.`
+Include web citations as supported by the API.`
+
+const eventSchema = structuredClone(schema)
+eventSchema.properties.spots.items.properties.event = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['startDate', 'endDate', 'occursOn', 'venue', 'timeText', 'status'],
+  properties: {
+    startDate: { type: 'string' },
+    endDate: { type: 'string' },
+    occursOn: { type: 'array', minItems: 1, maxItems: 2, items: { type: 'string' } },
+    venue: { type: 'string' },
+    timeText: { type: 'string' },
+    status: { type: 'string', enum: ['scheduled'] },
+  },
+}
+eventSchema.properties.spots.items.required.push('event')
+const eventInstructions = `Search for dated, upcoming local events, not ordinary shops or permanent attractions. Search only the supplied region and inclusive eventDates in Asia/Tokyo; no interest or genre restriction.
+The cited source must explicitly support the year, startDate/endDate (YYYY-MM-DD), venue (<=160 characters), and actual occurrence on at least one requested date. occursOn lists only requested dates on which the source says the event takes place. A long exhibition range is insufficient if that date could be a closure day; check exceptions. Never infer annual recurrence, the year, or fill an unknown day. Exclude undated, past-year, cancelled, postponed, closed-on-requested-date and uncertain occurrences. Do not label an event as happening right now.
+Use organizer/venue official pages or official tourism listings with event details. Return fewer or zero rather than guess. timeText (<=120 characters) is a short supported schedule or '時間は未確認'. status must be scheduled; these remain unconfirmed AI extractions, not verified schedules.
+`
 
 export function buildComparisonRequest(provider, query) {
   const valid = validateComparisonQuery(query)
+  const isEvent = valid.purpose === 'events'
+  const outputSchema = isEvent ? eventSchema : schema
+  const instructions =
+    (isEvent
+      ? baseInstructions.replace(
+          'Search the web for existing shops or permanent places near the supplied Japanese search center (railway station or approximate current location) and matching the supplied interest.',
+          eventInstructions,
+        )
+      : baseInstructions) +
+    ` The final answer must be one JSON object, without introductory prose, matching: ${JSON.stringify(outputSchema)}`
   const station = railStation(valid.stationId)
   const input = JSON.stringify({
     region: valid.region,
-    theme: valid.theme,
+    ...(isEvent
+      ? { purpose: 'events', eventDates: valid.eventDates, timezone: 'Asia/Tokyo' }
+      : { theme: valid.theme }),
     ...(valid.location
       ? {
           approximateCurrentLocation: {
@@ -152,7 +205,14 @@ export function buildComparisonRequest(provider, query) {
       include: ['web_search_call.action.sources'],
       instructions,
       input,
-      text: { format: { type: 'json_schema', name: 'shop_candidates', strict: true, schema } },
+      text: {
+        format: {
+          type: 'json_schema',
+          name: 'shop_candidates',
+          strict: true,
+          schema: outputSchema,
+        },
+      },
     }
   return {
     model: MODELS.anthropic,
@@ -214,7 +274,7 @@ function candidateText(value) {
   return value.replace(/<cite index=["']\d+-\d+["']>|<\/cite>/gu, '').trim()
 }
 
-export function parseComparisonResponse(provider, response) {
+export function parseComparisonResponse(provider, response, query) {
   let raw = '',
     searched = false
   const sources = new Set()
@@ -296,7 +356,15 @@ export function parseComparisonResponse(provider, response) {
       s.tags.some((t) => !tags.includes(t))
     )
       continue
+    let event
+    try {
+      if (query?.purpose === 'events') event = decodeEventSchedule(s.event, query.eventDates)
+      else if (s.event !== undefined) continue
+    } catch {
+      continue
+    }
     spots.push({
+      ...(event ? { event } : {}),
       ...fields,
       sourceUrl: url,
       tags: [...new Set(s.tags)],

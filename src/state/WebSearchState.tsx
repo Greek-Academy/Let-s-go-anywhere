@@ -1,3 +1,5 @@
+import { eventDateError } from '../domain/eventSearch'
+import type { EventDates } from '../domain/eventSearch'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { parseWebSearchResult, sameWebSpot } from '../domain/webSearch'
@@ -17,6 +19,7 @@ import { publicSearchOrigin } from '../domain/publicSearchConfig'
 import { isNativeApp } from '../platform/runtime'
 
 interface SearchDraft {
+  eventDates?: EventDates | null
   location?: DiscoveryCenter
   stationId?: string | null
   region: string | null
@@ -105,25 +108,54 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   const locationRequest = useRef(false)
   const [method, setMethod] = useState<SearchMethod>('comparison')
   const [comparisonView, setView] = useState<ComparisonView>({ order: 'general', provider: 'all' })
-  const [active, setActive] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [result, setResult] = useState<WebSearchResult | null>(null)
+  type ViewKey = 'places' | 'events'
+  type View = { active: boolean; error: string; result: WebSearchResult | null }
+  const emptyView = (): View => ({ active: false, error: '', result: null })
+  const [views, setViews] = useState<Record<ViewKey, View>>({
+    places: emptyView(),
+    events: emptyView(),
+  })
+  const viewKey: ViewKey = ['イベント', '今週末'].includes(state.discover.category)
+    ? 'events'
+    : 'places'
+  const requestView = useRef<ViewKey>('places')
+  const { active, error, result } = views[viewKey]
+  const setActive = (active: boolean) =>
+    setViews((v) => ({ ...v, [viewKey]: { ...v[viewKey], active } }))
+  const setError = (error: string) =>
+    setViews((v) => ({ ...v, [viewKey]: { ...v[viewKey], error } }))
+  const setResult = (result: WebSearchResult | null) =>
+    setViews((v) => ({ ...v, [viewKey]: { ...v[viewKey], result } }))
   const [status, setStatus] = useState<SearchStatus | null>(null)
   const running = useRef(false)
   const sequence = useRef(0)
   const controller = useRef<AbortController | null>(null)
   useEffect(() => {
-    setResult((r) => (r ? withoutSearchCoordinates(r) : r))
+    setViews(
+      (v) =>
+        Object.fromEntries(
+          Object.entries(v).map(([key, view]) => [
+            key,
+            { ...view, result: view.result ? withoutSearchCoordinates(view.result) : null },
+          ]),
+        ) as Record<ViewKey, View>,
+    )
     if (locationRequest.current) {
       sequence.current++
       controller.current?.abort()
       running.current = false
       locationRequest.current = false
       setLoading(false)
-      setError(
-        '現在地の利用を終了しました。送信済みの検索は回数に含まれます。前回の結果は無料で確認できます。',
-      )
+      const key = requestView.current
+      setViews((v) => ({
+        ...v,
+        [key]: {
+          ...v[key],
+          error:
+            '現在地の利用を終了しました。送信済みの検索は回数に含まれます。前回の結果は無料で確認できます。',
+        },
+      }))
     }
   }, [gps.fix])
   useEffect(() => {
@@ -134,10 +166,8 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       running.current = false
       locationRequest.current = false
       setLoading(false)
-      setResult(null)
+      setViews({ places: emptyView(), events: emptyView() })
       setStatus(null)
-      setError('')
-      setActive(false)
     }
     window.addEventListener('driveplus-search-session-change', clear)
     return () => {
@@ -194,17 +224,21 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       )
       return
     }
-    const theme = searchTheme(draft.theme, draft.tag)
-    const inputError = searchThemeError(draft.theme, draft.tag)
+    const isEvent = draft.category === 'イベント'
+    const theme = isEvent ? 'イベント' : searchTheme(draft.theme, draft.tag)
+    const inputError = isEvent
+      ? eventDateError(draft.eventDates ?? null)
+      : searchThemeError(draft.theme, draft.tag)
     if (inputError) {
       setError(inputError)
       return
     }
-    if (!['おすすめ', 'スポット'].includes(draft.category)) {
-      setError('Web検索は常設スポットが対象です。「おすすめ」か「スポット」を選んでください。')
+    if (isEvent && method !== 'comparison') {
+      setError('イベントはOpenAI・Claudeの比較検索で探せます。')
       return
     }
-    const query = {
+    const query: WebSearchResult['query'] = {
+      ...(isEvent ? { purpose: 'events' as const, eventDates: draft.eventDates! } : {}),
       region: method === 'comparison' ? draft.region! : '京都市',
       theme,
       ...(method === 'comparison'
@@ -214,6 +248,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
         : {}),
     }
     const statusPath = `/api/spot-search/${method === 'comparison' ? 'comparison-status' : 'status'}`
+    requestView.current = viewKey
     locationRequest.current = !!draft.location
     running.current = true
     setLoading(true)
@@ -352,16 +387,25 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
             ? '開ける結果がありません。まだ検索していない、検索を完了できなかった、または7日間の保存期間を過ぎた可能性があります。'
             : '前回の比較結果はまだありません。検索を実行すると、このMacで開き直せます。',
         )
-      const candidate = response as { query?: { region?: unknown; theme?: unknown } }
+      const candidate = response as { query?: WebSearchResult['query'] }
       if (typeof candidate.query?.region !== 'string' || typeof candidate.query?.theme !== 'string')
         throw new Error('保存された検索条件を確認できません。')
       const next = await parseWebSearchResult(response, {
         region: candidate.query.region,
         theme: candidate.query.theme,
+        purpose: candidate.query.purpose,
+        eventDates: candidate.query.eventDates,
       })
       if (next.kind !== 'comparison' || next.mode !== (config.demo ? 'sample' : 'live'))
         throw new Error('保存された検索方法を確認できません。')
-      if (request === sequence.current) setResult(next)
+      if (request === sequence.current) {
+        const restoredKey = next.query.purpose === 'events' ? 'events' : 'places'
+        setViews((v) => ({ ...v, [restoredKey]: { active: true, error: '', result: next } }))
+        update((s) => ({
+          ...s,
+          discover: { ...s.discover, category: restoredKey === 'events' ? 'イベント' : 'おすすめ' },
+        }))
+      }
     } catch (e) {
       if (request === sequence.current)
         setError(e instanceof Error ? e.message : '前回の結果を開けませんでした。')

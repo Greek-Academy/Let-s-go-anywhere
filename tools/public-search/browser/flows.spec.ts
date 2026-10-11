@@ -258,7 +258,10 @@ test('fifth search succeeds; sixth is blocked after reload/rejoin while free res
   await page.getByRole('button', { name: 'この駅の周辺で探す' }).click()
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('自然')
   for (let i = 1; i <= 5; i++) {
-    await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+    await page.getByRole('button', { name: i % 2 ? 'おすすめ' : 'イベント', exact: true }).click()
+    await page
+      .getByRole('button', { name: i % 2 ? 'Webで候補を探す' : 'Webでイベントを探す', exact: true })
+      .click()
     await expect(
       page.getByText(`比較検索 ${i} / 5 回（残り${5 - i}回）`, { exact: false }),
     ).toBeVisible()
@@ -266,6 +269,10 @@ test('fifth search succeeds; sixth is blocked after reload/rejoin while free res
   await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('上限に達しました')
   expect(calls).toHaveLength(5)
+  await page.getByRole('button', { name: 'イベント', exact: true }).click()
+  await page.getByRole('button', { name: 'Webでイベントを探す', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('上限に達しました')
+  await page.getByRole('button', { name: 'おすすめ', exact: true }).click()
   await page.reload()
   await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
   await login(page, email)

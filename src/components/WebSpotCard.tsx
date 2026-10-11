@@ -1,3 +1,4 @@
+import { WebEventSchedule } from './WebEventSchedule'
 import { RecommendationBadges, RecommendationFeedback } from './RecommendationFeedback'
 import { providerNames } from '../domain/recommendations'
 import { useState } from 'react'
@@ -80,7 +81,9 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
         onClick={() => navigate(`/web-spots/${spot.id}`)}
       >
         <WebSpotImage className="event-photo" />
-        <span className="photo-category">常設スポットの候補</span>
+        <span className="photo-category">
+          {spot.event ? 'イベントの候補' : '常設スポットの候補'}
+        </span>
       </button>
       <button
         className={`save-heart ${saved ? 'saved' : ''}`}
@@ -104,6 +107,7 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
             {spot.area}
           </span>
         </div>
+        <WebEventSchedule spot={spot} />
         <WebSpotSource spot={spot} />
         <RecommendationFeedback spot={spot} />
         <p className="small muted">

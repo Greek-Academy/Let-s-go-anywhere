@@ -1,3 +1,4 @@
+import { WebEventSchedule } from '../components/WebEventSchedule'
 import { RecommendationBadges, RecommendationFeedback } from '../components/RecommendationFeedback'
 import { providerNames } from '../domain/recommendations'
 import { ShareCandidateButton } from '../sharing/components'
@@ -77,7 +78,8 @@ export function WebSpotDetail() {
         <h1>{spot.name}</h1>
         <p className="detail-subtitle">{spot.area}</p>
         <p className="body-copy">{spot.summary}</p>
-        <SectionHeading title="希望に合うと考えた理由" />
+        <WebEventSchedule spot={spot} />
+        <SectionHeading title={spot.event ? 'イベントを提案した理由' : '希望に合うと考えた理由'} />
         {spot.recommendations ? (
           spot.recommendations.map((r) => (
             <div className="recommendation-reason" key={r.provider}>

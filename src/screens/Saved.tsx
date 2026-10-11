@@ -108,6 +108,11 @@ export function Saved() {
                             <WebSpotStatus spot={spot} />
                             <strong>{spot.name}</strong>
                             <small>{spot.area}</small>
+                            {spot.event && (
+                              <small>
+                                開催予定：{spot.event.startDate}〜{spot.event.endDate}（未確認）
+                              </small>
+                            )}
                           </span>
                           <ChevronRight size={16} />
                         </button>

@@ -1,6 +1,8 @@
+import type { EventSchedule } from './eventSearch.ts'
 import reviews from '../data/placeIdentityReviews.json' with { type: 'json' }
 
 interface Candidate {
+  event?: EventSchedule
   name: string
   area: string
   sourceUrl: string
@@ -34,6 +36,15 @@ function reviewedIdentity(candidate: Candidate) {
 /** Never infer that a shared name, ward or article URL identifies the same branch. */
 export function samePlace(a: Candidate, b: Candidate) {
   if (a.mode !== b.mode || normalize(a.name) !== normalize(b.name)) return false
+  if (
+    Boolean(a.event) !== Boolean(b.event) ||
+    (a.event &&
+      b.event &&
+      (a.event.startDate !== b.event.startDate ||
+        a.event.endDate !== b.event.endDate ||
+        normalize(a.event.venue) !== normalize(b.event.venue)))
+  )
+    return false
   if (normalize(a.area) === normalize(b.area)) return true
   const identity = reviewedIdentity(a)
   return Boolean(identity && identity === reviewedIdentity(b))
@@ -55,6 +66,16 @@ export function mergePlace<T extends Candidate>(first: T, second: T): T {
   ].slice(0, 3)
   return {
     ...first,
+    ...(first.event && second.event
+      ? {
+          event: {
+            ...first.event,
+            occursOn: [...new Set([...first.event.occursOn, ...second.event.occursOn])]
+              .sort()
+              .slice(0, 2),
+          },
+        }
+      : {}),
     recommendations,
     tags,
     ...(explicit ? { likedFor: selected.filter((tag) => tags.includes(tag)) } : {}),

@@ -10,6 +10,7 @@ import { WebSpotCard } from './WebSpotCard'
 import { Chip, EmptyState, SectionHeading } from './ui'
 
 export function ComparisonResults({ result }: { result: WebSearchResult }) {
+  const isEvent = result.query.purpose === 'events'
   const { state } = useApp()
   const {
     comparisonView: { order, provider },
@@ -17,7 +18,7 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
   } = useWebSearch()
   const { weights, likes } = preferenceWeights(state.savedWebSpots, result.mode)
   const ordered =
-    order === 'personal'
+    !isEvent && order === 'personal'
       ? personalRecommendations(result.spots, state.savedWebSpots, result.mode)
       : result.spots
   const visible = ordered.filter(
@@ -26,7 +27,7 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
   return (
     <div className="comparison-results">
       <SectionHeading
-        title={`${result.spots.length}件のお店・スポット候補`}
+        title={`${result.spots.length}件の${isEvent ? 'イベント' : 'お店・スポット'}候補`}
         subtitle={
           result.mode === 'sample'
             ? '架空サンプルです。APIは使っていません。'
@@ -36,54 +37,63 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
       {!!result.duplicates && (
         <p className="small muted">重なった提案{result.duplicates}件をまとめました。</p>
       )}
-      {result.spots.length < 15 && (
+      {!isEvent && result.spots.length < 15 && (
         <p className="notice">
           目標は合計15〜20件ですが、今回は{result.spots.length}
           件です。出典のある候補だけを表示し、自動の追加検索はしません。
         </p>
       )}
-      <div className="comparison-order" aria-label="おすすめの並び順">
-        <Chip
-          selected={order === 'general'}
-          onClick={() => setComparisonView({ order: 'general' })}
-        >
-          一般的なおすすめ
-        </Chip>
-        <Chip
-          selected={order === 'personal'}
-          onClick={() => setComparisonView({ order: 'personal' })}
-        >
-          好みに寄せたおすすめ
-        </Chip>
-      </div>
-      <p className="small muted">
-        {order === 'general'
-          ? '今回の地域・希望に対する提案です。2社の候補を交互に表示します。'
-          : likes
-            ? `保存した${likes}件を参考に、同じ特徴を持つ候補を上へ。ときどき違う候補も表示します。好みはまだ仮のものです。`
-            : 'まだ参考にできるいいねがありません。気になる候補のハートを押してみてください。今は一般的な順番です。'}
-      </p>
-      {order === 'personal' && likes > 0 && (
-        <div className="preference-summary">
-          <span>参考にしている特徴</span>
-          <p>
-            {[...weights]
-              .sort((a, b) => b[1] - a[1])
-              .slice(0, 5)
-              .map(([tag, count]) => `${tag}（${count}件）`)
-              .join('・')}
+      {!isEvent && (
+        <>
+          <div className="comparison-order" aria-label="おすすめの並び順">
+            <Chip
+              selected={order === 'general'}
+              onClick={() => setComparisonView({ order: 'general' })}
+            >
+              一般的なおすすめ
+            </Chip>
+            <Chip
+              selected={order === 'personal'}
+              onClick={() => setComparisonView({ order: 'personal' })}
+            >
+              好みに寄せたおすすめ
+            </Chip>
+          </div>
+          <p className="small muted">
+            {order === 'general'
+              ? '今回の地域・希望に対する提案です。2社の候補を交互に表示します。'
+              : likes
+                ? `保存した${likes}件を参考に、同じ特徴を持つ候補を上へ。ときどき違う候補も表示します。好みはまだ仮のものです。`
+                : 'まだ参考にできるいいねがありません。気になる候補のハートを押してみてください。今は一般的な順番です。'}
           </p>
-        </div>
+          {order === 'personal' && likes > 0 && (
+            <div className="preference-summary">
+              <span>参考にしている特徴</span>
+              <p>
+                {[...weights]
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 5)
+                  .map(([tag, count]) => `${tag}（${count}件）`)
+                  .join('・')}
+              </p>
+            </div>
+          )}
+          <details className="comparison-explanation">
+            <summary>いいねはどう使われる？</summary>
+            <p>
+              この端末の保存候補と、選んだ「好きなところ」を参考に並び替えます。ハートの解除で参考から外れます。押さなかった候補を嫌いとは判断しません。
+            </p>
+            <p>
+              特徴はAIによる分類です。価格帯は未確認のため使いません。好みの情報はAI・招待相手へ自動送信しません。この切り替えでAPI料金は発生しません。
+            </p>
+          </details>
+        </>
       )}
-      <details className="comparison-explanation">
-        <summary>いいねはどう使われる？</summary>
-        <p>
-          この端末の保存候補と、選んだ「好きなところ」を参考に並び替えます。ハートの解除で参考から外れます。押さなかった候補を嫌いとは判断しません。
+      {isEvent && (
+        <p className="notice">
+          開催日・会場を出典からAIが整理した候補です。開催の変更や中止、予約の要否は、訪問前に主催者の情報で確認してください。件数を増やすための自動再検索はしません。
         </p>
-        <p>
-          特徴はAIによる分類です。価格帯は未確認のため使いません。好みの情報はAI・招待相手へ自動送信しません。この切り替えでAPI料金は発生しません。
-        </p>
-      </details>
+      )}
       <div className="chips comparison-providers" aria-label="提案元で絞り込み">
         {(['all', 'openai', 'anthropic'] as const).map((value) => (
           <Chip

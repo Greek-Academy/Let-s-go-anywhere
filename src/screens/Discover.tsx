@@ -1,3 +1,5 @@
+import { EventDatePicker } from '../components/EventDatePicker'
+import { defaultEventSelection, eventDates, eventDatesLabel } from '../domain/eventSearch'
 import { useDiscoveryLocation } from '../state/DiscoveryLocationState'
 import { LOCATION_REGION } from '../domain/discoveryLocation'
 import { discoveryTags, searchTheme } from '../domain/searchTheme'
@@ -5,7 +7,7 @@ import { publicSearchOrigin } from '../domain/publicSearchConfig'
 import { ShareCandidateButton } from '../sharing/components'
 import { fromOuting } from '../sharing/candidates'
 import { ExternalModal } from '../components/ExternalLinkModal'
-import { evaluateOuting, occursThisWeekend, outingStateLabels } from '../domain/outingLifecycle'
+import { evaluateOuting, outingStateLabels } from '../domain/outingLifecycle'
 import { OutingImage, OutingStatus, OutingPhotoCredit } from '../components/OutingStatus'
 import { useContent, useContentTime } from '../content/ContentProvider'
 import { useId, useState } from 'react'
@@ -183,6 +185,10 @@ export function Discover() {
   const [regionOpen, setRegionOpen] = useState(false)
   const [areaDraft, setAreaDraft] = useState<string | null>(state.profile.stationId ?? null)
   const { category, search, tag, region } = state.discover
+  const isEvent = category === 'イベント'
+  const eventSelection = state.discover.eventSelection ?? defaultEventSelection
+  const dates = eventDates(eventSelection, now)
+  const effectiveMethod = isEvent ? 'comparison' : searchMethod
   const setFilterState = (value: Partial<typeof state.discover>) =>
     update((s) => ({ ...s, discover: { ...s.discover, ...value } }))
   const conditionsActive = hasConditions(state.searchConditions)
@@ -212,12 +218,16 @@ export function Discover() {
     .filter(
       (o) =>
         !state.hiddenEvents.includes(o.id) &&
-        (category === 'おすすめ' ||
-          (category === '今週末' && occursThisWeekend(o, now)) ||
-          (category === 'イベント' && o.kind === 'event') ||
-          (category === 'スポット' && o.kind === 'spot')) &&
-        (!tag || o.tags.includes(tag)) &&
-        (!search || `${o.title}${o.area}${o.tags.join('')}`.includes(search)),
+        (isEvent
+          ? o.kind === 'event' &&
+            !!dates &&
+            !!o.lifecycle?.occurrence?.startsAt &&
+            !!o.lifecycle?.occurrence?.endsAt &&
+            Date.parse(o.lifecycle.occurrence.startsAt) <
+              Date.parse(`${dates.end}T00:00:00+09:00`) + 86400000 &&
+            Date.parse(o.lifecycle.occurrence.endsAt) > Date.parse(`${dates.start}T00:00:00+09:00`)
+          : (!tag || o.tags.includes(tag)) &&
+            (!search || `${o.title}${o.area}${o.tags.join('')}`.includes(search))),
     )
     .sort(
       (a, b) =>
@@ -226,6 +236,7 @@ export function Discover() {
     )
   const filtered = candidates.filter(
     (o) =>
+      isEvent ||
       !conditionsActive ||
       state.conditionFilter === 'all' ||
       overallMatch(matchResults(o.id)) === state.conditionFilter,
@@ -298,60 +309,78 @@ export function Discover() {
             </button>
           </div>
         )}
+        <div className="chips discovery-chips" aria-label="見つけるの種類">
+          {['おすすめ', 'イベント'].map((c) => (
+            <Chip selected={c === category} key={c} onClick={() => setFilterState({ category: c })}>
+              {c}
+            </Chip>
+          ))}
+        </div>
         <form
           onSubmit={(event) => {
             event.preventDefault()
             void web.search(
               {
                 region:
-                  searchMethod === 'legacy'
+                  effectiveMethod === 'legacy'
                     ? (selectedStation?.prefecture ??
                       (region === '京都府' ? '京都府' : selectedRegion))
                     : selectedRegion,
                 stationId: selectedStation?.id,
                 location: gps.enabled ? gps.fix?.center : undefined,
-                theme: search,
+                theme: isEvent ? '' : search,
                 category,
-                tag,
+                tag: isEvent ? '' : tag,
+                eventDates: isEvent ? dates : undefined,
               },
-              searchMethod,
+              effectiveMethod,
             )
           }}
         >
-          <div className="discover-search-row">
-            <label className="search-field">
-              <Search size={17} />
-              <input
-                aria-label="お出かけを検索"
-                value={search}
-                maxLength={80}
-                onChange={(e) => setFilterState({ search: e.target.value })}
-                placeholder="気になる場所や、したいこと"
-              />
-            </label>
-            <IconButton
-              icon={SlidersHorizontal}
-              label="お出かけの絞り込み"
-              className={`filter-button ${tag ? 'has-filter' : ''}`}
-              onClick={() => setFilter(true)}
+          {isEvent ? (
+            <EventDatePicker
+              value={eventSelection}
+              now={now}
+              onChange={(eventSelection) => setFilterState({ eventSelection })}
             />
-          </div>
-          <p className="small muted" aria-live="polite">
-            {tag
-              ? `選択中：${tag}。追加の希望は任意です。`
-              : 'ジャンルを選ぶか、気になる場所や、したいことを入力してください。'}{' '}
-            検索条件は合わせて80文字まで。
-          </p>
-          {!!searchTheme(search, tag) && (
-            <p className="small muted">Web検索の希望：{searchTheme(search, tag)}</p>
+          ) : (
+            <>
+              <div className="discover-search-row">
+                <label className="search-field">
+                  <Search size={17} />
+                  <input
+                    aria-label="お出かけを検索"
+                    value={search}
+                    maxLength={80}
+                    onChange={(e) => setFilterState({ search: e.target.value })}
+                    placeholder="気になる場所や、したいこと"
+                  />
+                </label>
+                <IconButton
+                  icon={SlidersHorizontal}
+                  label="お出かけの絞り込み"
+                  className={`filter-button ${tag ? 'has-filter' : ''}`}
+                  onClick={() => setFilter(true)}
+                />
+              </div>
+              <p className="small muted" aria-live="polite">
+                {tag
+                  ? `選択中：${tag}。追加の希望は任意です。`
+                  : 'ジャンルを選ぶか、気になる場所や、したいことを入力してください。'}{' '}
+                検索条件は合わせて80文字まで。
+              </p>
+              {!!searchTheme(search, tag) && (
+                <p className="small muted">Web検索の希望：{searchTheme(search, tag)}</p>
+              )}
+            </>
           )}
           <label className="web-search-method">
             探し方
             <select
               aria-label="検索方法"
-              value={searchMethod}
+              value={effectiveMethod}
               onChange={(e) => setSearchMethod(e.target.value as SearchMethod)}
-              disabled={web.loading}
+              disabled={web.loading || isEvent}
             >
               <option value="comparison">OpenAI・Claudeで比較</option>
               {!publicSearchOrigin && (
@@ -365,16 +394,20 @@ export function Discover() {
             disabled={web.loading}
             className="web-search-submit"
           >
-            {web.loading ? '候補を探しています…' : 'Webで候補を探す'}
+            {web.loading
+              ? '候補を探しています…'
+              : isEvent
+                ? 'Webでイベントを探す'
+                : 'Webで候補を探す'}
           </PrimaryButton>
           <p className="small muted web-search-hint">
-            {searchMethod === 'comparison'
+            {effectiveMethod === 'comparison'
               ? publicSearchOrigin
-                ? '選んだ駅または取得した現在地の周辺と、ジャンル・希望を2社へ送信します。1アカウント累計5回まで（これまでの利用・送信後の失敗を含む）。前回結果の再表示は無料です。'
-                : 'お店・常設スポットを2社で調べます。合計15〜20件が目標です。比較はまず1回、各社API1回・Web検索最大2回。'
+                ? `選んだ駅または取得した現在地の周辺と、${isEvent ? '日付' : 'ジャンル・希望'}を2社へ送信します。おすすめ・イベント合計で1アカウント累計5回まで（これまでの利用・送信後の失敗を含む）。前回結果の再表示は無料です。`
+                : `${isEvent ? 'イベント' : 'お店・常設スポット'}を2社で調べます。比較はまず1回、各社API1回・Web検索最大2回。`
               : '京都府内のうち京都市の常設スポットが対象です。実検索ではAPIを1回利用します。'}
           </p>
-          {searchMethod === 'comparison' && (
+          {effectiveMethod === 'comparison' && (
             <button
               type="button"
               className="text-button centered"
@@ -385,20 +418,24 @@ export function Discover() {
             </button>
           )}
         </form>
-        <button
-          className="condition-edit-button discovery-conditions"
-          onClick={() => setConditionsOpen(true)}
-        >
-          <SlidersHorizontal size={18} />
-          <span>
-            <strong>今回のお出かけ条件</strong>
-            <small>
-              {conditionsActive ? '時間・予算・避けたい場面を変更' : '無理のない休日の条件を決める'}
-            </small>
-          </span>
-          <ChevronDown size={16} />
-        </button>
-        {conditionsActive && !web.active && (
+        {!isEvent && (
+          <button
+            className="condition-edit-button discovery-conditions"
+            onClick={() => setConditionsOpen(true)}
+          >
+            <SlidersHorizontal size={18} />
+            <span>
+              <strong>今回のお出かけ条件</strong>
+              <small>
+                {conditionsActive
+                  ? '時間・予算・避けたい場面を変更'
+                  : '無理のない休日の条件を決める'}
+              </small>
+            </span>
+            <ChevronDown size={16} />
+          </button>
+        )}
+        {!isEvent && conditionsActive && !web.active && (
           <div className="condition-filter">
             <p className="small muted">確認状態で絞り込み（架空の条件データ）</p>
             <div className="chips wrap">
@@ -426,15 +463,9 @@ export function Discover() {
             </div>
           </div>
         )}
-        <div className="chips discovery-chips">
-          {['おすすめ', '今週末', 'イベント', 'スポット'].map((c) => (
-            <Chip selected={c === category} key={c} onClick={() => setFilterState({ category: c })}>
-              {c}
-            </Chip>
-          ))}
-        </div>
         {web.active ? (
           <WebSearchResults
+            eventDates={isEvent ? dates : undefined}
             stationId={selectedStation?.id}
             location={gps.enabled ? gps.fix?.center : undefined}
             region={selectedRegion}
@@ -458,19 +489,7 @@ export function Discover() {
             </p>
             {filtered.length > 0 && (
               <SectionHeading
-                title={
-                  !selectedStation
-                    ? '使い方を試せるサンプル'
-                    : tag
-                      ? `${tag}を楽しむ休日`
-                      : category === 'おすすめ'
-                        ? 'あなたへのおすすめ'
-                        : category === '今週末'
-                          ? '今週末の楽しみ'
-                          : category === 'イベント'
-                            ? '季節のイベント'
-                            : 'いつか行きたいスポット'
-                }
+                title={isEvent ? '選んだ日付のイベントサンプル' : 'あなたへのおすすめ'}
                 subtitle={
                   state.profile.interests.length && category === 'おすすめ'
                     ? `${state.profile.interests.slice(0, 2).join('・')}が好きなあなたへ`
@@ -482,7 +501,7 @@ export function Discover() {
               {filtered.map((o) => (
                 <div key={o.id}>
                   <EventCard outing={o} onMore={() => setReason(o)} />
-                  {conditionsActive && (
+                  {!isEvent && conditionsActive && (
                     <button className="condition-summary" onClick={() => setReason(o)}>
                       <Tag
                         tone={overallMatch(matchResults(o.id)) === 'mismatch' ? 'peach' : 'neutral'}
@@ -508,9 +527,11 @@ export function Discover() {
                           : 'この駅周辺のサンプルはまだありません'
                     }
                     description={
-                      selectedRegion === null
-                        ? '最寄駅や、お出かけ先の駅を入力して候補から選べます。保存した候補はそのまま残っています。'
-                        : `${regionLabel}の候補は「Webで候補を探す」で検索できます。保存した候補は「行きたい」から確認できます。`
+                      isEvent
+                        ? '日付と地域を選び「Webでイベントを探す」を押してください。自動では検索しません。'
+                        : selectedRegion === null
+                          ? '最寄駅や、お出かけ先の駅を入力して候補から選べます。保存した候補はそのまま残っています。'
+                          : `${regionLabel}の候補は「Webで候補を探す」で検索できます。保存した候補は「行きたい」から確認できます。`
                     }
                     action="探す地域を選び直す"
                     onAction={() => setRegionOpen(true)}
@@ -520,9 +541,11 @@ export function Discover() {
                 <EmptyState
                   title="ぴったりの候補が見つかりません"
                   description={
-                    conditionsActive
-                      ? '未確認や合わない理由も確認できます。条件の見直しや、別の候補・移動方法を検討してみましょう。'
-                      : '選んだ地域で、検索語・興味・期間・非表示の条件に合う候補がありません。条件や探す地域を変えてみましょう。'
+                    isEvent
+                      ? `${dates ? eventDatesLabel(dates) : '選んだ日付'}のサンプルはありません。「Webでイベントを探す」で調べられます。`
+                      : conditionsActive
+                        ? '未確認や合わない理由も確認できます。条件の見直しや、別の候補・移動方法を検討してみましょう。'
+                        : '選んだ地域で、検索語・興味・期間・非表示の条件に合う候補がありません。条件や探す地域を変えてみましょう。'
                   }
                   action={conditionsActive ? 'すべての確認状態を見る' : '条件をリセット'}
                   onAction={() =>

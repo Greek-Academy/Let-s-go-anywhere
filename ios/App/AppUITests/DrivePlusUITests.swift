@@ -90,6 +90,7 @@ final class DrivePlusUITests: XCTestCase {
         }
         if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
         tap("見つける")
+        tap("おすすめ")
         tap("探す地域を変更")
         tap("別の駅の周辺")
         let stationInput = web.textFields["探したい駅"]
@@ -113,7 +114,7 @@ final class DrivePlusUITests: XCTestCase {
         if done.exists { done.tap() }
         tap("この駅の周辺で探す")
         tap("お出かけの絞り込み")
-        tap("自然")
+        if web.switches["自然"].value as? String != "1" { tap("自然") }
         tap("この条件で表示")
         XCTAssertTrue(web.staticTexts["選択中：自然。追加の希望は任意です。"].waitForExistence(timeout: 10))
         tap("Webで候補を探す")
@@ -126,6 +127,43 @@ final class DrivePlusUITests: XCTestCase {
         add(shot)
         tap("学ぶ")
         tap("見つける")
+    }
+
+    /// Event date controls use the real WKWebView. Signed out: no paid API request.
+    @MainActor
+    func testEventSearchControls() throws {
+        try testGenreSearchControls()
+        let app = XCUIApplication()
+        let web = app.webViews.firstMatch
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String) {
+            let button = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
+            for _ in 0..<12 {
+                if button.isHittable { break }
+                web.swipeUp()
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        tap("イベント")
+        XCTAssertFalse(web.textFields["お出かけを検索"].exists)
+        tap("今週末")
+        tap("今日")
+        let dateControls = XCTAttachment(screenshot: app.screenshot())
+        dateControls.name = "event-date-controls-native"
+        dateControls.lifetime = .keepAlways
+        add(dateControls)
+        tap("Webでイベントを探す")
+        let login = web.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "メール確認と参加コードの入力をしてください")).firstMatch
+        XCTAssertTrue(login.waitForExistence(timeout: 15), "Region and date alone must reach login guard")
+        for _ in 0..<5 { web.swipeDown() }
+        tap("おすすめ")
+        XCTAssertTrue(web.textFields["お出かけを検索"].exists)
+        XCTAssertTrue(web.staticTexts["選択中：自然。追加の希望は任意です。"].exists)
+        tap("イベント")
     }
 
     /// Bundled Firebase/AI-search build. Does not log in or spend a search attempt.

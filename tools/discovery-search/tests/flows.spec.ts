@@ -104,7 +104,7 @@ test('実サーバーの無料モードを経由し、出典・保存・詳細�
   expect(posts).toBe(1)
 })
 
-test('未対応地域・空欄・イベントでは検索しない', async ({ page }) => {
+test('従来検索は未対応地域・空欄を拒否し、イベントでは比較検索に切り替わる', async ({ page }) => {
   let posts = 0
   page.on('request', (r) => {
     if (r.url().endsWith('/api/spot-search/search')) posts++
@@ -121,8 +121,9 @@ test('未対応地域・空欄・イベントでは検索しない', async ({ pa
   await expect(page.getByRole('alert')).toContainText('ジャンルを選ぶか')
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill(query.theme)
   await page.getByRole('button', { name: 'イベント', exact: true }).click()
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('常設スポット')
+  await expect(page.getByLabel('検索方法', { exact: true })).toHaveValue('comparison')
+  await expect(page.getByRole('button', { name: 'Webでイベントを探す', exact: true })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'お出かけを検索' })).toHaveCount(0)
   expect(posts).toBe(0)
 })
 

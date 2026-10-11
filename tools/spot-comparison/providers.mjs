@@ -57,7 +57,7 @@ export async function runComparison({
           response = await upstream.json()
           usage = comparisonUsage(provider, response)
         }
-        const parsed = parseComparisonResponse(provider, response)
+        const parsed = parseComparisonResponse(provider, response, query)
         return {
           ...parsed,
           report: {
