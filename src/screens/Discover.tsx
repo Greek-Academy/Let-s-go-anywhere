@@ -1,3 +1,5 @@
+import { useDiscoveryLocation } from '../state/DiscoveryLocationState'
+import { LOCATION_REGION } from '../domain/discoveryLocation'
 import { discoveryTags, searchTheme } from '../domain/searchTheme'
 import { publicSearchOrigin } from '../domain/publicSearchConfig'
 import { ShareCandidateButton } from '../sharing/components'
@@ -170,6 +172,7 @@ export function Discover() {
   const now = useContentTime()
   const { state, update } = useApp()
   const web = useWebSearch()
+  const gps = useDiscoveryLocation()
   const { method: searchMethod, setMethod: setSearchMethod } = web
   const navigate = useNavigate()
   const [conditionsOpen, setConditionsOpen] = useState(false)
@@ -185,20 +188,26 @@ export function Discover() {
   const conditionsActive = hasConditions(state.searchConditions)
   const matchResults = (id: string) =>
     evaluateConditions(state.searchConditions, tripFacts[id], state.profile.area)
-  const selectedStation = resolveDiscoveryRegion(
-    region,
-    state.profile.stationId,
-    state.discover.stationId,
-  )
-  const selectedRegion = selectedStation ? stationRegion(selectedStation) : null
-  const regionLabel = selectedRegion ?? '駅を選択'
+  const selectedStation = gps.enabled
+    ? null
+    : resolveDiscoveryRegion(region, state.profile.stationId, state.discover.stationId)
+  const selectedRegion = gps.enabled
+    ? gps.fix
+      ? LOCATION_REGION
+      : null
+    : selectedStation
+      ? stationRegion(selectedStation)
+      : null
+  const regionLabel = selectedRegion ?? (gps.enabled ? '現在地を再取得' : '駅を選択')
   const originStation = railStation(state.profile.stationId)
   const recommendable = outings.filter((o) => evaluateOuting(o, now).recommendable)
-  const regionalOutings = selectedStation
-    ? recommendable.filter((o) => inDiscoveryRegion(o, selectedStation, source === 'sample'))
-    : source === 'sample'
-      ? recommendable
-      : []
+  const regionalOutings = gps.enabled
+    ? []
+    : selectedStation
+      ? recommendable.filter((o) => inDiscoveryRegion(o, selectedStation, source === 'sample'))
+      : source === 'sample'
+        ? recommendable
+        : []
   const candidates = regionalOutings
     .filter(
       (o) =>
@@ -265,11 +274,15 @@ export function Discover() {
           <ChevronDown size={15} />
         </button>
         <p className="discovery-region-caption">
-          {selectedStation
-            ? region === 'origin'
-              ? '出発駅の周辺から探しています。'
-              : '出発駅とは別の駅周辺を探しています。'
-            : '候補から駅を選んでください。以前の地域設定から駅を推測することはありません。'}
+          {gps.enabled
+            ? gps.fix
+              ? `取得した位置を起点に約2kmを目安に探します（端末の位置誤差：約${gps.fix.accuracy}m）。移動の追跡はしません。`
+              : '現在地の利用期限が切れました。探す地域から再取得するか、駅を選んでください。'
+            : selectedStation
+              ? region === 'origin'
+                ? '出発駅の周辺から探しています。'
+                : '出発駅とは別の駅周辺を探しています。'
+              : '候補から駅を選んでください。以前の地域設定から駅を推測することはありません。'}
           {selectedStation && ' 駅周辺約2kmが目安です。実際の距離は未確認です。'}
         </p>
         {publicSearchOrigin && (
@@ -296,6 +309,7 @@ export function Discover() {
                       (region === '京都府' ? '京都府' : selectedRegion))
                     : selectedRegion,
                 stationId: selectedStation?.id,
+                location: gps.enabled ? gps.fix?.center : undefined,
                 theme: search,
                 category,
                 tag,
@@ -356,7 +370,7 @@ export function Discover() {
           <p className="small muted web-search-hint">
             {searchMethod === 'comparison'
               ? publicSearchOrigin
-                ? '探す駅・駅の代表位置・ジャンル・追加の希望を2社へ送信します。検索回数の上限はありません。新しい検索は有料、前回結果の再表示は無料です。'
+                ? '選んだ駅または取得した現在地の周辺と、ジャンル・希望を2社へ送信します。1アカウント累計5回まで（これまでの利用・送信後の失敗を含む）。前回結果の再表示は無料です。'
                 : 'お店・常設スポットを2社で調べます。合計15〜20件が目標です。比較はまず1回、各社API1回・Web検索最大2回。'
               : '京都府内のうち京都市の常設スポットが対象です。実検索ではAPIを1回利用します。'}
           </p>
@@ -422,6 +436,7 @@ export function Discover() {
         {web.active ? (
           <WebSearchResults
             stationId={selectedStation?.id}
+            location={gps.enabled ? gps.fix?.center : undefined}
             region={selectedRegion}
             theme={search}
             category={category}
@@ -488,7 +503,9 @@ export function Discover() {
                     title={
                       selectedRegion === null
                         ? '探したい駅を選んでください'
-                        : 'この駅周辺のサンプルはまだありません'
+                        : gps.enabled
+                          ? '現在地周辺をWebで探せます'
+                          : 'この駅周辺のサンプルはまだありません'
                     }
                     description={
                       selectedRegion === null

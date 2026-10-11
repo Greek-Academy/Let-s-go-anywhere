@@ -356,3 +356,22 @@ test('station scope is canonical on both providers; arbitrary coordinates, old p
   assert.equal(calls, 0)
   assert.equal(api.status().attempts.length, 0)
 })
+
+test('nearby comparison persists result without coordinates and rejects ambiguous station+location', async (t) => {
+  const config = options(t)
+  const comparison = createComparison({ ...config, fetcher: fakeFetch })
+  const nearby = {
+    location: { lat: 35.691, lng: 139.7 },
+    region: '取得した現在地の周辺',
+    theme: '自然',
+  }
+  const result = await comparison.search(nearby)
+  assert.deepEqual(result.query.location, nearby.location)
+  assert.deepEqual(comparison.lastResult().query, {
+    region: nearby.region,
+    theme: '自然',
+    locationSearch: true,
+  })
+  assert(!readFileSync(join(config.directory, 'result.json'), 'utf8').includes('35.691'))
+  assert.throws(() => validateComparisonQuery({ ...query, location: nearby.location }))
+})

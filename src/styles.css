@@ -5022,3 +5022,13 @@ small {
 .station-credit a {
   color: #168779;
 }
+
+.discovery-location-notice {
+  display: block;
+}
+.discovery-location-notice p {
+  margin: 0;
+}
+.discovery-location-notice p + p {
+  margin-top: 10px;
+}

@@ -60,8 +60,13 @@ async function bridge(
             options: { eventName?: string },
             callback: () => void,
           ) => {
-            if (plugin === 'App' && method === 'addListener' && options.eventName === 'pause')
-              control.pause = callback
+            if (plugin === 'App' && method === 'addListener' && options.eventName === 'pause') {
+              const previous = control.pause
+              control.pause = () => {
+                previous?.()
+                callback()
+              }
+            }
             return 'test-listener'
           },
           nativePromise: async (

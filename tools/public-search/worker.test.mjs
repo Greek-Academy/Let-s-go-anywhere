@@ -116,7 +116,7 @@ test('authenticated comparison, private free restore, no key leakage or extra AI
   const status = await (await f.send('owner', 'comparison-status')).json()
   assert.equal(status.attempts.length, 1)
   assert.equal(status.globalRemaining, null)
-  assert.equal(status.maxAttempts, null)
+  assert.equal(status.maxAttempts, 5)
   assert.equal(status.attemptCount, 1)
   assert.equal((await f.send('owner')).status, 200)
   assert.equal(f.paid().length, 4)
@@ -131,19 +131,80 @@ test('authenticated comparison, private free restore, no key leakage or extra AI
   assert.equal(r.headers.get('Cache-Control'), 'no-store')
 })
 
-test('no lifetime cap across accounts or repeat searches; concurrent same-account requests share a lock', async () => {
+test('five lifetime attempts per account, atomic fifth request, existing usage and free restore', async () => {
   const f = fixture({ wait: () => new Promise((r) => setTimeout(r, 10)) })
   const responses = await Promise.all(Array.from({ length: 8 }, (_, i) => f.send(`user-${i}`)))
   assert.equal(responses.filter((r) => r.status === 200).length, 8)
-  for (let i = 0; i < 5; i++) assert.equal((await f.send('user-0')).status, 200)
-  assert.equal(f.paid().length, 26)
+  for (let i = 0; i < 3; i++) assert.equal((await f.send('user-0')).status, 200)
+  assert.equal((await (await f.send('user-0', 'comparison-status')).json()).attemptCount, 4)
+  const final = await Promise.all(
+    Array.from({ length: 10 }, (_, i) =>
+      f.send('user-0', 'compare', {
+        headers: { Origin: i % 2 ? 'capacitor://localhost' : origin },
+      }),
+    ),
+  )
+  assert.equal(final.filter((r) => r.status === 200).length, 1)
+  assert.equal(final.filter((r) => r.status === 429).length, 9)
+  assert.equal(f.paid().length, 24)
+  assert.equal((await f.send('user-0')).status, 429)
+  assert.equal((await (await f.send('user-0', 'comparison-status')).json()).attemptCount, 5)
+  const restored = await (await f.send('user-0', 'comparison-result')).json()
+  assert.equal(restored.spots.length, 18)
+  // Rollout never resets accounts already above the new limit.
+  f.database.exec('UPDATE attempts SET attempt_count = 9')
+  assert.equal((await f.send('user-0')).status, 429)
+  assert.equal((await (await f.send('user-0', 'comparison-status')).json()).attemptCount, 9)
+  assert.deepEqual(await (await f.send('user-0', 'comparison-result')).json(), restored)
+  assert.equal(f.paid().length, 24)
   const g = fixture({ wait: () => new Promise((r) => setTimeout(r, 20)) })
   const same = await Promise.all(Array.from({ length: 10 }, () => g.send('same')))
   assert.equal(same.filter((r) => r.status === 200).length, 1)
   assert.equal(same.filter((r) => r.status === 409).length, 9)
   assert.equal(g.paid().length, 2)
-  assert.equal((await g.send('same')).status, 200)
-  assert.equal((await (await g.send('same', 'comparison-status')).json()).attemptCount, 2)
+})
+
+test('nearby search sends approximate center to both providers but persists no coordinates', async () => {
+  const f = fixture()
+  const nearby = {
+    region: '取得した現在地の周辺',
+    location: { lat: 35.691, lng: 139.7 },
+    theme: '自然',
+  }
+  const response = await f.send('owner', 'compare', { query: nearby })
+  assert.equal(response.status, 200)
+  assert.deepEqual((await response.json()).query, nearby)
+  for (const { url, init } of f.paid()) {
+    const body = JSON.parse(init.body)
+    const input = JSON.parse(url.includes('openai') ? body.input : body.messages[0].content)
+    assert.deepEqual(input.approximateCurrentLocation, { latitude: 35.691, longitude: 139.7 })
+    assert.equal(input.station, undefined)
+    assert.equal(input.nearbyReference.name, '新宿')
+    assert.equal(input.radiusMeters, 2000)
+  }
+  const restored = await (await f.send('owner', 'comparison-result')).json()
+  assert.deepEqual(restored.query, {
+    region: nearby.region,
+    theme: nearby.theme,
+    locationSearch: true,
+  })
+  const stored = JSON.stringify(f.database.prepare('SELECT * FROM attempts').get())
+  assert(!stored.includes('35.691'))
+  assert(!stored.includes('139.7'))
+  for (const location of [
+    { lat: 35.690921, lng: 139.700258 },
+    { lat: 91, lng: 0 },
+    { lat: '35.691', lng: 139.7 },
+    { lat: 35.691, lng: 139.7, accuracy: 1 },
+  ]) {
+    assert.equal((await f.send('owner', 'compare', { query: { ...nearby, location } })).status, 400)
+  }
+  assert.equal(
+    (await f.send('owner', 'compare', { query: { ...nearby, stationId: query.stationId } })).status,
+    400,
+  )
+  assert.equal(f.paid().length, 2)
+  assert.equal((await (await f.send('owner', 'comparison-status')).json()).attemptCount, 1)
 })
 
 test('Firebase verification, audience, expiry, email, revocation and disabled account all fail closed', async () => {
@@ -193,6 +254,9 @@ test('provider failures are counted, preserve manual retry and never retry autom
     assert.equal(f.paid().length, 4)
     assert(!JSON.stringify(result).includes('secret-provider-body'))
     assert.equal(f.database.prepare('SELECT state FROM attempts').get().state, 'failed')
+    for (let i = 2; i < 5; i++) assert.equal((await f.send('owner')).status, 200)
+    assert.equal((await f.send('owner')).status, 429)
+    assert.equal(f.paid().length, 10)
   }
 })
 

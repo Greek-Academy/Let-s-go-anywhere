@@ -71,7 +71,7 @@ async function mockPublicSearch(context: BrowserContext) {
           configured: true,
           enabled: true,
           busy: false,
-          maxAttempts: null,
+          maxAttempts: 5,
           attemptCount: calls.filter((x) => x === uid).length,
           attempts: results.has(uid) ? [{ state: 'completed' }] : [],
           globalRemaining: null,
@@ -83,6 +83,8 @@ async function mockPublicSearch(context: BrowserContext) {
         body: JSON.stringify(results.get(uid) ?? null),
       })
     if (path === 'compare') {
+      if (calls.filter((x) => x === uid).length >= 5)
+        return route.fulfill({ status: 429, json: { error: '累計5回の上限です。' } })
       calls.push(uid)
       queries.push(route.request().postDataJSON())
       const result = await runComparison({ demo: true, query: route.request().postDataJSON() })
@@ -223,7 +225,7 @@ test('Shinjuku station + genre searches without text; extra wish, changed genre 
     { stationId: '1130208', region: '東京都 新宿駅周辺', theme: '温泉 / 日帰り' },
     { stationId: '1130208', region: '東京都 新宿駅周辺', theme: '静かなカフェ' },
   ])
-  await expect(page.getByText(/これまでの検索：4回。回数上限なし/)).toBeVisible()
+  await expect(page.getByText('比較検索 4 / 5 回（残り1回）', { exact: false })).toBeVisible()
   await page.getByRole('button', { name: '前回の比較結果を開く（無料）' }).click()
   await expect(page.getByText('18件のお店・スポット候補', { exact: true })).toBeVisible()
   expect(queries).toHaveLength(4)
@@ -236,4 +238,41 @@ test('Shinjuku station + genre searches without text; extra wish, changed genre 
   await page.getByRole('button', { name: '前回の比較結果を開く（無料）' }).click()
   await expect(page.getByText(/下は前回の検索結果です/)).toBeVisible()
   expect(queries).toHaveLength(4)
+})
+
+test('fifth search succeeds; sixth is blocked after reload/rejoin while free restore remains usable', async ({
+  page,
+  context,
+  request,
+}) => {
+  const { calls } = await mockPublicSearch(context)
+  const email = await account(request)
+  await page.goto('/#/welcome')
+  await page.getByRole('button', { name: 'まずは見てみる' }).click()
+  await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
+  await login(page, email)
+  await participate(page)
+  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('combobox', { name: '探したい駅' }).fill('しんじゅく')
+  await page.getByRole('option').filter({ hasText: '新宿駅（東京都）' }).first().click()
+  await page.getByRole('button', { name: 'この駅の周辺で探す' }).click()
+  await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('自然')
+  for (let i = 1; i <= 5; i++) {
+    await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+    await expect(
+      page.getByText(`比較検索 ${i} / 5 回（残り${5 - i}回）`, { exact: false }),
+    ).toBeVisible()
+  }
+  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('上限に達しました')
+  expect(calls).toHaveLength(5)
+  await page.reload()
+  await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
+  await login(page, email)
+  await participate(page)
+  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('上限に達しました')
+  await page.getByRole('button', { name: '前回の比較結果を開く（無料）' }).click()
+  await expect(page.getByText('18件のお店・スポット候補', { exact: true })).toBeVisible()
+  expect(calls).toHaveLength(5)
 })
