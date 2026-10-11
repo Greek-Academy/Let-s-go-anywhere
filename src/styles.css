@@ -4832,24 +4832,6 @@ small {
 }
 
 /* Two-provider discovery follows the existing soft teal cards and mobile spacing. */
-.web-search-method {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  font-size: 12px;
-  color: var(--muted);
-}
-.web-search-method select {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 8px;
-  border: 1px solid #d9e9e2;
-  border-radius: 12px;
-  background: #f5f9f7;
-  color: #365951;
-  font: inherit;
-}
 .recommendation-badges {
   display: flex;
   flex-wrap: wrap;
@@ -4901,7 +4883,6 @@ small {
 .preference-summary p {
   margin: 4px 0 0;
 }
-.comparison-explanation,
 .comparison-metrics {
   background: #f6f8f5;
   border: 1px solid #e2eae3;
@@ -4911,7 +4892,6 @@ small {
   line-height: 1.8;
   margin: 10px 0 18px;
 }
-.comparison-explanation summary,
 .comparison-metrics summary {
   cursor: pointer;
   color: #396458;

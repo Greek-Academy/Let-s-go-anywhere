@@ -48,7 +48,6 @@ import type { ConditionFilter } from '../domain/tripConditions'
 
 import { ArrivalTeaser } from './Arrival'
 import { EventCard } from '../components/Cards'
-import type { SearchMethod } from '../state/WebSearchState'
 import { useWebSearch } from '../state/WebSearchState'
 import { WebSearchResults } from '../components/WebSearchResults'
 import {
@@ -175,7 +174,6 @@ export function Discover() {
   const { state, update } = useApp()
   const web = useWebSearch()
   const gps = useDiscoveryLocation()
-  const { method: searchMethod, setMethod: setSearchMethod } = web
   const navigate = useNavigate()
   const [conditionsOpen, setConditionsOpen] = useState(false)
   const [sns, setSns] = useState(false)
@@ -188,7 +186,6 @@ export function Discover() {
   const isEvent = category === 'イベント'
   const eventSelection = state.discover.eventSelection ?? defaultEventSelection
   const dates = eventDates(eventSelection, now)
-  const effectiveMethod = isEvent ? 'comparison' : searchMethod
   const setFilterState = (value: Partial<typeof state.discover>) =>
     update((s) => ({ ...s, discover: { ...s.discover, ...value } }))
   const conditionsActive = hasConditions(state.searchConditions)
@@ -321,11 +318,7 @@ export function Discover() {
             event.preventDefault()
             void web.search(
               {
-                region:
-                  effectiveMethod === 'legacy'
-                    ? (selectedStation?.prefecture ??
-                      (region === '京都府' ? '京都府' : selectedRegion))
-                    : selectedRegion,
+                region: selectedRegion,
                 stationId: selectedStation?.id,
                 location: gps.enabled ? gps.fix?.center : undefined,
                 theme: isEvent ? '' : search,
@@ -333,7 +326,7 @@ export function Discover() {
                 tag: isEvent ? '' : tag,
                 eventDates: isEvent ? dates : undefined,
               },
-              effectiveMethod,
+              'comparison',
             )
           }}
         >
@@ -374,20 +367,6 @@ export function Discover() {
               )}
             </>
           )}
-          <label className="web-search-method">
-            探し方
-            <select
-              aria-label="検索方法"
-              value={effectiveMethod}
-              onChange={(e) => setSearchMethod(e.target.value as SearchMethod)}
-              disabled={web.loading || isEvent}
-            >
-              <option value="comparison">OpenAI・Claudeで比較</option>
-              {!publicSearchOrigin && (
-                <option value="legacy">京都市の公式観光サイト（従来の検索）</option>
-              )}
-            </select>
-          </label>
           <PrimaryButton
             type="submit"
             icon={Search}
@@ -401,22 +380,18 @@ export function Discover() {
                 : 'Webで候補を探す'}
           </PrimaryButton>
           <p className="small muted web-search-hint">
-            {effectiveMethod === 'comparison'
-              ? publicSearchOrigin
-                ? `選んだ駅または取得した現在地の周辺と、${isEvent ? '日付' : 'ジャンル・希望'}を2社へ送信します。おすすめ・イベント合計で1アカウント累計5回まで（これまでの利用・送信後の失敗を含む）。前回結果の再表示は無料です。`
-                : `${isEvent ? 'イベント' : 'お店・常設スポット'}を2社で調べます。比較はまず1回、各社API1回・Web検索最大2回。`
-              : '京都府内のうち京都市の常設スポットが対象です。実検索ではAPIを1回利用します。'}
+            {publicSearchOrigin
+              ? `選んだ駅または取得した現在地の周辺と、${isEvent ? '日付' : 'ジャンル・希望'}を2社へ送信します。おすすめ・イベント合計で1アカウント累計5回まで（これまでの利用・送信後の失敗を含む）。前回結果の再表示は無料です。`
+              : `${isEvent ? 'イベント' : 'お店・常設スポット'}を2社で調べます。比較はまず1回、各社API1回・Web検索最大2回。`}
           </p>
-          {effectiveMethod === 'comparison' && (
-            <button
-              type="button"
-              className="text-button centered"
-              disabled={web.loading}
-              onClick={() => void web.restoreComparison()}
-            >
-              前回の比較結果を開く（無料）
-            </button>
-          )}
+          <button
+            type="button"
+            className="text-button centered"
+            disabled={web.loading}
+            onClick={() => void web.restoreComparison()}
+          >
+            前回の比較結果を開く（無料）
+          </button>
         </form>
         {!isEvent && (
           <button
