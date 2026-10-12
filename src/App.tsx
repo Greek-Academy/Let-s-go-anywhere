@@ -34,6 +34,9 @@ import { LearningNotes } from './screens/LearningNotes'
 import { LearningColumnDetail } from './screens/LearningColumns'
 import { AppSettings, LearningHistory, Profile, ProfileEdit, Reflection } from './screens/Profile'
 
+const PlacePhotoPilot = __PLACE_PHOTO_PILOT__
+  ? lazy(() => import('./screens/PlacePhotoPilot'))
+  : () => null
 const SearchAccess = lazy(() => import('./screens/SearchAccess'))
 const CloudSharing = lazy(() => import('./screens/CloudSharing'))
 const FirebasePreparation = lazy(() => import('./screens/FirebasePreparation'))
@@ -65,6 +68,16 @@ function AppRoutes() {
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/onboarding/:step" element={<Onboarding />} />
         <Route path="/discover" element={<Discover />} />
+        {__PLACE_PHOTO_PILOT__ && (
+          <Route
+            path="/photo-pilot"
+            element={
+              <Suspense fallback={<p className="page-pad">読み込み中…</p>}>
+                <PlacePhotoPilot />
+              </Suspense>
+            }
+          />
+        )}
         <Route
           path="/search/access"
           element={

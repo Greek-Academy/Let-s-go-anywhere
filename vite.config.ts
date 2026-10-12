@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import { placePhotos } from './build/placePhotos.ts'
 import { resolvePublicSearch } from './build/publicSearch.ts'
 import { privateDevelopmentFiles } from './build/privateFiles.ts'
 import { searchBridge } from './build/searchBridge.ts'
@@ -25,6 +26,7 @@ export default defineConfig(({ mode, command }) => {
       Object.entries(process.env).filter(([key]) => key.startsWith('DRIVEPLUS_')),
     ),
   }
+  const photoPilot = mode === 'photos' && command === 'serve'
   const firebase = resolveFirebasePilot(mode, environment)
   const publicSearch = resolvePublicSearch(mode, environment)
   const searchCsp = publicSearch
@@ -42,6 +44,7 @@ export default defineConfig(({ mode, command }) => {
     define: {
       __FIREBASE_PILOT__: JSON.stringify(firebase),
       __PUBLIC_SEARCH_ORIGIN__: JSON.stringify(publicSearch),
+      __PLACE_PHOTO_PILOT__: JSON.stringify(photoPilot),
     },
     build: {
       sourcemap: false,
@@ -54,6 +57,7 @@ export default defineConfig(({ mode, command }) => {
     server: { fs: { deny: privateDevelopmentFiles } },
     plugins: [
       react(),
+      ...(photoPilot ? [placePhotos()] : []),
       searchBridge(Number(process.env.DRIVEPLUS_SEARCH_BACKEND_PORT ?? 4181)),
       {
         name: 'driveplus-preview-release',

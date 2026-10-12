@@ -41,3 +41,5 @@ ui-debug.log
 wrangler.local.json
 dogfood-test-results/
 dogfood-playwright-report/
+
+photo-test-results/
