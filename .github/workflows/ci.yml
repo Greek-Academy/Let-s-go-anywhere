@@ -93,6 +93,9 @@ jobs:
       - name: Verify static preview artifact
         run: npm run verify:preview -- --for-upload
 
+      - name: Test limited place photo pilot without external calls
+        run: npm run test:photos
+
       - name: Test release backup and restore guards
         run: npm run test:release-backup
 
@@ -122,6 +125,9 @@ jobs:
 
       - name: Test discovery integration with a separate sample-only backend
         run: npm run test:discovery-search
+
+      - name: Test photo pilot UI without Google API calls
+        run: npm run test:photos:ui
 
       - name: Upload discovery search report
         if: ${{ !cancelled() }}
@@ -175,5 +181,6 @@ jobs:
           path: |
             test-results/
             review-test-results/
+            photo-test-results/
           if-no-files-found: ignore
           retention-days: 14

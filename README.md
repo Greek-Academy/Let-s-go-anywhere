@@ -6,6 +6,8 @@
 
 開発状況を確認したい方は、まず[今できることと次に進めること](docs/PROJECT_STATUS.md)をご覧ください。モックと実運用の違い、次の候補、試していただきたい3つの操作をまとめています。
 
+3店舗だけで実写真を試す場合は、[Google Placesのキー準備・写真検証手順](docs/PLACE_PHOTOS_PILOT.md)をご覧ください。`npm run photos:dev`でMac専用の検証画面（http://127.0.0.1:5186/#/photo-pilot）を開けます。Googleへの接続は取得ボタンからだけ行い、各店1回に制限します。一般公開版はイラストのままです。
+
 地域と候補表示の改善は[3つの確認操作と画面](docs/reviews/discovery-region/README.md)にまとめています。
 
 iPhoneアプリとして確認する場合は、[シミュレーターの起動・実機への入れ方](docs/IOS_DEVELOPMENT.md)をご覧ください。React＋Capacitorを使い、`npm run ios:sync` → `npm run ios:open` → XcodeでiPhoneシミュレーターを選んで▶︎、で起動します。Expo Go・有料会員登録は不要です。Web版とアプリ版の保存データは別々です。

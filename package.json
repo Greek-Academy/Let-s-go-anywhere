@@ -45,7 +45,10 @@
     "test:public-search": "npm run build:search-worker && node --test tools/public-search/*.test.mjs",
     "test:dogfood": "firebase emulators:exec --only auth --project demo-driveplus \"playwright test --config playwright.dogfood.config.ts\"",
     "dogfood:prepare": "node scripts/prepare-dogfood.mjs",
-    "dogfood:hosting": "node scripts/prepare-dogfood-hosting.mjs"
+    "dogfood:hosting": "node scripts/prepare-dogfood-hosting.mjs",
+    "photos:dev": "vite --mode photos --host 127.0.0.1 --port 5186 --strictPort",
+    "test:photos": "node --test tools/place-photos/*.test.mjs",
+    "test:photos:ui": "playwright test --config playwright.photos.config.ts"
   },
   "dependencies": {
     "@capacitor/app": "8.1.1",
