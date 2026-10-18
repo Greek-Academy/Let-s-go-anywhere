@@ -12,3 +12,7 @@ review-test-results/
 src/data/kyoto-basemap.geo.json
 # Generated attributed rail catalog; regenerate with scripts/import-rail-stations.py.
 src/data/rail-stations.json
+
+# Preserve the scoring factory and the original comparison fixture verbatim.
+src/ramen/vendor/scoring.js
+tests/fixtures/ramen/scoring-original.cjs

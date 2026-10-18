@@ -10,6 +10,8 @@
 
 地域と候補表示の改善は[3つの確認操作と画面](docs/reviews/discovery-region/README.md)にまとめています。
 
+ホームの「ラーメンタイプ診断」から、100枚への回答・途中再開・結果・回答見直しを試せます。[診断の組み込みと確認手順](docs/RAMEN_DIAGNOSIS.md)を参照してください。追加APIは使いません。
+
 iPhoneアプリとして確認する場合は、[シミュレーターの起動・実機への入れ方](docs/IOS_DEVELOPMENT.md)をご覧ください。React＋Capacitorを使い、`npm run ios:sync` → `npm run ios:open` → XcodeでiPhoneシミュレーターを選んで▶︎、で起動します。Expo Go・有料会員登録は不要です。Web版とアプリ版の保存データは別々です。
 
 追加開発の操作手順・画像・本番化の残作業は [下見・お出かけ条件・SNS保存のレビュー](docs/reviews/development-batch-1/README.md) にまとめています。

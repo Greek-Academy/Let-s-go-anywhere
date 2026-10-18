@@ -1,0 +1,2899 @@
+{
+  "schema_version": 3,
+  "axes": [
+    {
+      "id": "clarity",
+      "name": "スープの見え方",
+      "letters": ["C", "O"],
+      "labels": ["透明感", "にごり"],
+      "meaning": "写真に写るスープの透け感。色の濃さ、塩分、脂の量、味の濃さは別に扱う。",
+      "phrases": ["澄んだスープ", "にごりのあるスープ"]
+    },
+    {
+      "id": "noodle_width",
+      "name": "見える麺の太さ",
+      "letters": ["F", "T"],
+      "labels": ["細め", "太め"],
+      "meaning": "写真で確認できる麺幅。麺が隠れている写真は判定材料にしない。硬さ・コシは推測しない。",
+      "phrases": ["細めの麺", "太めの麺"]
+    },
+    {
+      "id": "abundance",
+      "name": "具の盛り",
+      "letters": ["S", "L"],
+      "labels": ["シンプル", "たっぷり"],
+      "meaning": "具の見える量・高さ・覆い方。器の大きさ、総重量、摂取量とは異なる。",
+      "phrases": ["具がシンプルな盛り", "具がたっぷりの盛り"]
+    },
+    {
+      "id": "arrangement",
+      "name": "盛り付け",
+      "letters": ["N", "A"],
+      "labels": ["自然な重なり", "整った配置"],
+      "meaning": "麺線や具材の整列・区画・対称性。店の清潔さや写真の画質は別。",
+      "phrases": ["自然に重なる盛り付け", "配置を整えた盛り付け"]
+    }
+  ],
+  "extras": [
+    {
+      "id": "oil_visible",
+      "name": "見える油",
+      "labels": ["目立ちにくい〜普通", "目立つ"],
+      "phrases": ["油が目立ちにくい〜ほどほど", "表面に油がよく見える"],
+      "low_max": 0.5
+    },
+    {
+      "id": "dark_broth",
+      "name": "スープの色",
+      "labels": ["淡い", "濃い"],
+      "phrases": ["淡い色のスープ", "濃い色のスープ"],
+      "low_max": 0.25
+    },
+    {
+      "id": "curly_noodles",
+      "name": "麺の形",
+      "labels": ["ストレート", "ちぢれ"],
+      "phrases": ["まっすぐな麺", "ちぢれた麺"],
+      "low_max": 0.25
+    },
+    {
+      "id": "meat_presence",
+      "name": "肉の存在感",
+      "labels": ["控えめ〜普通", "大きい"],
+      "phrases": ["肉の存在感が控えめ〜ほどほど", "肉の存在感が大きい"],
+      "low_max": 0.5
+    },
+    {
+      "id": "vegetable_presence",
+      "name": "野菜の存在感",
+      "labels": ["控えめ〜普通", "大きい"],
+      "phrases": ["野菜の存在感が控えめ〜ほどほど", "野菜の存在感が大きい"],
+      "low_max": 0.5
+    },
+    {
+      "id": "red_spice_appearance",
+      "name": "赤みの見え方",
+      "labels": ["控えめ", "強い"],
+      "phrases": ["赤みが控えめ", "赤い油や具が目立つ"],
+      "low_max": 0.25
+    }
+  ],
+  "types": [
+    {
+      "code": "CFSN",
+      "name": "澄み細麺の素朴派",
+      "description": "澄んだスープに細い麺、具を絞った一杯に惹かれるタイプ。具や麺が自然に重なる、気取らない見た目が好みです。",
+      "traits": {
+        "clarity": "C",
+        "noodle_width": "F",
+        "arrangement": "N",
+        "abundance": "S"
+      },
+      "tags": ["透明感", "細め", "シンプル", "自然な重なり"],
+      "archetype": true,
+      "short_description": "透明感・細め・シンプル・自然な重なりの組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "CFSA",
+      "name": "澄み細麺の整え派",
+      "description": "澄んだスープと細い麺が見える、具を絞った一杯が好み。麺や具の位置が整い、すっきりまとまった見た目に惹かれるタイプです。",
+      "traits": {
+        "clarity": "C",
+        "noodle_width": "F",
+        "arrangement": "A",
+        "abundance": "S"
+      },
+      "tags": ["透明感", "細め", "シンプル", "整った配置"],
+      "archetype": true,
+      "short_description": "透明感・細め・シンプル・整った配置の組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "CFLN",
+      "name": "澄み細麺のにぎわい派",
+      "description": "澄んだスープと細い麺に、具がたっぷり重なる一杯が好み。透明感に加えて、自然に盛られた具のにぎわいにも惹かれるタイプです。",
+      "traits": {
+        "clarity": "C",
+        "noodle_width": "F",
+        "arrangement": "N",
+        "abundance": "L"
+      },
+      "tags": ["透明感", "細め", "たっぷり", "自然な重なり"],
+      "archetype": true,
+      "short_description": "透明感・細め・たっぷり・自然な重なりの組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "CFLA",
+      "name": "澄み細麺の彩り派",
+      "description": "澄んだスープと細い麺に、たっぷりの具が整って並ぶ一杯が好み。具の存在感と、配置がまとまった見た目の両方に惹かれるタイプです。",
+      "traits": {
+        "clarity": "C",
+        "noodle_width": "F",
+        "arrangement": "A",
+        "abundance": "L"
+      },
+      "tags": ["透明感", "細め", "たっぷり", "整った配置"],
+      "archetype": true,
+      "short_description": "透明感・細め・たっぷり・整った配置の組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "CTSN",
+      "name": "澄み太麺の素朴派",
+      "description": "澄んだスープから太い麺がのぞく、具を絞った一杯が好み。太麺の存在感を、自然な盛り付けで楽しみたくなるタイプです。",
+      "traits": {
+        "clarity": "C",
+        "noodle_width": "T",
+        "arrangement": "N",
+        "abundance": "S"
+      },
+      "tags": ["透明感", "太め", "シンプル", "自然な重なり"],
+      "archetype": true,
+      "short_description": "透明感・太め・シンプル・自然な重なりの組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "CTSA",
+      "name": "澄み太麺の整え派",
+      "description": "澄んだスープと太い麺を、すっきりした具の配置で見せる一杯が好み。麺に存在感があり、盛り付けは整っている写真に惹かれるタイプです。",
+      "traits": {
+        "clarity": "C",
+        "noodle_width": "T",
+        "arrangement": "A",
+        "abundance": "S"
+      },
+      "tags": ["透明感", "太め", "シンプル", "整った配置"],
+      "archetype": true,
+      "short_description": "透明感・太め・シンプル・整った配置の組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "CTLN",
+      "name": "澄み太麺の豪快派",
+      "description": "澄んだスープに太い麺、自然に重なるたっぷりの具が好み。スープの透明感と、具や麺の存在感を一緒に楽しみたくなるタイプです。",
+      "traits": {
+        "clarity": "C",
+        "noodle_width": "T",
+        "arrangement": "N",
+        "abundance": "L"
+      },
+      "tags": ["透明感", "太め", "たっぷり", "自然な重なり"],
+      "archetype": true,
+      "short_description": "透明感・太め・たっぷり・自然な重なりの組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "CTLA",
+      "name": "澄み太麺の盛り込み派",
+      "description": "澄んだスープと太い麺に、たっぷりの具を整えて盛った一杯が好み。にぎやかさがありながら、配置にまとまりのある写真に惹かれるタイプです。",
+      "traits": {
+        "clarity": "C",
+        "noodle_width": "T",
+        "arrangement": "A",
+        "abundance": "L"
+      },
+      "tags": ["透明感", "太め", "たっぷり", "整った配置"],
+      "archetype": true,
+      "short_description": "透明感・太め・たっぷり・整った配置の組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "OFSN",
+      "name": "にごり細麺の素朴派",
+      "description": "にごりのあるスープと細い麺を、少なめの具で見せる一杯が好み。自然に具が重なり、麺とスープがよく見える写真に惹かれるタイプです。",
+      "traits": {
+        "clarity": "O",
+        "noodle_width": "F",
+        "arrangement": "N",
+        "abundance": "S"
+      },
+      "tags": ["にごり", "細め", "シンプル", "自然な重なり"],
+      "archetype": true,
+      "short_description": "にごり・細め・シンプル・自然な重なりの組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "OFSA",
+      "name": "にごり細麺の整え派",
+      "description": "にごりのあるスープと細い麺に、具を絞って整えた一杯が好み。スープの見た目に存在感があり、盛り付けはすっきりした写真に惹かれるタイプです。",
+      "traits": {
+        "clarity": "O",
+        "noodle_width": "F",
+        "arrangement": "A",
+        "abundance": "S"
+      },
+      "tags": ["にごり", "細め", "シンプル", "整った配置"],
+      "archetype": true,
+      "short_description": "にごり・細め・シンプル・整った配置の組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "OFLN",
+      "name": "にごり細麺のにぎわい派",
+      "description": "にごりのあるスープと細い麺に、たっぷりの具が自然に重なる一杯が好み。細麺とにぎやかな具の組み合わせに惹かれるタイプです。",
+      "traits": {
+        "clarity": "O",
+        "noodle_width": "F",
+        "arrangement": "N",
+        "abundance": "L"
+      },
+      "tags": ["にごり", "細め", "たっぷり", "自然な重なり"],
+      "archetype": true,
+      "short_description": "にごり・細め・たっぷり・自然な重なりの組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "OFLA",
+      "name": "にごり細麺の彩り派",
+      "description": "にごりのあるスープと細い麺に、たっぷりの具が整って並ぶ一杯が好み。具の多さと、配置のまとまりを一緒に楽しみたくなるタイプです。",
+      "traits": {
+        "clarity": "O",
+        "noodle_width": "F",
+        "arrangement": "A",
+        "abundance": "L"
+      },
+      "tags": ["にごり", "細め", "たっぷり", "整った配置"],
+      "archetype": true,
+      "short_description": "にごり・細め・たっぷり・整った配置の組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "OTSN",
+      "name": "にごり太麺の素朴派",
+      "description": "にごりのあるスープと太い麺が見える、具を絞った一杯が好み。麺とスープの存在感を、自然な盛り付けで見せる写真に惹かれるタイプです。",
+      "traits": {
+        "clarity": "O",
+        "noodle_width": "T",
+        "arrangement": "N",
+        "abundance": "S"
+      },
+      "tags": ["にごり", "太め", "シンプル", "自然な重なり"],
+      "archetype": true,
+      "short_description": "にごり・太め・シンプル・自然な重なりの組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "OTSA",
+      "name": "にごり太麺の整え派",
+      "description": "にごりのあるスープと太い麺に、具を絞って整えた一杯が好み。麺やスープに存在感があり、見た目はすっきりまとまる組み合わせに惹かれるタイプです。",
+      "traits": {
+        "clarity": "O",
+        "noodle_width": "T",
+        "arrangement": "A",
+        "abundance": "S"
+      },
+      "tags": ["にごり", "太め", "シンプル", "整った配置"],
+      "archetype": true,
+      "short_description": "にごり・太め・シンプル・整った配置の組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "OTLN",
+      "name": "にごり太麺の豪快派",
+      "description": "にごりのあるスープに太い麺、たっぷりの具が自然に重なる一杯が好み。器の中に麺も具も詰まったように見える写真に惹かれるタイプです。",
+      "traits": {
+        "clarity": "O",
+        "noodle_width": "T",
+        "arrangement": "N",
+        "abundance": "L"
+      },
+      "tags": ["にごり", "太め", "たっぷり", "自然な重なり"],
+      "archetype": true,
+      "short_description": "にごり・太め・たっぷり・自然な重なりの組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    },
+    {
+      "code": "OTLA",
+      "name": "にごり太麺の盛り込み派",
+      "description": "にごりのあるスープと太い麺に、たっぷりの具を整えて盛った一杯が好み。麺や具の存在感に加えて、盛り付けのまとまりにも惹かれるタイプです。",
+      "traits": {
+        "clarity": "O",
+        "noodle_width": "T",
+        "arrangement": "A",
+        "abundance": "L"
+      },
+      "tags": ["にごり", "太め", "たっぷり", "整った配置"],
+      "archetype": true,
+      "short_description": "にごり・太め・たっぷり・整った配置の組み合わせ。",
+      "nuance": null,
+      "description_heading": "このタイプの特徴"
+    }
+  ],
+  "photos": [
+    {
+      "id": "p001",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "shoyu",
+      "flavor_basis": "上らぁ麺【醤油】1700円",
+      "evidence": "透ける茶色の汁に油の光沢。大きい肉と海苔が麺を覆う。",
+      "uncertainty": ["麺の太さは覆われて不明。"],
+      "restaurant_id": "13247487",
+      "image_sha256": "3e565d8df14223ce058beb14e361686cc161d698402c0fb0c240076bdf10879a",
+      "visual_review_sheet": "audit/photos-001-020.jpg"
+    },
+    {
+      "id": "p004",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": -1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": null,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "低い角度で淡い汁、中央のねぎと少量の肉が見える。",
+      "uncertainty": ["器の縁が内容を隠す。麺は判定不可。"],
+      "restaurant_id": "13300645",
+      "image_sha256": "528ccc58dae81fcceb62147b9107fc1f95ea1caad32ddf89dc96250601b93a17",
+      "visual_review_sheet": "audit/photos-001-020.jpg"
+    },
+    {
+      "id": "p008",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "shio",
+      "flavor_basis": "特上塩らぁめん=1500円",
+      "evidence": "黄色の透明感ある汁、細い麺、緑の葉と肉が分かれて見える。",
+      "uncertainty": ["光の反射で油の量は推定しない。"],
+      "restaurant_id": "13284009",
+      "image_sha256": "cee5095273d49fdb6d3c19c44d566f2dd50c8905ff7e289cd185f1824eb3ab45",
+      "visual_review_sheet": "audit/photos-001-020.jpg"
+    },
+    {
+      "id": "p009",
+      "axes": {
+        "clarity": 0,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": 0,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "淡色の汁はやや霞み、細い麺が底に見える。大きい肉と海苔。",
+      "uncertainty": ["反射のため透明度は中間扱い。"],
+      "restaurant_id": "13284009",
+      "image_sha256": "1c8f1deb2195de760dbca7c0657aceeff5ef021e15cafd8cdf4f6129b7b3234e",
+      "visual_review_sheet": "audit/photos-001-020.jpg"
+    },
+    {
+      "id": "p010",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "複数色の肉と卵が区分されて配置され、茶色の汁に油滴。",
+      "uncertainty": ["麺がほぼ隠れる。"],
+      "restaurant_id": "13194812",
+      "image_sha256": "99db35f818670fd682158f51abb4890e5045ceb7272ee0d3c032d02a0b14c342",
+      "visual_review_sheet": "audit/photos-001-020.jpg"
+    },
+    {
+      "id": "p011",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 0,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "淡い透明な汁とやや波打つ麺。肉と海苔は片側寄り。",
+      "uncertainty": ["明るい撮影で色が淡く見える。"],
+      "restaurant_id": "13194812",
+      "image_sha256": "4b39380d92a57cbf4493f783888e58dd866c870aac673b6ec8690e616cf068df",
+      "visual_review_sheet": "audit/photos-001-020.jpg"
+    },
+    {
+      "id": "p014",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": null,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "卵・長方形の肉・ワンタン様の具が分かれて置かれる。",
+      "uncertainty": ["低い角度で麺は隠れる。"],
+      "restaurant_id": "13228602",
+      "image_sha256": "02420c00777fcd49fbf88a8b14f4016f1ba5005645f4ea961f5f19e6068e10c4",
+      "visual_review_sheet": "audit/photos-001-020.jpg"
+    },
+    {
+      "id": "p015",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "shoyu",
+      "flavor_basis": "特製醤油=1400円",
+      "evidence": "長方形の肉、卵、ねぎが区分され、茶色の透ける汁と細麺。",
+      "uncertainty": ["料理名や味は画像から推定しない。"],
+      "restaurant_id": "13228602",
+      "image_sha256": "ce53986baa83952689d4ca8afe111dab18502f9b10daa962baaad0e08df71d06",
+      "visual_review_sheet": "audit/photos-001-020.jpg"
+    },
+    {
+      "id": "p017",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": -1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細い麺がそろい、肉二枚と卵が広い白い器に整う。淡色の汁。",
+      "uncertainty": ["光沢と油膜を厳密には分離できない。"],
+      "restaurant_id": "13234195",
+      "image_sha256": "d059e3e27f2f67694e840a7e6681eb043d8c8c2d9afbb5cc67917bb9170b6ac4",
+      "visual_review_sheet": "audit/photos-001-020.jpg"
+    },
+    {
+      "id": "p018",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "肉が扇状、茎が平行に配置。茶色の汁と細い麺。",
+      "uncertainty": ["麺の見える面積は小さい。"],
+      "restaurant_id": "13234195",
+      "image_sha256": "6b80d47070de05063f643eb30e2b25bfa844b5110e1a85bd8e426d027eea4dda",
+      "visual_review_sheet": "audit/photos-001-020.jpg"
+    },
+    {
+      "id": "p021",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": null,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "低い角度で淡い汁と肉、赤い丸い具、ねぎ。",
+      "uncertainty": ["器の縁で麺が隠れる。赤い具を辛味と断定しない。"],
+      "restaurant_id": "13290780",
+      "image_sha256": "34d110d0940e9b6cfcd363440b347e5a26b058a0369eff8a26f4da3923ed7ef6",
+      "visual_review_sheet": "audit/photos-021-040.jpg"
+    },
+    {
+      "id": "p023",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "淡い汁に肉と卵が配置され、細い麺が少し見える。",
+      "uncertainty": ["引いた写真で細部は小さい。"],
+      "restaurant_id": "13234223",
+      "image_sha256": "d6afe7535a363bf0a1315fe310c1ea701982d3370e942f9790ca71c4bc248bb2",
+      "visual_review_sheet": "audit/photos-021-040.jpg"
+    },
+    {
+      "id": "p025",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "shio",
+      "flavor_basis": "柚子塩らぁ麺(1,200円)",
+      "evidence": "黄色で透ける汁、そろった細麺、区分された薬味と肉。",
+      "uncertainty": ["油の光沢は実際の量を意味しない。"],
+      "restaurant_id": "13234223",
+      "image_sha256": "7517b5a8c85e354b8a95f677c4b05f507fdad6a0999f9f9eecc50b1633ea3a30",
+      "visual_review_sheet": "audit/photos-021-040.jpg"
+    },
+    {
+      "id": "p027",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細い麺がそろい、緑の茎が平行。茶色い透ける汁。",
+      "uncertainty": [],
+      "restaurant_id": "13272366",
+      "image_sha256": "f407053ca99de1c2ca97cb5e56ced8672ce2b4b316a0ecf73aaff0419c4b37ef",
+      "visual_review_sheet": "audit/photos-021-040.jpg"
+    },
+    {
+      "id": "p029",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 1,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "肉・卵・緑の具が片側にまとまり、細麺と茶色の汁が見える。",
+      "uncertainty": [],
+      "restaurant_id": "13272366",
+      "image_sha256": "cc29698027f965335d84a5ec2a0be57736d2d9bc52f371e29ba83dbb6cf1b4c8",
+      "visual_review_sheet": "audit/photos-021-040.jpg"
+    },
+    {
+      "id": "p032",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 1
+      },
+      "serving_type": "soup",
+      "flavor_category": "tantan",
+      "flavor_basis": "麻辣担々麺",
+      "evidence": "明るい橙色の汁に細麺。中央に赤い粉状の具と卵。",
+      "uncertainty": ["明るい撮影で汁色が薄く見える。"],
+      "restaurant_id": "13141302",
+      "image_sha256": "c9ae1294d51da80673f07d06174ccb2282102cb26a57890b756cbb3b608e6d46",
+      "visual_review_sheet": "audit/photos-021-040.jpg"
+    },
+    {
+      "id": "p033",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 1,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "濃い茶色の汁に肉・卵・包み状の具が大きく占める。",
+      "uncertainty": ["麺は覆われて不明。"],
+      "restaurant_id": "13141302",
+      "image_sha256": "4d776b49b69ddb12fa8cf99712624ace1b03d8aff0d5b52ba78825ef1f31b0db",
+      "visual_review_sheet": "audit/photos-021-040.jpg"
+    },
+    {
+      "id": "p034",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 0,
+        "abundance": 1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "茶色の透明な汁。肉が重なり、青菜・海苔・ナルト。",
+      "uncertainty": ["麺は少しだけ見える。"],
+      "restaurant_id": "13278390",
+      "image_sha256": "fcbc1be855b4d35c03b3ebb1e0d4e69de908e53b6000c251560c54eae302f13c",
+      "visual_review_sheet": "audit/photos-021-040.jpg"
+    },
+    {
+      "id": "p038",
+      "axes": {
+        "clarity": 0,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "淡色でやや霞む汁に細麺。貝殻と肉、葉が区分される。",
+      "uncertainty": ["反射で透明度が不確か。"],
+      "restaurant_id": "13242508",
+      "image_sha256": "2f8269e24d664c96a215f2a0520b15e0029dd7166690beadbe077d85635bb99b",
+      "visual_review_sheet": "audit/photos-021-040.jpg"
+    },
+    {
+      "id": "p039",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": -1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 0,
+        "vegetable_presence": 0,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "麺だけの茶色い透ける汁椀。肉や卵は別皿に並ぶ。",
+      "uncertainty": ["主椀の具量を評価。別皿の具は豊富。"],
+      "restaurant_id": "13242508",
+      "image_sha256": "fe58ad6027bdea1e5c69701c79e67a78bd1a41963efd1b6801cc5eeabd84acf8",
+      "visual_review_sheet": "audit/photos-021-040.jpg"
+    },
+    {
+      "id": "p040",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "低い角度で茶色い汁、肉、卵、青菜が見える。",
+      "uncertainty": ["麺は器と具で隠れる。"],
+      "restaurant_id": "13246669",
+      "image_sha256": "5b33464eaa6a273bdaa4c96a967cda8025c201fee89b1f0e2a70af64e6c5ed3a",
+      "visual_review_sheet": "audit/photos-021-040.jpg"
+    },
+    {
+      "id": "p042",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 0,
+        "abundance": 1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "shoyu",
+      "flavor_basis": "チャーシュー醤油らーめん1000円",
+      "evidence": "肉が同じ方向に並び、茶色い汁と麺が一部見える。",
+      "uncertainty": ["被写界深度が浅く麺の幅は中間扱い。"],
+      "restaurant_id": "13246669",
+      "image_sha256": "30bc4699e603cbe8e9c3d46755eec32c26bd0271c93fb7131cac4a2e524914ae",
+      "visual_review_sheet": "audit/photos-041-060.jpg"
+    },
+    {
+      "id": "p043",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": -1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "大きい肉一枚と海苔、ねぎ。茶色い汁に強い光沢。",
+      "uncertainty": ["引いた写真で麺は判定不可。"],
+      "restaurant_id": "13204607",
+      "image_sha256": "35fc23ba31f71ec0f6d33c7bba2ee138476bee54d99982e2031d6c7ef95e4e93",
+      "visual_review_sheet": "audit/photos-041-060.jpg"
+    },
+    {
+      "id": "p044",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 1,
+        "abundance": 0,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 1,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "shoyu",
+      "flavor_basis": "特製ラーメン→醤油味",
+      "evidence": "幅のある縮れ麺が不規則に露出。肉・卵・メンマ様の具。",
+      "uncertainty": [],
+      "restaurant_id": "13204607",
+      "image_sha256": "6b613173a622f29d3f3013612879744902867b26e965542a9cbd530fd47f3c29",
+      "visual_review_sheet": "audit/photos-041-060.jpg"
+    },
+    {
+      "id": "p049",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "shoyu",
+      "flavor_basis": "醤油ワンタン麺",
+      "evidence": "茶色い透明な汁に細麺、薄切り肉と細いねぎ。",
+      "uncertainty": [],
+      "restaurant_id": "13139195",
+      "image_sha256": "e8ff5da820d6ee614cbf9026877ccccc4c050b3cc4eaa4fdde35929bf3e6f8d3",
+      "visual_review_sheet": "audit/photos-041-060.jpg"
+    },
+    {
+      "id": "p051",
+      "axes": {
+        "clarity": null,
+        "noodle_width": 0,
+        "abundance": -1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0,
+        "dark_broth": null,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "麺が大部分を占め、肉一片と少量のねぎ。",
+      "uncertainty": ["汁面がほぼ隠れ、透明度と色は判定しない。"],
+      "restaurant_id": "13008779",
+      "image_sha256": "b86ab0dcd9c1115215c024f60fde9977ec0768b57fb60c91cd107abd81423d93",
+      "visual_review_sheet": "audit/photos-041-060.jpg"
+    },
+    {
+      "id": "p053",
+      "axes": {
+        "clarity": 0,
+        "noodle_width": 0,
+        "abundance": -1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 1,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "濃い茶色の汁に不規則な麺と小さな肉、ねぎ。",
+      "uncertainty": ["色かぶりと反射がある。"],
+      "restaurant_id": "13008779",
+      "image_sha256": "87e574819c7d3d35cd5e0fca78ad0849d7d632bb2a2434c03f49d15fec056ca7",
+      "visual_review_sheet": "audit/photos-041-060.jpg"
+    },
+    {
+      "id": "p055",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "大きな肉が重なり表面を覆う。隙間の茶色い汁に油滴。",
+      "uncertainty": ["麺は隠れる。"],
+      "restaurant_id": "13001469",
+      "image_sha256": "ab5705a6bdb82baf8a9b89701909257401bf1d245868c6e5ce3766dbc33486c4",
+      "visual_review_sheet": "audit/photos-041-060.jpg"
+    },
+    {
+      "id": "p056",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 1,
+        "abundance": 0,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 1,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "幅広く強く波打つ麺を持ち上げる。大きい肉と茶色の汁。",
+      "uncertainty": ["持ち上げ後の配置。"],
+      "restaurant_id": "13001469",
+      "image_sha256": "bc7536c9cb3c6e4384f4480394fc74a28004b4e24a92951cf4e62f924a143d1a",
+      "visual_review_sheet": "audit/photos-041-060.jpg"
+    },
+    {
+      "id": "p059",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 1,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "非常に濃い茶色の汁、細麺、肉と卵。表面に油滴と泡。",
+      "uncertainty": ["暗い汁のため透明度の確信は中程度。"],
+      "restaurant_id": "13147594",
+      "image_sha256": "26aca28f9ef00123ddb6f26aa011a46cac0b61d980a1a77c1b07cc19bf18a86d",
+      "visual_review_sheet": "audit/photos-041-060.jpg"
+    },
+    {
+      "id": "p060",
+      "axes": {
+        "clarity": 0,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": 0,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "淡くやや濁る汁に細麺、厚みのある肉数片と卵。",
+      "uncertainty": ["背景ぼけと反射あり。"],
+      "restaurant_id": "13263789",
+      "image_sha256": "31ed117d62c0b7dd87729bbded6560641e055bc2b4206ce225702da10eba0588",
+      "visual_review_sheet": "audit/photos-041-060.jpg"
+    },
+    {
+      "id": "p063",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "濁った茶色の汁に大きい肉と卵、海苔。",
+      "uncertainty": ["麺が隠れる。"],
+      "restaurant_id": "13217922",
+      "image_sha256": "b88781793579692b46d2ed1a9af06cc6d6523e95ab4489aace75a38030deb805",
+      "visual_review_sheet": "audit/photos-061-080.jpg"
+    },
+    {
+      "id": "p065",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 0,
+        "abundance": -1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "橙色の濁った汁、麺、少量の肉・青菜・海苔。",
+      "uncertainty": ["被写界深度が浅い。"],
+      "restaurant_id": "13217922",
+      "image_sha256": "c3ce8901d28cc6f4d88d1f228085971e0c7b96fcf17db782e7b6839c18deb57b",
+      "visual_review_sheet": "audit/photos-061-080.jpg"
+    },
+    {
+      "id": "p067",
+      "axes": {
+        "clarity": null,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": null,
+        "curly_noodles": 0,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "unknown",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細麺の上に薄切り肉が並び、四角い具と茎が整う。",
+      "uncertainty": ["水分は見えるが汁の深さを判定できない。"],
+      "restaurant_id": "13151200",
+      "image_sha256": "f2654278d931911dbb0f18b39a89b00594e7bbae34c4c44599c57d72457e0a2d",
+      "visual_review_sheet": "audit/photos-061-080.jpg"
+    },
+    {
+      "id": "p068",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "茶色い透明な汁と細い麺、肉と四角い具、卵の接写。",
+      "uncertainty": ["接写で全体量の確信は中程度。"],
+      "restaurant_id": "13151200",
+      "image_sha256": "53da3cccce1a8b9b52d18400cf7e034823deaf85fe68a5d5efbb0272f46aa636",
+      "visual_review_sheet": "audit/photos-061-080.jpg"
+    },
+    {
+      "id": "p071",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 0,
+        "abundance": -1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "茶色い透ける汁と麺、ねぎ・ナルト・少量の肉。",
+      "uncertainty": [],
+      "restaurant_id": "13192433",
+      "image_sha256": "0ec6ad46fcd16704380869063da5070a7379c026df9fab90f11e4b52e4c41c67",
+      "visual_review_sheet": "audit/photos-061-080.jpg"
+    },
+    {
+      "id": "p072",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 1,
+        "abundance": 1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "tsukemen",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "太い麺の上に多数の肉と卵・海苔。別椀の汁は濁る。",
+      "uncertainty": ["汁椀は小さく写る。"],
+      "restaurant_id": "13180862",
+      "image_sha256": "11b3d01f9264f27fba67a753964c08b4c441bb2158defa35aeb8ba5f06a9edec",
+      "visual_review_sheet": "audit/photos-061-080.jpg"
+    },
+    {
+      "id": "p074",
+      "axes": {
+        "clarity": null,
+        "noodle_width": 1,
+        "abundance": 1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": null,
+        "dark_broth": 1,
+        "curly_noodles": 0.5,
+        "meat_presence": 1,
+        "vegetable_presence": 0,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "tsukemen",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "太い麺の上に肉が厚く並ぶ。別椀の暗い汁は端だけ見える。",
+      "uncertainty": ["汁の透明度と油は判定不可。"],
+      "restaurant_id": "13180862",
+      "image_sha256": "32986edf8a5b4ebb16aa4e20037823e239adb027ed2fb08d1b51a6580943ea0b",
+      "visual_review_sheet": "audit/photos-061-080.jpg"
+    },
+    {
+      "id": "p076",
+      "axes": {
+        "clarity": 0,
+        "noodle_width": 1,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": 1,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "shio",
+      "flavor_basis": "貝塩ラーメン",
+      "evidence": "淡色でやや霞む汁、太い縮れ麺、肉・卵・葉。",
+      "uncertainty": [],
+      "restaurant_id": "13191776",
+      "image_sha256": "20cd5370228c14dfc37b3ffada6673ac181a94f5c88a6e7ef505dd5deb0017b7",
+      "visual_review_sheet": "audit/photos-061-080.jpg"
+    },
+    {
+      "id": "p077",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "tsukemen",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "太い麺がまとまり、肉が立てかけられる。別椀は濁った汁。",
+      "uncertainty": [],
+      "restaurant_id": "13191776",
+      "image_sha256": "bc3cb2345041795b1b680052a1ec770c72299768824d1bc0dd0f1f5f4d55bb9a",
+      "visual_review_sheet": "audit/photos-061-080.jpg"
+    },
+    {
+      "id": "p079",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "茶色い汁に肉と卵、青菜、ナルト。",
+      "uncertainty": ["低い角度で麺は隠れる。"],
+      "restaurant_id": "13134691",
+      "image_sha256": "eb1f3cb6241f4ce5c5291a919ce3e8583762f18b6f8caf990b6a39d9d37a468d",
+      "visual_review_sheet": "audit/photos-061-080.jpg"
+    },
+    {
+      "id": "p080",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 0,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "肉・細切りの具・ねぎが広く重なり、茶色い汁。",
+      "uncertainty": ["麺は一部だけ。"],
+      "restaurant_id": "13134691",
+      "image_sha256": "c9be156a10d435b63b4503ec8ef6aa163e52aa5daba26c7892868c5c65b99c32",
+      "visual_review_sheet": "audit/photos-061-080.jpg"
+    },
+    {
+      "id": "p082",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "灰褐色の濁った汁に細麺、刻み玉ねぎ様の具、大きい肉。",
+      "uncertainty": [],
+      "restaurant_id": "13221764",
+      "image_sha256": "9a3f30ffb22e671a12adf7285cd765fe0fc4eafc0c1450287230f9d03f27b8e3",
+      "visual_review_sheet": "audit/photos-081-100.jpg"
+    },
+    {
+      "id": "p086",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": -1,
+        "abundance": -1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "濁った茶色の汁に細い麺、少量の肉とねぎ・海苔。",
+      "uncertainty": [],
+      "restaurant_id": "13153294",
+      "image_sha256": "af725d7e0a7d9edcfa5749ab3bec6164a2a6d077c985c721e5dc8772b8dcbc87",
+      "visual_review_sheet": "audit/photos-081-100.jpg"
+    },
+    {
+      "id": "p087",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "tsukemen",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "太い麺と肉・卵・薄い黄色の輪切り。別椀は濁った茶色の汁。",
+      "uncertainty": [],
+      "restaurant_id": "13153294",
+      "image_sha256": "e453bb83d06a11bdf9c99345580ba4ce43c0ccbacdc10c895a6c608d0e64b779",
+      "visual_review_sheet": "audit/photos-081-100.jpg"
+    },
+    {
+      "id": "p089",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 0,
+        "abundance": 0,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 1,
+        "curly_noodles": 0.5,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "濃い茶色の透明な汁と麺。肉と細いねぎが重なる。",
+      "uncertainty": [],
+      "restaurant_id": "13147068",
+      "image_sha256": "297ddb4c1880578cc42894457641c1b9ad2490f78f498479d7bb580e021f0807",
+      "visual_review_sheet": "audit/photos-081-100.jpg"
+    },
+    {
+      "id": "p091",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 0,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "茶色い透明な汁に肉数枚とねぎ、麺が少し見える。",
+      "uncertainty": [],
+      "restaurant_id": "13157559",
+      "image_sha256": "4819a85ebb05bd005766b38c2deb3dc1d937088b31200c0bf189948476e1f584",
+      "visual_review_sheet": "audit/photos-081-100.jpg"
+    },
+    {
+      "id": "p092",
+      "axes": {
+        "clarity": 0,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細かな白い粒と肉が汁面を覆う。刻み具が散る。",
+      "uncertainty": ["粒と反射で透明度は中間、麺は不明。"],
+      "restaurant_id": "13157559",
+      "image_sha256": "faf54669fbf555f2391ea8ea38c9718f79bd13564b8c219af84ac33b2ada2002",
+      "visual_review_sheet": "audit/photos-081-100.jpg"
+    },
+    {
+      "id": "p095",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 0,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": null,
+        "meat_presence": 0.5,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "miso",
+      "flavor_basis": "味玉味噌1130円",
+      "evidence": "黄色い濁った汁に細い野菜の山、肉一枚と四角い具。",
+      "uncertainty": ["細い白いものは野菜に見え、麺幅は判定しない。"],
+      "restaurant_id": "13307017",
+      "image_sha256": "a63c7f3f513ac50c7a3bfb98f8c0af6c0f955dff4cb60ee54b8ede5f5b3c20ab",
+      "visual_review_sheet": "audit/photos-081-100.jpg"
+    },
+    {
+      "id": "p097",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 0,
+        "abundance": 0,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "中程度の黄色い麺を持ち上げ、野菜と濁った茶色の汁。",
+      "uncertainty": ["持ち上げ後の配置。"],
+      "restaurant_id": "13307017",
+      "image_sha256": "e1e67331b3af8e61917ba437559345af4d741d69760f13dbe4fd084f0bb53401",
+      "visual_review_sheet": "audit/photos-081-100.jpg"
+    },
+    {
+      "id": "p098",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": 0,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "赤い縁の薄切り肉が扇状に並び、包み状の具と淡い汁。",
+      "uncertainty": ["肉の赤い縁は辛味とは扱わない。"],
+      "restaurant_id": "13206756",
+      "image_sha256": "bc3f5c70ce059826c7524c7522e9c45366e765845282eb36f97f97bd56fdda54",
+      "visual_review_sheet": "audit/photos-081-100.jpg"
+    },
+    {
+      "id": "p100",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細い麺を持ち上げる。淡い汁に肉と青い具。",
+      "uncertainty": ["持ち上げで具の一部が隠れる。"],
+      "restaurant_id": "13206756",
+      "image_sha256": "e9dedd0af7331dbea6184a74b2e674ebfcab9901cb67e6619c3b46b7ebbb4dab",
+      "visual_review_sheet": "audit/photos-081-100.jpg"
+    },
+    {
+      "id": "p101",
+      "axes": {
+        "clarity": 0,
+        "noodle_width": null,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0,
+        "curly_noodles": null,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "淡い汁に白い泡様の部分。肉と青菜、刻み紫色の具。",
+      "uncertainty": ["接写と表面の泡で麺や透明度が分かりにくい。"],
+      "restaurant_id": "13219341",
+      "image_sha256": "775fecf08ca58ac6008f71aac4828b417c8ac6d2a7eff0129e535d4e12657ffd",
+      "visual_review_sheet": "audit/photos-101-120.jpg"
+    },
+    {
+      "id": "p103",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": -1,
+        "abundance": -1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 0,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "tsukemen",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細麺が整って重なり、濁った汁が別椀。具はさらに別皿。",
+      "uncertainty": ["主麺椀の具量を評価。別皿の肉はある。"],
+      "restaurant_id": "13219341",
+      "image_sha256": "86d75a94b714a3ddef13b939b2a6d3f4f65bbe5f9125febeaf0a725b30d9d839",
+      "visual_review_sheet": "audit/photos-101-120.jpg"
+    },
+    {
+      "id": "p104",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 1,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "肉が器を広く覆い、濃い茶色の汁に刻み白い具。",
+      "uncertainty": ["麺は隠れる。"],
+      "restaurant_id": "13019588",
+      "image_sha256": "359781fb033688e16afafe982b336b2ff2e97c35be1c877bf2a95dae153ae7bd",
+      "visual_review_sheet": "audit/photos-101-120.jpg"
+    },
+    {
+      "id": "p106",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": -1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細い麺が束状に並び、中央に刻み具。茶色い透ける汁。",
+      "uncertainty": [],
+      "restaurant_id": "13019588",
+      "image_sha256": "64d5d6455eac5924e999c8afed76df96329f56c1fa1d5083ce613d6dfed48fce",
+      "visual_review_sheet": "audit/photos-101-120.jpg"
+    },
+    {
+      "id": "p108",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 1,
+        "abundance": 0,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "太めの麺が不規則に露出し、肉と卵。茶色の透明な汁。",
+      "uncertainty": [],
+      "restaurant_id": "13289213",
+      "image_sha256": "fb781ae858f92f68e1ef9f9ff75ddef43d42392354ddd19e197b4adf886f97a9",
+      "visual_review_sheet": "audit/photos-101-120.jpg"
+    },
+    {
+      "id": "p109",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 0,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細長い茶色の具が表面を厚く覆う。海苔とナルト、茶色い汁。",
+      "uncertainty": ["麺と肉は見えない。"],
+      "restaurant_id": "13289213",
+      "image_sha256": "418ab13e2946fc04a1b4469a290b95785898e06fde20a59cd7e8720f7584a71d",
+      "visual_review_sheet": "audit/photos-101-120.jpg"
+    },
+    {
+      "id": "p111",
+      "axes": {
+        "clarity": null,
+        "noodle_width": 0,
+        "abundance": 0,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": null,
+        "curly_noodles": 0.5,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "dry",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "汁面のない麺に細い肉、刻みねぎ、肉片が不規則に載る。",
+      "uncertainty": [],
+      "restaurant_id": "13273342",
+      "image_sha256": "7787660c7efbce68a8ce4091a13160200e536fad328f881e6f925b46a35a08a0",
+      "visual_review_sheet": "audit/photos-101-120.jpg"
+    },
+    {
+      "id": "p115",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 1,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "tsukemen",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "平たい縮れ麺が整い、肉二枚と卵。別椀に濁った汁。",
+      "uncertainty": [],
+      "restaurant_id": "13177636",
+      "image_sha256": "4fc9914492c251bb25fad5a12b8c5124091b9ea68ffee133c7a877f1ff6f6e5e",
+      "visual_review_sheet": "audit/photos-101-120.jpg"
+    },
+    {
+      "id": "p116",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "複数の肉が放射状に並び、中央に細切り具。茶色い濁った汁。",
+      "uncertainty": ["麺は覆われる。"],
+      "restaurant_id": "13177636",
+      "image_sha256": "9157e4c46021801451d2be0b983189f4dff06eb3ec0bab0a6c6b1b888ce8abbb",
+      "visual_review_sheet": "audit/photos-101-120.jpg"
+    },
+    {
+      "id": "p118",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "肉と細い野菜、白い粒状の具が重なる。淡い濁った汁。",
+      "uncertainty": ["麺は野菜の下。"],
+      "restaurant_id": "13022796",
+      "image_sha256": "46384158bd31eea8f5e6bd5745c29340af3017be79a448ec7967f72ffd4868ec",
+      "visual_review_sheet": "audit/photos-101-120.jpg"
+    },
+    {
+      "id": "p119",
+      "axes": {
+        "clarity": null,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": null,
+        "meat_presence": null,
+        "vegetable_presence": 0,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細かい黒い海苔状の具が表面を完全に覆う。",
+      "uncertainty": ["汁の透明度、麺、肉は判定不可。海苔は野菜項目に含めない。"],
+      "restaurant_id": "13022796",
+      "image_sha256": "db6770c1a05c99f79c2aa242a615926e1bbe1eb15d4a71b8e5930a9294ca760f",
+      "visual_review_sheet": "audit/photos-101-120.jpg"
+    },
+    {
+      "id": "p122",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 0,
+        "abundance": 0,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "褐色の不透明な汁に細いねぎと肉。麺は隙間に見える。",
+      "uncertainty": [],
+      "restaurant_id": "13292429",
+      "image_sha256": "9aed6d5fc201601d519a236805a15330bd19b4ccefc435768a2d8727d09a9713",
+      "visual_review_sheet": "audit/photos-121-140.jpg"
+    },
+    {
+      "id": "p125",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 1,
+        "abundance": -1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 1,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "太い縮れ麺が大きく露出、少量の肉と細切り具。茶色い汁。",
+      "uncertainty": [],
+      "restaurant_id": "13194993",
+      "image_sha256": "2c29ce1535830f7e461e40eae33f7a29cdfd7298da1717a966ecc067f327c7a0",
+      "visual_review_sheet": "audit/photos-121-140.jpg"
+    },
+    {
+      "id": "p126",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "濁った茶色の汁に大きい肉、卵、黄色い粒と細い野菜。",
+      "uncertainty": ["麺は覆われる。"],
+      "restaurant_id": "13254802",
+      "image_sha256": "88b1bf28908e1d082005a8dc2843427d5dfdf440e586783384d8deed8cb585b8",
+      "visual_review_sheet": "audit/photos-121-140.jpg"
+    },
+    {
+      "id": "p128",
+      "axes": {
+        "clarity": null,
+        "noodle_width": 1,
+        "abundance": null,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": null,
+        "dark_broth": null,
+        "curly_noodles": 1,
+        "meat_presence": null,
+        "vegetable_presence": null,
+        "red_spice_appearance": null
+      },
+      "serving_type": "unknown",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "太く波打つ黄色い麺を持ち上げた接写。",
+      "uncertainty": ["汁面と具が画角外のため、麺以外は判定しない。"],
+      "restaurant_id": "13254802",
+      "image_sha256": "1037de156c22395fb0ac9c03820356e8bc8985c34ff784280cafb0996f9fda5c",
+      "visual_review_sheet": "audit/photos-121-140.jpg"
+    },
+    {
+      "id": "p129",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 0,
+        "abundance": -1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "黄色い濁った汁、少量の肉と青菜、海苔。",
+      "uncertainty": [],
+      "restaurant_id": "13010014",
+      "image_sha256": "b72de25531901d73aa4ca1ef692d54fac6381f75a95fc2725fc0689fa0714dd2",
+      "visual_review_sheet": "audit/photos-121-140.jpg"
+    },
+    {
+      "id": "p132",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "薄切り肉が並び、大きい海苔と青菜。黄色い濁った汁。",
+      "uncertainty": ["麺は隠れる。"],
+      "restaurant_id": "13010014",
+      "image_sha256": "266b7f4c694acb683f372be9e25a7fc672b8829883ae947dab1829b6f4d05e3c",
+      "visual_review_sheet": "audit/photos-121-140.jpg"
+    },
+    {
+      "id": "p133",
+      "axes": {
+        "clarity": null,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": null,
+        "dark_broth": null,
+        "curly_noodles": null,
+        "meat_presence": 0.5,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細い野菜が山状に盛られ肉が横に見える。",
+      "uncertainty": ["横からの撮影で汁と麺が器に隠れる。"],
+      "restaurant_id": "13200815",
+      "image_sha256": "f26ccfa8b83f234fb5fdb6e62ac67ff23534aa31a1e532f7a3d86afef85b9aff",
+      "visual_review_sheet": "audit/photos-121-140.jpg"
+    },
+    {
+      "id": "p135",
+      "axes": {
+        "clarity": 0,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "もやし様の野菜と大きい肉、刻み具が器を覆う。",
+      "uncertainty": ["汁は縁に少し見えるだけ。麺は判定不可。"],
+      "restaurant_id": "13200815",
+      "image_sha256": "062069bad7477769e4ccba7e6ed20a2e15a7416cb21f34bf97657cab4b9bd100",
+      "visual_review_sheet": "audit/photos-121-140.jpg"
+    },
+    {
+      "id": "p139",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 1,
+        "abundance": -1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 1,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "tsukemen",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "太めの麺に肉一枚、別椀に濃い茶色の汁と刻み具。",
+      "uncertainty": ["暗い汁だが透明感は残る。"],
+      "restaurant_id": "13005969",
+      "image_sha256": "9df7556a56ea173b3db0c2a3a1fe3ae79a8b8114be17ea8f5f37bf8b996ffc1c",
+      "visual_review_sheet": "audit/photos-121-140.jpg"
+    },
+    {
+      "id": "p141",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 1,
+        "abundance": 0,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 1,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "太く縮れた麺の接写。褐色の濁った汁と刻みねぎ。",
+      "uncertainty": ["画角外の具量は不明。"],
+      "restaurant_id": "13157790",
+      "image_sha256": "eb01eafa0efef87df844bb79fd9e3d7e020da896eb890c5d966a97c659622ff4",
+      "visual_review_sheet": "audit/photos-141-160.jpg"
+    },
+    {
+      "id": "p143",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 0,
+        "abundance": -1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "濁った薄茶色の汁に麺、少量の肉とねぎ。",
+      "uncertainty": [],
+      "restaurant_id": "13157790",
+      "image_sha256": "ef684bccc3b7baf32b388185f102ba53ffad4e8f26af595d329f80cf1949e510",
+      "visual_review_sheet": "audit/photos-141-160.jpg"
+    },
+    {
+      "id": "p145",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 1,
+        "abundance": -1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 1,
+        "curly_noodles": 1,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "shoyu",
+      "flavor_basis": "醤油そば　1000円",
+      "evidence": "濃い茶色の汁に幅のある縮れ麺、少量の肉と海苔。",
+      "uncertainty": [],
+      "restaurant_id": "13285496",
+      "image_sha256": "d5b322769f38ffe5acdab86795301f0f5cde3d8c1bf586cc1a8a1c9b33741bb4",
+      "visual_review_sheet": "audit/photos-141-160.jpg"
+    },
+    {
+      "id": "p146",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 0,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 1,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "shoyu",
+      "flavor_basis": "特製地鶏醤油そば（１，４００円）２０２６年９月",
+      "evidence": "濃い茶色の透ける汁に卵と肉、海苔。",
+      "uncertainty": ["麺は一部だけ。"],
+      "restaurant_id": "13285496",
+      "image_sha256": "4fd2671ec6f2771216244045d945ebd5bbf424ee99f568a974766c90fe9ac64e",
+      "visual_review_sheet": "audit/photos-141-160.jpg"
+    },
+    {
+      "id": "p149",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 0.5,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "野菜と白褐色の粒状の具が高い山。縁に濁った汁。",
+      "uncertainty": ["麺と肉は大半が隠れる。"],
+      "restaurant_id": "13236620",
+      "image_sha256": "19f938b9c9098a8ce3df83cd5f480e6f9aa74b39db4330b71a0c91a264426408",
+      "visual_review_sheet": "audit/photos-141-160.jpg"
+    },
+    {
+      "id": "p152",
+      "axes": {
+        "clarity": null,
+        "noodle_width": 1,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": null,
+        "curly_noodles": 1,
+        "meat_presence": 0.5,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "dry",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "太い縮れ麺が山状。芽物と白い細かい具、ナルトが載る。",
+      "uncertainty": ["白い細かい具の正体は断定しない。"],
+      "restaurant_id": "13236620",
+      "image_sha256": "1bf553af276b8fb1c5a8814d4f745248202b7608db3438ab98a909bc290c80c2",
+      "visual_review_sheet": "audit/photos-141-160.jpg"
+    },
+    {
+      "id": "p155",
+      "axes": {
+        "clarity": null,
+        "noodle_width": 0,
+        "abundance": 1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": null,
+        "curly_noodles": 0.5,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 1
+      },
+      "serving_type": "dry",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "麺の上にひき肉が多く載り、卵二切れ。底に赤い油状のたれ。",
+      "uncertainty": [],
+      "restaurant_id": "13295075",
+      "image_sha256": "3e1934e37e02992fa77497d40457e36cd344d5fd7411c78410fd8e1b3ac50311",
+      "visual_review_sheet": "audit/photos-141-160.jpg"
+    },
+    {
+      "id": "p156",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "低い角度で濁った汁、肉・卵・青菜・海苔が見える。",
+      "uncertainty": ["器の縁で麺が隠れる。"],
+      "restaurant_id": "13295075",
+      "image_sha256": "be2acfe678043aeb132e9544dd78caa009a4376fe0e7f9704c97a47c51ff2a85",
+      "visual_review_sheet": "audit/photos-141-160.jpg"
+    },
+    {
+      "id": "p159",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 1,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 1,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "厚い肉と粒状の具が重なり、太い麺と濁った汁が隙間に見える。",
+      "uncertainty": [],
+      "restaurant_id": "13008749",
+      "image_sha256": "e925c44c9d98f8a3cea418686153205c23468fafcfc117466529a2ab16c2eb54",
+      "visual_review_sheet": "audit/photos-141-160.jpg"
+    },
+    {
+      "id": "p160",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "野菜と厚い肉が高い山を作り、濁った汁が見える。",
+      "uncertainty": ["麺は隠れる。"],
+      "restaurant_id": "13008749",
+      "image_sha256": "a058f155bbbebf92a3ab23a7ad3673d18735a33178f93acd5f98fdcf1459aa7d",
+      "visual_review_sheet": "audit/photos-141-160.jpg"
+    },
+    {
+      "id": "p161",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 1,
+        "curly_noodles": null,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 1
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "赤い油様の面と濁った汁。中央にねぎと細かい具、卵。",
+      "uncertainty": ["麺は見えない。辛さは断定しない。"],
+      "restaurant_id": "13126311",
+      "image_sha256": "60ce905e02bbc22d7b6cdfedb16a1632c1e0311c97f4f3630c745bd1a8609001",
+      "visual_review_sheet": "audit/photos-161-180.jpg"
+    },
+    {
+      "id": "p162",
+      "axes": {
+        "clarity": 0,
+        "noodle_width": 0,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 1
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "多量の葉物が中央を覆い、橙褐色の汁と麺が周囲に見える。",
+      "uncertainty": ["汁の透明度は葉と油で分かりにくい。"],
+      "restaurant_id": "13126311",
+      "image_sha256": "ea752bd0b6a51542175fecd33d0de029641d70fbc8e684206901c62562d09e17",
+      "visual_review_sheet": "audit/photos-161-180.jpg"
+    },
+    {
+      "id": "p166",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "複数の大きい肉が汁面を覆う。青菜と海苔、茶色い汁。",
+      "uncertainty": ["麺はほぼ見えない。"],
+      "restaurant_id": "13147941",
+      "image_sha256": "e1f19a9b90c166bd49bab25d9e42fe02326942d9fc3ff1fb21195d7b84eb0420",
+      "visual_review_sheet": "audit/photos-161-180.jpg"
+    },
+    {
+      "id": "p167",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 1,
+        "abundance": 0,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 1,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "幅広く縮れた麺が中央に露出。茶色の汁と肉、青い茎。",
+      "uncertainty": [],
+      "restaurant_id": "13147941",
+      "image_sha256": "48bb56aa0533e004313fcd0a0cd19fc1cb70c04c9e0f8f80c78e8ffb38a99aeb",
+      "visual_review_sheet": "audit/photos-161-180.jpg"
+    },
+    {
+      "id": "p171",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": -1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "shoyu",
+      "flavor_basis": "地鶏 醤油",
+      "evidence": "細い麺が大きく露出して整い、肉一枚と少量の薬味。",
+      "uncertainty": [],
+      "restaurant_id": "13235903",
+      "image_sha256": "d3e97dc234a7d55e0a4104f74481efc9222bbb78e033634036a548a1aa3dafc1",
+      "visual_review_sheet": "audit/photos-161-180.jpg"
+    },
+    {
+      "id": "p174",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": 0,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細麺の束が整い、肉が両側、中央にナルトとねぎ。淡い汁。",
+      "uncertainty": [],
+      "restaurant_id": "13264562",
+      "image_sha256": "4c0689c0d63771c42069c1c04930c0fe69df6beb43006ce4d644ba94433b4fb4",
+      "visual_review_sheet": "audit/photos-161-180.jpg"
+    },
+    {
+      "id": "p175",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 0,
+        "abundance": 1,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0.5
+      },
+      "serving_type": "tsukemen",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "肉が花状に巻かれ、丸い焼き野菜と葉、赤い麺面。別椀に濁った汁。",
+      "uncertainty": ["赤いものが辛味かは不明。"],
+      "restaurant_id": "13264562",
+      "image_sha256": "4f4425d377088123bc558bfbadc76f69fe443c533185bf84aa0a7ba6114b2d4b",
+      "visual_review_sheet": "audit/photos-161-180.jpg"
+    },
+    {
+      "id": "p177",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "白濁した汁に大量の黒い細切り具とねぎ。肉が周囲に見える。",
+      "uncertainty": ["麺は隠れる。黒い具を野菜項目には足さず、ねぎを評価。"],
+      "restaurant_id": "13319540",
+      "image_sha256": "b3cb18bf90784f5f204a9ead24c5f4fdfde68bbfd0e306d2c791cb125996c4a6",
+      "visual_review_sheet": "audit/photos-161-180.jpg"
+    },
+    {
+      "id": "p179",
+      "axes": {
+        "clarity": null,
+        "noodle_width": 1,
+        "abundance": -1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": null,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "unknown",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "太めの麺にねぎと少量の細かい具。液体は底に少量。",
+      "uncertainty": ["低い汁量の麺と汁なしの境界が曖昧。元画像でも断定しない。"],
+      "restaurant_id": "13319540",
+      "image_sha256": "7bdd86d34be0b0fc42830931de35a3bd3132469b76ae4724d665224763e91c80",
+      "visual_review_sheet": "audit/photos-161-180.jpg"
+    },
+    {
+      "id": "p181",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 1,
+        "curly_noodles": 0,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "濃い茶色の汁と整った細麺。肉と卵、葉物が区分される。",
+      "uncertainty": [],
+      "restaurant_id": "13201505",
+      "image_sha256": "b7cfad5feae83946db9f9d9f2aeeaa190340494b2a0494cba6debbf8113f2a69",
+      "visual_review_sheet": "audit/photos-181-200.jpg"
+    },
+    {
+      "id": "p187",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 0,
+        "abundance": -1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "茶色い透明な汁に少量の肉と海苔、麺が下に見える。",
+      "uncertainty": [],
+      "restaurant_id": "13010036",
+      "image_sha256": "e6323d08642f09197fe278b03105c8b8532222750acd6c84f0573fb0f3aa910c",
+      "visual_review_sheet": "audit/photos-181-200.jpg"
+    },
+    {
+      "id": "p188",
+      "axes": {
+        "clarity": -1,
+        "noodle_width": 0,
+        "abundance": -1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "茶色い透ける汁に油滴。少量の肉とねぎ、長方形の具。",
+      "uncertainty": [],
+      "restaurant_id": "13010036",
+      "image_sha256": "e3e40b1c6533d04fdd417dce9dd9c2608075f236710040c883cc1e5580be163e",
+      "visual_review_sheet": "audit/photos-181-200.jpg"
+    },
+    {
+      "id": "p189",
+      "axes": {
+        "clarity": 0,
+        "noodle_width": 0,
+        "abundance": 1,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": 0.5,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "薄切り肉が表面の大部分を覆い、褐色でやや霞む汁。",
+      "uncertainty": ["麺は一部だけ。"],
+      "restaurant_id": "13285898",
+      "image_sha256": "a1a116a1e1885d97bc4b4dbcffc24c315620d1ebdc9aaf2e8947b3444403a14e",
+      "visual_review_sheet": "audit/photos-181-200.jpg"
+    },
+    {
+      "id": "p192",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": -1,
+        "abundance": 0,
+        "arrangement": 1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": 0,
+        "meat_presence": 1,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "tsukemen",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "細麺が束状に整い、肉が片側に並ぶ。別椀は濁った汁とねぎ。",
+      "uncertainty": [],
+      "restaurant_id": "13285898",
+      "image_sha256": "e2a2a2ebe78608221adad36a9d989decc299aa984a96c550b0a14b4a0c8dad3e",
+      "visual_review_sheet": "audit/photos-181-200.jpg"
+    },
+    {
+      "id": "p193",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "灰褐色の濁った汁に肉と大きな波打つ茶色い具。",
+      "uncertainty": ["麺は見えない。波打つ茶色い具は麺として扱わない。"],
+      "restaurant_id": "13310672",
+      "image_sha256": "e2d301783fba92cdf5d092d6fa805a581b5f9a3b5b3c58a22fd7cf83895b5b90",
+      "visual_review_sheet": "audit/photos-181-200.jpg"
+    },
+    {
+      "id": "p196",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 1,
+        "arrangement": -1
+      },
+      "extras": {
+        "oil_visible": 0.5,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 0.5,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "濁った淡褐色の汁に肉と茶色い具、ねぎ。刻み青菜の別皿。",
+      "uncertainty": ["麺は隠れる。別皿は主椀の具量に含めない。"],
+      "restaurant_id": "13310672",
+      "image_sha256": "fa71fb248bb69405e88cf723a9a97506009e49fdb5b5b95ec8e71daa28c19026",
+      "visual_review_sheet": "audit/photos-181-200.jpg"
+    },
+    {
+      "id": "p197",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": 0,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0,
+        "curly_noodles": 0.5,
+        "meat_presence": 0.5,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "黄色い濁った汁と麺。れんげに緑の葉、背景に肉と海苔。",
+      "uncertainty": ["接写とれんげで全体の具量は中程度の確信。"],
+      "restaurant_id": "13295665",
+      "image_sha256": "0ec0fccac27db3d22cfcae2b3077551ca1c9a0510ddd27abdece827436c1f59b",
+      "visual_review_sheet": "audit/photos-181-200.jpg"
+    },
+    {
+      "id": "p199",
+      "axes": {
+        "clarity": 1,
+        "noodle_width": null,
+        "abundance": 0,
+        "arrangement": 0
+      },
+      "extras": {
+        "oil_visible": 1,
+        "dark_broth": 0.5,
+        "curly_noodles": null,
+        "meat_presence": 1,
+        "vegetable_presence": 1,
+        "red_spice_appearance": 0
+      },
+      "serving_type": "soup",
+      "flavor_category": "unknown",
+      "flavor_basis": null,
+      "evidence": "褐色の不透明な汁、広い肉と青菜のまとまり。",
+      "uncertainty": ["麺は見えない。"],
+      "restaurant_id": "13295665",
+      "image_sha256": "b226b05e15dd9034721c107e98c7c4e7afcbd22a21f1af8dbcb15951b6336486",
+      "visual_review_sheet": "audit/photos-181-200.jpg"
+    }
+  ],
+  "flavors": [
+    {
+      "id": "shoyu",
+      "label": "醤油"
+    },
+    {
+      "id": "shio",
+      "label": "塩"
+    },
+    {
+      "id": "miso",
+      "label": "味噌"
+    },
+    {
+      "id": "tonkotsu",
+      "label": "豚骨"
+    },
+    {
+      "id": "tantan",
+      "label": "担々麺"
+    }
+  ],
+  "serving": [
+    {
+      "id": "soup",
+      "label": "汁あり"
+    },
+    {
+      "id": "tsukemen",
+      "label": "つけ麺"
+    },
+    {
+      "id": "dry",
+      "label": "汁なし"
+    }
+  ],
+  "sources": [
+    {
+      "title": "MBTI公式：16タイプと4組の選好",
+      "url": "https://www.myersbriggs.org/my-mbti-personality-type/the-16-mbti-personality-types/home.htm"
+    },
+    {
+      "title": "MBTI公式：得点は好みの強さではなく、回答の一貫性",
+      "url": "https://www.myersbriggs.org/my-mbti-personality-type/my-mbti-results/home.htm"
+    },
+    {
+      "title": "16Personalities：公式MBTIとは別のモデル",
+      "url": "https://www.16personalities.com/articles/our-theory"
+    },
+    {
+      "title": "マルハニチロ：ラーメンとチャーハンの意識・実態調査 2018",
+      "url": "https://www.umios.com/jp/contents/research/pdf/20180302_ramen_chahan_cyousa2018.pdf"
+    },
+    {
+      "title": "NTTドコモ：ラーメンの好きな味・麺・トッピング調査 2022",
+      "url": "https://dpoint.docomo.ne.jp/enq/guide/research/research20221101.html"
+    }
+  ]
+}

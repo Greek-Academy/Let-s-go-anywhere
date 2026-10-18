@@ -8,6 +8,7 @@ import { validTimestamp } from '../domain/dates'
 import { prefectures } from '../data/regions'
 import { decodeSavedWebSpots } from '../domain/webSearch'
 import { carProviders } from '../data/carProviders'
+import { RAMEN_DATASET } from '../ramen/model'
 
 export const STORAGE_KEY = 'driveplus.mock.v1'
 export const MAX_STORAGE_LENGTH = 2 * 1024 * 1024 // UTF-16 code units, checked before JSON.parse
@@ -127,6 +128,17 @@ const consultation: Rule = (v) => {
   return parsed
 }
 const schema: Record<keyof AppState, Rule> = {
+  ramen: shape({
+    dataset: oneOf([RAMEN_DATASET]),
+    cursor: number(0, 99, true),
+    answers: (value) => {
+      const entries = Object.entries(object(value))
+      if (entries.some(([key]) => !/^q(?:0[0-9][1-9]|0[1-9]0|100)$/.test(key))) return bad()
+      return Object.fromEntries(
+        entries.map(([key, answer]) => [key, oneOf(['yes', 'maybe', 'no', 'skip'])(answer)]),
+      )
+    },
+  }),
   realMap: shape({
     mode: oneOf(['map', 'list']),
     type: oneOf(['すべて', 'レンタカー', 'カーシェア']),

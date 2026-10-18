@@ -1,3 +1,4 @@
+import { RamenLaunchCard } from '../ramen/components'
 import { EventDatePicker } from '../components/EventDatePicker'
 import { defaultEventSelection, eventDates, eventDatesLabel } from '../domain/eventSearch'
 import { useDiscoveryLocation } from '../state/DiscoveryLocationState'
@@ -266,6 +267,7 @@ export function Discover() {
           <h1>今度の休日、どこに行く？</h1>
         </div>
         <p className="discover-lead">あなたの「好き」から、楽しみを見つけよう。</p>
+        <RamenLaunchCard />
         <button
           className="discovery-region-button"
           aria-label="探す地域を変更"

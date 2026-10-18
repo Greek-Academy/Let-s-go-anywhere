@@ -1,4 +1,6 @@
 import type { EventSelection } from '../domain/eventSearch'
+import { createRamenState } from '../ramen/model'
+import type { RamenState } from '../ramen/model'
 import { createRealMapState } from '../domain/realStations'
 import type { RealMapState } from '../domain/realStations'
 import { userProfile } from '../data/options'
@@ -18,6 +20,7 @@ import { emptyConditions } from '../domain/tripConditions'
 import type { TripConditions, ConditionFilter } from '../domain/tripConditions'
 
 export interface AppState {
+  ramen: RamenState
   realMap: RealMapState
   carSearch: CarSearchConditions
   searchConditions: TripConditions
@@ -65,6 +68,7 @@ export interface AppState {
   settings: { largeText: boolean; reducedMotion: boolean }
 }
 export const createInitialState = (): AppState => ({
+  ramen: createRamenState(),
   realMap: createRealMapState(),
   carSearch: { area: null, type: 'すべて', provider: null },
   searchConditions: emptyConditions(),

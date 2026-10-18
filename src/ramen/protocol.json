@@ -1,0 +1,530 @@
+{
+  "version": 3,
+  "experiment_id": "ramen-visual-types-v3",
+  "dataset_sha256": "2774febf7f831725e3da3564bfe1f5506d263e66ea2f94146903bb7609207c74",
+  "photo_count": 100,
+  "restaurant_count": 58,
+  "order_seed": 20261018,
+  "questions": [
+    {
+      "id": "q001",
+      "kind": "single",
+      "photo_id": "p077"
+    },
+    {
+      "id": "q002",
+      "kind": "single",
+      "photo_id": "p053"
+    },
+    {
+      "id": "q003",
+      "kind": "single",
+      "photo_id": "p034"
+    },
+    {
+      "id": "q004",
+      "kind": "single",
+      "photo_id": "p132"
+    },
+    {
+      "id": "q005",
+      "kind": "single",
+      "photo_id": "p091"
+    },
+    {
+      "id": "q006",
+      "kind": "single",
+      "photo_id": "p049"
+    },
+    {
+      "id": "q007",
+      "kind": "single",
+      "photo_id": "p160"
+    },
+    {
+      "id": "q008",
+      "kind": "single",
+      "photo_id": "p032"
+    },
+    {
+      "id": "q009",
+      "kind": "single",
+      "photo_id": "p040"
+    },
+    {
+      "id": "q010",
+      "kind": "single",
+      "photo_id": "p103"
+    },
+    {
+      "id": "q011",
+      "kind": "single",
+      "photo_id": "p021"
+    },
+    {
+      "id": "q012",
+      "kind": "single",
+      "photo_id": "p171"
+    },
+    {
+      "id": "q013",
+      "kind": "single",
+      "photo_id": "p122"
+    },
+    {
+      "id": "q014",
+      "kind": "single",
+      "photo_id": "p167"
+    },
+    {
+      "id": "q015",
+      "kind": "single",
+      "photo_id": "p177"
+    },
+    {
+      "id": "q016",
+      "kind": "single",
+      "photo_id": "p129"
+    },
+    {
+      "id": "q017",
+      "kind": "single",
+      "photo_id": "p145"
+    },
+    {
+      "id": "q018",
+      "kind": "single",
+      "photo_id": "p087"
+    },
+    {
+      "id": "q019",
+      "kind": "single",
+      "photo_id": "p008"
+    },
+    {
+      "id": "q020",
+      "kind": "single",
+      "photo_id": "p193"
+    },
+    {
+      "id": "q021",
+      "kind": "single",
+      "photo_id": "p104"
+    },
+    {
+      "id": "q022",
+      "kind": "single",
+      "photo_id": "p098"
+    },
+    {
+      "id": "q023",
+      "kind": "single",
+      "photo_id": "p095"
+    },
+    {
+      "id": "q024",
+      "kind": "single",
+      "photo_id": "p043"
+    },
+    {
+      "id": "q025",
+      "kind": "single",
+      "photo_id": "p199"
+    },
+    {
+      "id": "q026",
+      "kind": "single",
+      "photo_id": "p128"
+    },
+    {
+      "id": "q027",
+      "kind": "single",
+      "photo_id": "p155"
+    },
+    {
+      "id": "q028",
+      "kind": "single",
+      "photo_id": "p139"
+    },
+    {
+      "id": "q029",
+      "kind": "single",
+      "photo_id": "p108"
+    },
+    {
+      "id": "q030",
+      "kind": "single",
+      "photo_id": "p152"
+    },
+    {
+      "id": "q031",
+      "kind": "single",
+      "photo_id": "p076"
+    },
+    {
+      "id": "q032",
+      "kind": "single",
+      "photo_id": "p039"
+    },
+    {
+      "id": "q033",
+      "kind": "single",
+      "photo_id": "p115"
+    },
+    {
+      "id": "q034",
+      "kind": "single",
+      "photo_id": "p197"
+    },
+    {
+      "id": "q035",
+      "kind": "single",
+      "photo_id": "p174"
+    },
+    {
+      "id": "q036",
+      "kind": "single",
+      "photo_id": "p079"
+    },
+    {
+      "id": "q037",
+      "kind": "single",
+      "photo_id": "p074"
+    },
+    {
+      "id": "q038",
+      "kind": "single",
+      "photo_id": "p080"
+    },
+    {
+      "id": "q039",
+      "kind": "single",
+      "photo_id": "p106"
+    },
+    {
+      "id": "q040",
+      "kind": "single",
+      "photo_id": "p101"
+    },
+    {
+      "id": "q041",
+      "kind": "single",
+      "photo_id": "p004"
+    },
+    {
+      "id": "q042",
+      "kind": "single",
+      "photo_id": "p141"
+    },
+    {
+      "id": "q043",
+      "kind": "single",
+      "photo_id": "p100"
+    },
+    {
+      "id": "q044",
+      "kind": "single",
+      "photo_id": "p149"
+    },
+    {
+      "id": "q045",
+      "kind": "single",
+      "photo_id": "p175"
+    },
+    {
+      "id": "q046",
+      "kind": "single",
+      "photo_id": "p063"
+    },
+    {
+      "id": "q047",
+      "kind": "single",
+      "photo_id": "p161"
+    },
+    {
+      "id": "q048",
+      "kind": "single",
+      "photo_id": "p092"
+    },
+    {
+      "id": "q049",
+      "kind": "single",
+      "photo_id": "p159"
+    },
+    {
+      "id": "q050",
+      "kind": "single",
+      "photo_id": "p067"
+    },
+    {
+      "id": "q051",
+      "kind": "single",
+      "photo_id": "p059"
+    },
+    {
+      "id": "q052",
+      "kind": "single",
+      "photo_id": "p097"
+    },
+    {
+      "id": "q053",
+      "kind": "single",
+      "photo_id": "p116"
+    },
+    {
+      "id": "q054",
+      "kind": "single",
+      "photo_id": "p166"
+    },
+    {
+      "id": "q055",
+      "kind": "single",
+      "photo_id": "p009"
+    },
+    {
+      "id": "q056",
+      "kind": "single",
+      "photo_id": "p072"
+    },
+    {
+      "id": "q057",
+      "kind": "single",
+      "photo_id": "p162"
+    },
+    {
+      "id": "q058",
+      "kind": "single",
+      "photo_id": "p038"
+    },
+    {
+      "id": "q059",
+      "kind": "single",
+      "photo_id": "p109"
+    },
+    {
+      "id": "q060",
+      "kind": "single",
+      "photo_id": "p181"
+    },
+    {
+      "id": "q061",
+      "kind": "single",
+      "photo_id": "p089"
+    },
+    {
+      "id": "q062",
+      "kind": "single",
+      "photo_id": "p118"
+    },
+    {
+      "id": "q063",
+      "kind": "single",
+      "photo_id": "p071"
+    },
+    {
+      "id": "q064",
+      "kind": "single",
+      "photo_id": "p086"
+    },
+    {
+      "id": "q065",
+      "kind": "single",
+      "photo_id": "p010"
+    },
+    {
+      "id": "q066",
+      "kind": "single",
+      "photo_id": "p011"
+    },
+    {
+      "id": "q067",
+      "kind": "single",
+      "photo_id": "p023"
+    },
+    {
+      "id": "q068",
+      "kind": "single",
+      "photo_id": "p042"
+    },
+    {
+      "id": "q069",
+      "kind": "single",
+      "photo_id": "p027"
+    },
+    {
+      "id": "q070",
+      "kind": "single",
+      "photo_id": "p179"
+    },
+    {
+      "id": "q071",
+      "kind": "single",
+      "photo_id": "p001"
+    },
+    {
+      "id": "q072",
+      "kind": "single",
+      "photo_id": "p119"
+    },
+    {
+      "id": "q073",
+      "kind": "single",
+      "photo_id": "p025"
+    },
+    {
+      "id": "q074",
+      "kind": "single",
+      "photo_id": "p196"
+    },
+    {
+      "id": "q075",
+      "kind": "single",
+      "photo_id": "p192"
+    },
+    {
+      "id": "q076",
+      "kind": "single",
+      "photo_id": "p135"
+    },
+    {
+      "id": "q077",
+      "kind": "single",
+      "photo_id": "p055"
+    },
+    {
+      "id": "q078",
+      "kind": "single",
+      "photo_id": "p187"
+    },
+    {
+      "id": "q079",
+      "kind": "single",
+      "photo_id": "p146"
+    },
+    {
+      "id": "q080",
+      "kind": "single",
+      "photo_id": "p018"
+    },
+    {
+      "id": "q081",
+      "kind": "single",
+      "photo_id": "p188"
+    },
+    {
+      "id": "q082",
+      "kind": "single",
+      "photo_id": "p033"
+    },
+    {
+      "id": "q083",
+      "kind": "single",
+      "photo_id": "p060"
+    },
+    {
+      "id": "q084",
+      "kind": "single",
+      "photo_id": "p014"
+    },
+    {
+      "id": "q085",
+      "kind": "single",
+      "photo_id": "p126"
+    },
+    {
+      "id": "q086",
+      "kind": "single",
+      "photo_id": "p189"
+    },
+    {
+      "id": "q087",
+      "kind": "single",
+      "photo_id": "p044"
+    },
+    {
+      "id": "q088",
+      "kind": "single",
+      "photo_id": "p143"
+    },
+    {
+      "id": "q089",
+      "kind": "single",
+      "photo_id": "p065"
+    },
+    {
+      "id": "q090",
+      "kind": "single",
+      "photo_id": "p068"
+    },
+    {
+      "id": "q091",
+      "kind": "single",
+      "photo_id": "p156"
+    },
+    {
+      "id": "q092",
+      "kind": "single",
+      "photo_id": "p015"
+    },
+    {
+      "id": "q093",
+      "kind": "single",
+      "photo_id": "p056"
+    },
+    {
+      "id": "q094",
+      "kind": "single",
+      "photo_id": "p029"
+    },
+    {
+      "id": "q095",
+      "kind": "single",
+      "photo_id": "p133"
+    },
+    {
+      "id": "q096",
+      "kind": "single",
+      "photo_id": "p125"
+    },
+    {
+      "id": "q097",
+      "kind": "single",
+      "photo_id": "p111"
+    },
+    {
+      "id": "q098",
+      "kind": "single",
+      "photo_id": "p017"
+    },
+    {
+      "id": "q099",
+      "kind": "single",
+      "photo_id": "p082"
+    },
+    {
+      "id": "q100",
+      "kind": "single",
+      "photo_id": "p051"
+    }
+  ],
+  "selection": "selection-v3.json",
+  "rules": {
+    "min_photos_per_pole": 6,
+    "min_restaurants_per_pole": 3,
+    "boundary_points": 10,
+    "min_rating_group": 10,
+    "type_requires": "at least two answer categories each have ten responses; all-same is undetermined",
+    "answer_scores": {
+      "yes": 1,
+      "maybe": 0.5,
+      "no": 0
+    },
+    "skip": "excluded, never neutral",
+    "weighting": "equal mean of within-restaurant mean ratings in each feature pole",
+    "stability": "direction unchanged leaving each restaurant out once",
+    "scope": "descriptive association, not validated psychometrics or accuracy equivalence to 200 photos"
+  },
+  "previous_types_and_axes_unchanged": true,
+  "legacy_answers": "preserved in their old storage key; selected photos mapped by photo_id into new state",
+  "original_photos_unchanged": true
+}

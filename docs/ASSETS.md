@@ -17,6 +17,10 @@
 
 [画面・表示ルール・検証](reviews/card-illustrations/README.md)。
 
+## ラーメンタイプ診断の写真
+
+`public/images/ramen/` の100枚は、依頼された完成済み診断 `konomiresearch/sites/ramen-photo-test/` から同じファイルのまま引き継いだ来店者投稿の写真です。以下のUnsplashイメージ写真とは別の素材です。元の出典・クレジットを `src/ramen/sources.json` と診断内の「写真100枚の出典」に残し、元ファイルとの対応を `src/ramen/provenance.json` に記録しています。出典表示だけで利用許諾を確認済みとは扱いません。外部公開の利用条件・許諾は元プロジェクトの確認記録と併せて確認してください。
+
 ## 既存の地図データ・イメージ写真
 
 駅選択用の同梱データ（#104）は画像素材とは別に、Seo-4d696b75 / station_database の2026年9月30日版から廃止駅を除いて加工しています。加工データにもCC BY-SA 4.0を適用します。[出典・固定コミット・ライセンス・再生成手順](RAIL_STATIONS.md)。

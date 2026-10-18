@@ -5,6 +5,54 @@ import CoreLocation
 /// Run on a dedicated simulator; this flow changes sample data.
 final class DrivePlusUITests: XCTestCase {
 
+    /// Dedicated simulator only. Bundled photos, real Preferences, no API calls.
+    @MainActor
+    func testRamenDiagnosisResume() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launch()
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        let controls = web.descendants(matching: .any).matching(NSPredicate(
+            format: "elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
+        func tap(_ label: String, contains: Bool = false) {
+            let button = controls.matching(NSPredicate(format: contains ? "label CONTAINS %@" : "label == %@", label)).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
+            for _ in 0..<12 {
+                if button.isHittable { break }
+                web.swipeUp()
+            }
+            XCTAssertTrue(button.isHittable, label)
+            button.tap()
+        }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        tap("ラーメンタイプ診断", contains: true)
+        tap("診断をはじめる")
+        tap("好き")
+        tap("次の写真へ")
+        tap("どちらともいえない")
+        XCTAssertTrue(web.staticTexts["この端末に保存済み"].waitForExistence(timeout: 10))
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "ramen-native-answer"
+        shot.lifetime = .keepAlways
+        add(shot)
+        tap("ホームに戻る")
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(web.waitForExistence(timeout: 30))
+        tap("ラーメンタイプ診断", contains: true)
+        tap("続きから回答する")
+        XCTAssertTrue(web.staticTexts["PHOTO 003 / 100"].waitForExistence(timeout: 10))
+        tap("前の写真")
+        XCTAssertTrue(web.staticTexts["PHOTO 002 / 100"].waitForExistence(timeout: 10))
+        let neutral = controls.matching(NSPredicate(format: "label == %@", "どちらともいえない")).firstMatch
+        XCTAssertEqual(neutral.value as? String, "1")
+        tap("ホームに戻る")
+    }
+
+
     /// Dedicated simulator only. Uses a public landmark and stops at the login guard (no AI cost).
     @MainActor
     func testDiscoverCurrentLocation() throws {

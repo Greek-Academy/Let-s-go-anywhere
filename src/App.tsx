@@ -37,6 +37,7 @@ import { AppSettings, LearningHistory, Profile, ProfileEdit, Reflection } from '
 const PlacePhotoPilot = __PLACE_PHOTO_PILOT__
   ? lazy(() => import('./screens/PlacePhotoPilot'))
   : () => null
+const RamenDiagnosis = lazy(() => import('./ramen/RamenDiagnosis'))
 const SearchAccess = lazy(() => import('./screens/SearchAccess'))
 const CloudSharing = lazy(() => import('./screens/CloudSharing'))
 const FirebasePreparation = lazy(() => import('./screens/FirebasePreparation'))
@@ -68,6 +69,20 @@ function AppRoutes() {
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/onboarding/:step" element={<Onboarding />} />
         <Route path="/discover" element={<Discover />} />
+        <Route
+          path="/ramen/*"
+          element={
+            <Suspense
+              fallback={
+                <p className="page-pad" role="status">
+                  診断を読み込み中…
+                </p>
+              }
+            >
+              <RamenDiagnosis />
+            </Suspense>
+          }
+        />
         {__PLACE_PHOTO_PILOT__ && (
           <Route
             path="/photo-pilot"
