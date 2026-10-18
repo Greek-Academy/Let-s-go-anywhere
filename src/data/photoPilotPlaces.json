@@ -1,0 +1,32 @@
+[
+  {
+    "id": "inoda-honten",
+    "name": "イノダコーヒ 本店",
+    "aliases": ["イノダコーヒ 本店", "イノダコーヒ本店", "イノダコーヒー 本店"],
+    "address": "京都市中京区堺町通三条下る道祐町140番地",
+    "addressParts": ["京都市", "中京区", "道祐町"],
+    "streetNumber": "140",
+    "sourceUrl": "https://www.inoda-coffee.co.jp/shop/honten/",
+    "checkedOn": "2026-10-12"
+  },
+  {
+    "id": "smart-teramachi",
+    "name": "スマート珈琲店",
+    "aliases": ["スマート珈琲店", "スマートコーヒー"],
+    "address": "京都市中京区寺町通三条上る天性寺前町537",
+    "addressParts": ["京都市", "中京区", "天性寺前町"],
+    "streetNumber": "537",
+    "sourceUrl": "https://www.smartcoffee.jp/information",
+    "checkedOn": "2026-10-12"
+  },
+  {
+    "id": "ogawa-sakaimachi-nishiki",
+    "name": "小川珈琲 堺町錦店",
+    "aliases": ["小川珈琲 堺町錦店", "小川珈琲 堺町錦"],
+    "address": "京都市中京区堺町通錦小路上る菊屋町519-1",
+    "addressParts": ["京都市", "中京区", "菊屋町"],
+    "streetNumber": "519-1",
+    "sourceUrl": "https://www.oc-ogawa.co.jp/nishiki/",
+    "checkedOn": "2026-10-12"
+  }
+]
