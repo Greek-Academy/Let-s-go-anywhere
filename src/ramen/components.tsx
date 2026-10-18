@@ -152,12 +152,28 @@ export function RamenPhoto({
           </PrimaryButton>
         </div>
       )}
-      {expanded && (
-        <Modal title={label} onClose={() => setExpanded(false)}>
-          <img className="ramen-expanded" src={src} alt={`拡大した${label}`} />
-        </Modal>
-      )}
+      {expanded && <PhotoZoom src={src} label={label} onClose={() => setExpanded(false)} />}
     </div>
+  )
+}
+
+function PhotoZoom({ src, label, onClose }: { src: string; label: string; onClose: () => void }) {
+  const [zoomed, setZoomed] = useState(false)
+  return (
+    <Modal title={label} onClose={onClose}>
+      <div
+        className={`ramen-zoom-viewport ${zoomed ? 'ramen-zoomed' : ''}`}
+        tabIndex={0}
+        role="region"
+        aria-label="写真の拡大・スクロール領域"
+      >
+        <img src={src} alt={`拡大した${label}`} draggable={false} />
+      </div>
+      <p className="ramen-zoom-help">拡大した写真は、指やスクロールで上下左右に動かせます。</p>
+      <PrimaryButton variant="secondary" onClick={() => setZoomed((value) => !value)}>
+        {zoomed ? '全体を表示' : '2倍に拡大'}
+      </PrimaryButton>
+    </Modal>
   )
 }
 

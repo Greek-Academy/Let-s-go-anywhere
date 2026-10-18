@@ -239,12 +239,28 @@
 .ramen-photo-small .ramen-photo-error .button svg {
   display: none;
 }
-.ramen-expanded {
-  width: 100%;
-  display: block;
-  object-fit: contain;
-  max-height: 65dvh;
+.ramen-zoom-viewport {
+  height: min(440px, 52dvh);
+  overflow: auto;
+  background: #f4f6f3;
   border-radius: 12px;
+  touch-action: pan-x pan-y;
+}
+.ramen-zoom-viewport img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.ramen-zoomed img {
+  width: 200%;
+  max-width: none;
+  height: auto;
+}
+.ramen-zoom-help {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #6b8179;
 }
 .ramen-answers {
   display: grid;

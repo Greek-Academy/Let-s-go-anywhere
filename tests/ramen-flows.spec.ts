@@ -118,6 +118,13 @@ test('home entry, three choices, zoom, back/edit, resume and existing navigation
   await choose(page, '好き')
   await page.getByRole('button', { name: '写真1を拡大', exact: true }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('button', { name: '2倍に拡大', exact: true }).click()
+  expect(
+    await page
+      .getByRole('region', { name: '写真の拡大・スクロール領域' })
+      .evaluate((el) => el.scrollWidth >= el.clientWidth * 1.9),
+  ).toBe(true)
+  await page.getByRole('button', { name: '全体を表示', exact: true }).click()
   await page.getByRole('button', { name: '閉じる', exact: true }).click()
   await page.getByRole('button', { name: '次の写真へ' }).click()
   await choose(page, 'どちらともいえない')
