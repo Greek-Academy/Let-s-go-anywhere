@@ -1,7 +1,8 @@
 import { firebasePilot } from '../firebase/config'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, Heart, ImageOff, Users } from 'lucide-react'
+import { ChevronDown, Heart, Users } from 'lucide-react'
+import { SpotIllustration } from '../components/SpotIllustration'
 import { BottomSheet, Chip, PrimaryButton, Tag } from '../components/ui'
 import { OutingImage, OutingPhotoCredit, OutingStatus } from '../components/OutingStatus'
 import { useContent } from '../content/ContentProvider'
@@ -96,14 +97,7 @@ export function CandidatePreview({
     <div className="sharing-candidate">
       {photo && (
         <div className="sharing-photo">
-          {outing ? (
-            <OutingImage outing={outing} decorative />
-          ) : (
-            <span className="sharing-placeholder">
-              <ImageOff size={26} />
-              <span>写真は未取得です</span>
-            </span>
-          )}
+          {outing ? <OutingImage outing={outing} decorative /> : <SpotIllustration />}
         </div>
       )}
       <div className="sharing-candidate-body">

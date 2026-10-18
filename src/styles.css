@@ -3735,8 +3735,51 @@ small {
 .web-search-error {
   color: #885139;
 }
-.web-spot-image {
+.spot-illustration {
+  position: relative;
+  display: block;
+  overflow: hidden;
   background: linear-gradient(135deg, #e8f1ec, #d2e4dc);
+}
+.spot-illustration > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.spot-illustration-caption {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  padding: 3px 8px;
+  border: 1px solid #ffffff90;
+  border-radius: 6px;
+  background: #ffffffed;
+  color: #48635a;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.5;
+  pointer-events: none;
+}
+.spot-illustration-compact .spot-illustration-caption {
+  left: 3px;
+  bottom: 3px;
+  padding: 1px 3px;
+  border: 0;
+  border-radius: 3px;
+  font-size: 9px;
+}
+.spot-illustration-fallback {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  color: #669388;
+}
+.spot-illustration-compact .spot-illustration-fallback {
+  width: 24px;
+  height: 24px;
 }
 .web-spot-card .card-title-button {
   margin-top: 10px;
@@ -3763,11 +3806,8 @@ small {
 .saved-web-spot .web-spot-image {
   width: 58px;
   height: 64px;
-  flex-shrink: 0;
+  flex: 0 0 58px;
   border-radius: 12px;
-}
-.saved-web-spot .web-spot-image span {
-  display: none;
 }
 .event-detail .detail-hero > .web-spot-image {
   width: 100%;

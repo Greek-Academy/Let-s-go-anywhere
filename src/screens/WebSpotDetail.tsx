@@ -59,7 +59,7 @@ export function WebSpotDetail() {
   return (
     <div className="screen event-detail">
       <div className="detail-hero">
-        <WebSpotImage />
+        <WebSpotImage spot={spot} eager />
         <div className="detail-hero-actions">
           <IconButton icon={ArrowLeft} label="戻る" onClick={back} />
           <IconButton
@@ -105,7 +105,8 @@ export function WebSpotDetail() {
             ['料金・予約条件', '未確認'],
             ['駐車場・車の入口', '未確認'],
             ['距離・所要時間', '未確認'],
-            ['写真・利用条件', '未取得・未確認'],
+            ['画像', 'ジャンルのイメージイラスト'],
+            ['実際の場所の写真・利用条件', '未取得・未確認'],
           ]}
         />
         <PrimaryButton

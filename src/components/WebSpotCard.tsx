@@ -3,7 +3,9 @@ import { RecommendationBadges, RecommendationFeedback } from './RecommendationFe
 import { providerNames } from '../domain/recommendations'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Heart, ImageOff, MapPin, ExternalLink } from 'lucide-react'
+import { Heart, MapPin, ExternalLink } from 'lucide-react'
+import { SpotIllustration } from './SpotIllustration'
+import { spotIllustrationKind } from '../data/spotIllustrations'
 import type { WebSpot } from '../domain/webSearch'
 import { sameWebSpot } from '../domain/webSearch'
 import { useApp } from '../state/AppState'
@@ -11,16 +13,24 @@ import { useWebSearch } from '../state/WebSearchState'
 import { ExternalModal } from './ExternalLinkModal'
 import { Tag } from './ui'
 
-export function WebSpotImage({ className = '' }: { className?: string }) {
+export function WebSpotImage({
+  spot,
+  className = '',
+  compact = false,
+  eager = false,
+}: {
+  spot: WebSpot
+  className?: string
+  compact?: boolean
+  eager?: boolean
+}) {
   return (
-    <span
-      className={`outing-photo-empty web-spot-image ${className}`}
-      role="img"
-      aria-label="写真は未取得です"
-    >
-      <ImageOff size={24} aria-hidden="true" />
-      <span aria-hidden="true">写真は未取得です</span>
-    </span>
+    <SpotIllustration
+      kind={spotIllustrationKind(spot)}
+      className={`web-spot-image ${className}`}
+      compact={compact}
+      eager={eager}
+    />
   )
 }
 export function WebSpotStatus({ spot }: { spot: WebSpot }) {
@@ -80,7 +90,7 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
         aria-label={`${spot.name}の詳細を見る`}
         onClick={() => navigate(`/web-spots/${spot.id}`)}
       >
-        <WebSpotImage className="event-photo" />
+        <WebSpotImage spot={spot} className="event-photo" />
         <span className="photo-category">
           {spot.event ? 'イベントの候補' : '常設スポットの候補'}
         </span>

@@ -141,14 +141,6 @@
   height: 100%;
   object-fit: cover;
 }
-.sharing-placeholder {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted);
-  font-size: 11px;
-}
 .sharing-candidate-body {
   padding: 16px;
 }
