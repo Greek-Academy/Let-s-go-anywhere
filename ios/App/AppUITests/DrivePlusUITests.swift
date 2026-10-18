@@ -27,7 +27,7 @@ final class DrivePlusUITests: XCTestCase {
             XCTAssertTrue(button.isHittable, label)
             button.tap()
         }
-        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
+        if web.buttons["まずは見てみる"].waitForExistence(timeout: 20) { tap("まずは見てみる") }
         tap("ラーメンタイプ診断", contains: true)
         tap("診断をはじめる")
         tap("好き")
@@ -44,14 +44,17 @@ final class DrivePlusUITests: XCTestCase {
         XCTAssertTrue(web.waitForExistence(timeout: 30))
         tap("ラーメンタイプ診断", contains: true)
         tap("続きから回答する")
-        XCTAssertTrue(web.staticTexts["PHOTO 003 / 100"].waitForExistence(timeout: 10))
+        XCTAssertTrue(web.buttons["写真3を拡大"].waitForExistence(timeout: 10))
         tap("前の写真")
-        XCTAssertTrue(web.staticTexts["PHOTO 002 / 100"].waitForExistence(timeout: 10))
+        XCTAssertTrue(web.buttons["写真2を拡大"].waitForExistence(timeout: 10))
         let neutral = controls.matching(NSPredicate(format: "label == %@", "どちらともいえない")).firstMatch
         XCTAssertEqual(neutral.value as? String, "1")
+        let resumed = XCTAttachment(screenshot: app.screenshot())
+        resumed.name = "ramen-native-resumed"
+        resumed.lifetime = .keepAlways
+        add(resumed)
         tap("ホームに戻る")
     }
-
 
     /// Dedicated simulator only. Uses a public landmark and stops at the login guard (no AI cost).
     @MainActor

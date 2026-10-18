@@ -232,6 +232,20 @@ test('result has matching scores, explanations, 16 types, attribution, export an
   expect(
     await page.evaluate(() => (window as unknown as { ramenCopied: string }).ramenCopied),
   ).toBe(scoring.toText(expected, profile))
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new Error('clipboard unavailable')
+        },
+      },
+    })
+  })
+  await page.getByRole('button', { name: '結果をコピー', exact: true }).click()
+  await expect(page.getByRole('textbox', { name: 'コピー用の診断結果' })).toHaveValue(
+    scoring.toText(expected, profile),
+  )
   const download = page.waitForEvent('download')
   await page.getByRole('button', { name: 'テキストで保存', exact: true }).click()
   expect((await download).suggestedFilename()).toBe('ramen-preference-result.txt')
