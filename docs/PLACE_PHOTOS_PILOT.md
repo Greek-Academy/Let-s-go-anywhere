@@ -4,6 +4,8 @@
 
 今回はMac内の検証画面です。一般公開版・iPhoneアプリは引き続きイラストです。実写真と費用を確認した後で、3店舗に限定した公開版への接続を検討します。Google写真を既存の保存・共有データに入れません。
 
+2026-10-18に3店舗すべてで実取得・画像表示・撮影者と元写真リンクの表示を確認しました。検索3回・写真3回の枠は使用済みです。[実検証の結果と残作業](reviews/place-photos/README.md)を参照してください。既に取得した写真は開いた検証タブで確認し、新しいタブや再読み込みでは再取得しません。
+
 ## あなたにお願いする準備
 
 1. [Google Cloud Console](https://console.cloud.google.com/)を開き、Googleアカウントでログインします。
@@ -26,7 +28,7 @@ npm run photos:dev
 
 http://127.0.0.1:5186/#/photo-pilot
 
-ブランチ用の作業フォルダは `/tmp/driveplus-issue118` です。キーのファイルは上記letsgoanywhere側と共有しています。一般的な `npm run dev`・静的ビルド・公開サーバーでは写真取得機能は有効になりません。
+ブランチ用の作業フォルダは `/Users/seyamayoshihiko/Desktop/letsgoanywhere-previews/issue-118-photos` です。以前の一時フォルダから移し直しました。キーのファイルは上記letsgoanywhere側と共有しています。一般的な `npm run dev`・静的ビルド・公開サーバーでは写真取得機能は有効になりません。
 
 1. 店名・住所・店舗公式の案内を確認します。3店舗は写真の照合用に選定したもので、AIが今回推薦した候補ではありません。
 2. 各店舗の「このお店の写真を確認する」を1回押します。店名と住所が一意に一致した場合だけ、Google Photosへ進みます。
@@ -36,7 +38,7 @@ http://127.0.0.1:5186/#/photo-pilot
 
 ## 費用・取得上限
 
-2026-10-12に[Google公式料金表](https://developers.google.com/maps/billing-and-pricing/pricing)と[Text Searchの項目別料金](https://developers.google.com/maps/documentation/places/web-service/text-search)を確認しました。
+2026-10-12に[Google公式料金表](https://developers.google.com/maps/billing-and-pricing/pricing)と[Text Searchの項目別料金](https://developers.google.com/maps/documentation/places/web-service/text-search)を確認し、2026-10-18の実取得時にも料金表を確認しました。
 
 - 使用項目：`places.id,places.displayName,places.formattedAddress,places.photos`。Text Search Proに該当。初段階の単価は1,000件あたり32米ドル、毎月の無料枠5,000件。
 - Place Details Photos：1,000件あたり7米ドル、毎月の無料枠1,000件。
@@ -61,5 +63,5 @@ http://127.0.0.1:5186/#/photo-pilot
 
 ## 次の段階
 
-- Googleキー設定後の実取得・画像の店舗一致・実請求は未確認。結果をIssue #118に記録します。
+- 実取得と店名・住所の照合、画像読み込み、撮影者と元写真リンクの表示は確認済み。写真に写っている内容の最終確認と、Google Cloud上の実請求・APIキーの利用先制限の確認は人間のTODOです。キーの保存とAPIの接続成功だけでは、利用先の制限までは確認できません。
 - 一般公開のおすすめ・保存・詳細に接続する場合は、3店舗との照合、ログイン・回数制限、写真の一時取得、利用規約・プライバシー案内を公開環境に実装します。この段階では現在のWorker・DB・Firebaseプラン・検索回数を変更しません。
