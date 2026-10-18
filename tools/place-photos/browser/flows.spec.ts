@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { resolve } from 'node:path'
+import { randomUUID } from 'node:crypto'
+import { writeFile, unlink } from 'node:fs/promises'
 
 const photo = {
   imageUrl: 'https://lh3.googleusercontent.com/test-photo',
@@ -111,7 +113,22 @@ test('開発サーバーでもキーを配信せず、外部Origin・トーク�
   const data = await status.json()
   expect(data).not.toHaveProperty('key')
   expect(data).not.toHaveProperty('apiKey')
-  expect((await request.get('/.env.photos.local')).status()).toBe(403)
+  // CI intentionally has no real .env.photos.local. Vite serves SPA HTML for a
+  // missing file, so verify its deny rule using an existing, fake secret file.
+  // A unique filename avoids touching the developer's actual key or other workers.
+  const filename = `.env.photo-guard-${randomUUID()}.local`
+  const path = resolve(filename)
+  const sentinel = 'PHOTO_TEST_SENTINEL_NOT_A_REAL_KEY'
+  await writeFile(path, `GOOGLE_PLACES_API_KEY=${sentinel}\n`, { flag: 'wx', mode: 0o600 })
+  try {
+    for (const url of [`/${filename}`, `/@fs${path}`]) {
+      const denied = await request.get(url)
+      expect(denied.status()).toBe(403)
+      expect(await denied.text()).not.toContain(sentinel)
+    }
+  } finally {
+    await unlink(path)
+  }
   expect(
     (
       await request.get('/api/place-photos/status', { headers: { Origin: 'https://evil.example' } })
