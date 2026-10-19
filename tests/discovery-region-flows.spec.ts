@@ -25,13 +25,15 @@ test('onboarding selects a station in kana, goes back and preserves the selectio
   page,
 }) => {
   await page.goto('/#/onboarding/1')
-  await expect(page.getByRole('button', { name: '次へ', exact: true })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'ホームへ', exact: true })).toBeDisabled()
   await select(page, '出発する最寄駅', 'しんじゅ', '新宿駅（東京都）')
-  await page.getByRole('button', { name: '次へ', exact: true }).click()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
+  await page.getByRole('button', { name: 'はじめる', exact: true }).click()
   await expect(page.getByRole('combobox', { name: '出発する最寄駅' })).toHaveValue('新宿')
   await page.reload()
   expect((await readState(page)).profile.stationId).toBe('1130208')
+  await page.getByRole('button', { name: 'ホームへ', exact: true }).click()
+  await expect(page).toHaveURL(/#\/discover$/)
 })
 test('station destination is independent of origin, preserves saves, cancels drafts and restores after reload', async ({
   page,

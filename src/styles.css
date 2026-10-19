@@ -1030,7 +1030,6 @@ small {
   border-color: var(--teal);
 }
 .choice-stack,
-.companion-choices,
 .filter-options {
   display: flex;
   flex-direction: column;
@@ -1380,22 +1379,6 @@ small {
   order: 2;
   margin-left: 6px;
 }
-.welcome-dots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 21px;
-}
-.welcome-dots span {
-  background: #ffffff4d;
-  width: 4px;
-  height: 4px;
-  border-radius: 4px;
-}
-.welcome-dots .active {
-  background: #fff;
-  width: 17px;
-}
 .welcome-skip {
   min-height: 46px;
   color: #f2f8ef;
@@ -1428,26 +1411,9 @@ small {
   gap: 24px;
   flex-shrink: 0;
 }
-.step-progress {
-  display: flex;
-  gap: 5px;
-  flex: 1;
-  max-width: 124px;
-  margin: 0 auto;
-}
-.step-progress > span {
-  width: 33.33%;
-  height: 4px;
-  border-radius: 5px;
-  background: #e9efea;
-}
-.step-progress > span.active {
-  background: var(--teal);
-}
-.step-count {
-  color: #8d9e92;
-  font-size: 10px;
-  padding-right: 8px;
+.onboarding-label {
+  color: #6b8179;
+  font-size: 12px;
 }
 .onboarding-content {
   padding: 26px 25px 10px;
@@ -1589,80 +1555,6 @@ small {
 .onboarding-content > .muted {
   margin-top: 13px;
   font-size: 10px;
-}
-.companion-choices .choice {
-  padding: 14px;
-  min-height: 71px;
-}
-.companion-choices .choice-icon {
-  margin-right: 2px;
-  font-size: 25px;
-  background: #f6f6ef;
-  border-radius: 12px;
-  width: 39px;
-  height: 39px;
-}
-.companion-choices .selected .choice-icon {
-  background: #e3f2e6;
-}
-.interest-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.interest-tile {
-  border: 1.5px solid #e8ede6;
-  border-radius: 13px;
-  padding: 5px 5px 9px;
-  position: relative;
-  text-align: left;
-  overflow: hidden;
-  background: #fff;
-}
-.interest-tile.selected {
-  border-color: #4dae8d;
-  background: #f0f8ef;
-}
-.interest-tile img {
-  width: 100%;
-  height: 74px;
-  border-radius: 8px;
-}
-.interest-tile strong {
-  display: block;
-  font-size: 12px;
-  padding: 8px 5px 2px;
-}
-.interest-tile small {
-  font-size: 8px;
-  color: #91a08d;
-  padding: 0 5px;
-}
-.interest-check {
-  position: absolute;
-  top: 11px;
-  right: 11px;
-  border: 1px solid #ffffffd1;
-  color: #fff;
-  background: #ffffff50;
-  width: 19px;
-  height: 19px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-}
-.selected .interest-check {
-  border-color: #fff;
-  background: var(--teal);
-}
-.interest-selection {
-  font-size: 11px;
-  color: #8b9d87;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  margin: 17px 0 3px;
 }
 .onboarding-footer {
   padding: 18px 25px 2px;

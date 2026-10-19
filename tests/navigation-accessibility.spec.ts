@@ -30,10 +30,9 @@ test('keyboard onboarding and all four tabs move focus to the new screen without
   await keyboardActivate(page, page.getByRole('button', { name: 'はじめる', exact: true }))
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   await expect(page.getByRole('combobox', { name: '出発する最寄駅' })).not.toBeFocused()
-  for (let step = 0; step < 3; step++) {
-    await keyboardActivate(page, page.getByRole('button', { name: 'スキップ', exact: true }))
-    await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
-  }
+  await keyboardActivate(page, page.getByRole('button', { name: 'スキップ', exact: true }))
+  await expect(page).toHaveURL(/#\/discover$/)
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   for (const name of ['行きたい', '車を探す', '学ぶ', '見つける']) {
     await keyboardActivate(
       page,

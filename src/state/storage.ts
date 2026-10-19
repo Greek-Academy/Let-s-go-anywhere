@@ -94,6 +94,18 @@ const sharedFields = [
   'knowledge',
 ] as const
 const initial = createInitialState()
+// Accept only the known withdrawn pilot shape, then omit it from future saves.
+// Otherwise its extra top-level key would block unrelated profile/outing writes.
+const retiredRamen = shape({
+  dataset: oneOf(['2774febf7f831725e3da3564bfe1f5506d263e66ea2f94146903bb7609207c74']),
+  cursor: number(0, 99, true),
+  answers: (value) => {
+    const entries = Object.entries(object(value))
+    if (entries.some(([key]) => !/^q(?:0[0-9][1-9]|0[1-9]0|100)$/.test(key))) return bad()
+    for (const [, answer] of entries) oneOf(['yes', 'maybe', 'no', 'skip'])(answer)
+    return undefined
+  },
+})
 const conditionsShape = shape(
   { date: text, departAt: text, returnBy: text, budget: text, avoid: list(oneOf(drivingScenes)) },
   { ...initial.searchConditions },
@@ -229,9 +241,18 @@ export function decodeStoredState(raw: string | null): {
     // Existing v1 records always have a profile and savedEvents. Other missing
     // sections are known legacy fields and receive defaults, not new approval.
     if (!own(data, 'profile') || !own(data, 'savedEvents')) return { state, problem: 'invalid' }
-    let problem: StorageProblem | null = Object.keys(data).some((key) => !own(schema, key))
+    let problem: StorageProblem | null = Object.keys(data).some(
+      (key) => key !== 'ramen' && !own(schema, key),
+    )
       ? 'invalid'
       : null
+    if (own(data, 'ramen')) {
+      try {
+        retiredRamen(data.ramen)
+      } catch {
+        problem = 'invalid'
+      }
+    }
     for (const key of Object.keys(schema) as (keyof AppState)[]) {
       if (!own(data, key)) continue
       try {
