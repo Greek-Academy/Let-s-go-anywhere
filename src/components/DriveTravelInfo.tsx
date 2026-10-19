@@ -28,8 +28,14 @@ export function DriveTravelInfo({ travel }: { travel?: DriveTravel }) {
       {current ? (
         <>
           <p className="small">
-            {current.status === 'sample' ? '操作確認用の架空の時間' : 'Google Maps'} · 約
-            {Math.round(current.distanceMeters / 1000)}km
+            {current.status === 'sample' ? (
+              '操作確認用の架空の時間'
+            ) : (
+              <span className="drive-maps-attribution" translate="no">
+                Google Maps
+              </span>
+            )}{' '}
+            · 約{Math.round(current.distanceMeters / 1000)}km
           </p>
           <p className="small muted">
             {current.status === 'calculated'

@@ -5165,3 +5165,12 @@ small {
   font-size: 10px;
   line-height: 1.65;
 }
+.drive-maps-attribution {
+  font-family: Roboto, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: normal;
+  white-space: nowrap;
+  color: #5e5e5e;
+}
