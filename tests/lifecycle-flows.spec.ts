@@ -53,7 +53,7 @@ test('a passed end boundary updates open discovery and saved detail without chan
   await expect(page.getByRole('button', { name: '湖畔のオータム花火の詳細を見る' })).toHaveCount(0)
   await page.getByRole('button', { name: 'イベント', exact: true }).click()
   await page.getByRole('button', { name: '今週末', exact: true }).click()
-  await expect(page.locator('.event-card')).toHaveCount(1)
+  await expect(page.locator('.event-card')).toHaveCount(5)
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await expect(page.locator('.saved-outing')).toContainText('終了（サンプル）')
   await page.locator('.saved-outing').getByRole('button').first().click()

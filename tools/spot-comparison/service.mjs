@@ -14,7 +14,15 @@ import {
 } from './core.mjs'
 import { runComparison } from './providers.mjs'
 
-export function createComparison({ demo, apiKey, anthropicApiKey, directory, fetcher, timeoutMs }) {
+export function createComparison({
+  demo,
+  apiKey,
+  anthropicApiKey,
+  routesApiKey,
+  directory,
+  fetcher,
+  timeoutMs,
+}) {
   const ledger = new Ledger(directory, COMPARISON_LIMIT)
   let busy = false
   let sampleResult = null
@@ -71,6 +79,7 @@ export function createComparison({ demo, apiKey, anthropicApiKey, directory, fet
           demo,
           apiKey,
           anthropicApiKey,
+          routesApiKey,
           fetcher,
           timeoutMs,
         })

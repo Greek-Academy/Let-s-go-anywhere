@@ -32,6 +32,7 @@ export function createPilot({
   demo = false,
   apiKey = '',
   anthropicApiKey = '',
+  routesApiKey = '',
   directory = resolve(root, '.local-research'),
   fetcher = fetch,
   timeoutMs = 120_000,
@@ -42,6 +43,7 @@ export function createPilot({
     demo,
     apiKey,
     anthropicApiKey,
+    routesApiKey,
     directory: resolve(directory, 'comparison-v1'),
     fetcher,
     timeoutMs,
@@ -197,6 +199,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid port')
   let apiKey = ''
   let anthropicApiKey = ''
+  let routesApiKey = ''
   if (!demo) {
     try {
       const env = parseEnv(readFileSync(resolve(root, '.env.research.local'), 'utf8'))
@@ -206,7 +209,17 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
       if (error.code !== 'ENOENT') throw new Error('Cannot read local key file')
     }
   }
-  createPilot({ demo, apiKey, anthropicApiKey }).listen(port, '127.0.0.1', () => {
+  if (!demo) {
+    try {
+      routesApiKey =
+        parseEnv(
+          readFileSync(resolve(root, '.env.routes.local'), 'utf8'),
+        ).GOOGLE_ROUTES_API_KEY?.trim() ?? ''
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw new Error('Cannot read routes key file')
+    }
+  }
+  createPilot({ demo, apiKey, anthropicApiKey, routesApiKey }).listen(port, '127.0.0.1', () => {
     console.log(
       `Drive+ ${demo ? '架空サンプル（通信なし）' : '実検索の検証'}: http://127.0.0.1:${port}`,
     )

@@ -37,10 +37,11 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
       {!!result.duplicates && (
         <p className="small muted">重なった提案{result.duplicates}件をまとめました。</p>
       )}
-      {!isEvent && result.spots.length < 15 && (
+      {result.spots.length < (result.query.drive ? 10 : 15) && (
         <p className="notice">
-          目標は合計15〜20件ですが、今回は{result.spots.length}
-          件です。出典のある候補だけを表示し、自動の追加検索はしません。
+          {result.query.drive ? '10件を目安に探していますが' : '目標は合計15〜20件ですが'}、今回は
+          {result.spots.length}
+          件です。件数を埋めるための架空情報や、自動の追加検索は行いません。
         </p>
       )}
       {!isEvent && (

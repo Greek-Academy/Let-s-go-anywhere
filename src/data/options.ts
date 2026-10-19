@@ -8,6 +8,10 @@ export const interests = [
   { name: 'アウトドア', image: '/images/forest.jpg', caption: '自然を全身で' },
   { name: '季節イベント', image: '/images/fireworks.jpg', caption: '今だけの楽しみ' },
   { name: '買い物', image: '/images/cafe.jpg', caption: 'お気に入り探し' },
+  { name: '音楽', image: '/images/fireworks.jpg', caption: 'ライブ・音楽イベント' },
+  { name: 'アート', image: '/images/cafe.jpg', caption: '展示・ものづくり' },
+  { name: '写真', image: '/images/coast.jpg', caption: '撮りたくなる風景' },
+  { name: '車・ドライブ', image: '/images/forest.jpg', caption: '走る楽しさを見つける' },
 ]
 
 export const companions = [

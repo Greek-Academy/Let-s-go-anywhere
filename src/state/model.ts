@@ -1,4 +1,6 @@
 import type { EventSelection } from '../domain/eventSearch'
+import { emptyDriveChoices } from '../domain/driveSearch'
+import type { DriveChoices } from '../domain/driveSearch'
 import { createRealMapState } from '../domain/realStations'
 import type { RealMapState } from '../domain/realStations'
 import { userProfile } from '../data/options'
@@ -18,6 +20,7 @@ import { emptyConditions } from '../domain/tripConditions'
 import type { TripConditions, ConditionFilter } from '../domain/tripConditions'
 
 export interface AppState {
+  driveChoices: DriveChoices
   realMap: RealMapState
   carSearch: CarSearchConditions
   searchConditions: TripConditions
@@ -53,6 +56,8 @@ export interface AppState {
     offset: { x: number; y: number }
   }
   discover: {
+    driveMode?: 'default' | 'free' | 'conditions'
+    usageSamples?: boolean
     category: string
     eventSelection?: EventSelection
     search: string
@@ -65,6 +70,7 @@ export interface AppState {
   settings: { largeText: boolean; reducedMotion: boolean }
 }
 export const createInitialState = (): AppState => ({
+  driveChoices: emptyDriveChoices(),
   realMap: createRealMapState(),
   carSearch: { area: null, type: 'すべて', provider: null },
   searchConditions: emptyConditions(),
@@ -94,6 +100,8 @@ export const createInitialState = (): AppState => ({
     offset: { x: 0, y: 0 },
   },
   discover: {
+    driveMode: 'default',
+    usageSamples: false,
     category: 'おすすめ',
     search: '',
     tag: '',

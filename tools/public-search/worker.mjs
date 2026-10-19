@@ -223,6 +223,7 @@ export function createPublicSearch({ fetcher = fetch, now = Date.now } = {}) {
             query,
             apiKey: env.OPENAI_API_KEY,
             anthropicApiKey: env.ANTHROPIC_API_KEY,
+            routesApiKey: env.GOOGLE_ROUTES_API_KEY,
             fetcher: async (...args) => {
               const response = await fetcher(...args)
               return {

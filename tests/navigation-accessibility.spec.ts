@@ -1,3 +1,4 @@
+import { showUnscopedSamples } from './helpers/discovery'
 import { expect, test } from './support/mapFixture'
 import type { Locator, Page } from '@playwright/test'
 
@@ -29,7 +30,7 @@ test('keyboard onboarding and all four tabs move focus to the new screen without
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   await keyboardActivate(page, page.getByRole('button', { name: 'はじめる', exact: true }))
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
-  await expect(page.getByRole('combobox', { name: '出発する最寄駅' })).not.toBeFocused()
+  await expect(page.getByRole('button', { name: '自然', exact: true })).not.toBeFocused()
   await keyboardActivate(page, page.getByRole('button', { name: 'スキップ', exact: true }))
   await expect(page).toHaveURL(/#\/discover$/)
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
@@ -53,6 +54,7 @@ test('detail back and browser forward restore the originating card and its scrol
   page,
 }) => {
   await enter(page)
+  await showUnscopedSamples(page)
   const card = page.locator('.event-photo-button').last()
   const label = await card.getAttribute('aria-label')
   await card.focus()

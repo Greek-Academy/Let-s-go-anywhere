@@ -136,6 +136,13 @@ test('whitelist snapshots omit private search rationale and personal state; unkn
     area: '京都',
     summary: '公開の説明',
     matchReason: '秘密の希望',
+    travel: {
+      status: 'calculated',
+      durationSeconds: 9000,
+      distanceMeters: 123456,
+      checkedAt: new Date(now).toISOString(),
+      expiresAt: new Date(now + 600000).toISOString(),
+    },
     sourceUrl: 'https://example.com/place',
     mode: 'live',
     retrievedAt: new Date(now).toISOString(),
@@ -143,6 +150,7 @@ test('whitelist snapshots omit private search rationale and personal state; unkn
   })
   expect(JSON.stringify(web)).not.toContain('秘密')
   expect(web).not.toHaveProperty('matchReason')
+  expect(web).not.toHaveProperty('travel')
   const catalog = fromOuting(sampleCatalog.outings[0], new Date(now))
   expect(catalog.sample).toBe(true)
   expect(catalog).not.toHaveProperty('image')

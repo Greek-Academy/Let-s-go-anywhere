@@ -1,6 +1,5 @@
-import { StationPicker } from '../components/StationPicker'
-import { railStation, stationRegion } from '../domain/railStations'
-import { ArrowLeft, ArrowRight, MapPin } from 'lucide-react'
+import { HobbyChoices } from '../components/DriveSearchControls'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../state/AppState'
 import { Brand, IconButton, PrimaryButton } from '../components/ui'
@@ -49,72 +48,40 @@ export function Onboarding() {
   const { step } = useParams()
   const navigate = useNavigate()
   const { state, update } = useApp()
-  // Retired steps never render; replace them so Back cannot reopen those questions.
   if (step !== '1') return <Navigate to={state.onboarded ? '/discover' : '/onboarding/1'} replace />
-  const profile = state.profile
   const finish = () => {
-    update((s) => ({
-      ...s,
-      onboarded: true,
-      map: { ...s.map, area: s.profile.area || s.map.area },
-    }))
+    update((s) => ({ ...s, onboarded: true }))
     navigate('/discover', { replace: true })
   }
   return (
-    <div className="onboarding-page">
+    <div className="onboarding-page hobbies-onboarding">
       <div className="onboarding-header">
         <IconButton icon={ArrowLeft} label="戻る" onClick={() => navigate('/welcome')} />
-        <span className="onboarding-label">出発駅の設定</span>
+        <span className="onboarding-label">趣味の設定</span>
       </div>
       <div className="onboarding-content">
-        <span className="eyebrow teal">LET'S FIND YOUR WEEKEND</span>
+        <span className="eyebrow teal">DRIVE TO SOMETHING YOU LOVE</span>
         <h1>
-          どこから、
+          好きなことを、
           <br />
-          お出かけしますか？
+          ドライブのきっかけに。
         </h1>
-        <p className="body-copy">最寄駅を選ぶと、その周辺の休日のヒントを探せます。</p>
-        <StationPicker
-          label="出発する最寄駅"
-          value={profile.stationId}
-          onChange={(stationId) => {
-            const station = railStation(stationId)
-            update((s) => ({
-              ...s,
-              profile: {
-                ...s.profile,
-                stationId,
-                ...(station ? { area: stationRegion(station) } : {}),
-              },
-            }))
-          }}
+        <p className="body-copy">
+          あなたの趣味に合うイベントを探します。複数選べます。あとから変更もできます。
+        </p>
+        <HobbyChoices
+          value={state.profile.interests}
+          onChange={(values) =>
+            update((s) => ({ ...s, profile: { ...s.profile, interests: values } }))
+          }
         />
-        {!profile.stationId && !!profile.area && (
-          <p className="small muted">
-            以前の設定：{profile.area}。候補から駅を選び直してください。
-          </p>
-        )}
-        <div className="area-illustration" aria-hidden="true">
-          <div className="area-grid" />
-          <div className="area-park park-one" />
-          <div className="area-park park-two" />
-          <div className="area-river" />
-          <div className="area-street one" />
-          <div className="area-street two" />
-          <span className="area-pin">
-            <MapPin size={39} fill="currentColor" />
-          </span>
-          <span className="area-tag">ここから、楽しみが広がる。</span>
-        </div>
-        <p className="muted small">位置情報の許可は必要ありません。</p>
+        <p className="small muted" aria-live="polite">
+          {state.profile.interests.length}個の趣味を選択中
+        </p>
       </div>
       <div className="onboarding-footer">
-        <PrimaryButton
-          onClick={finish}
-          disabled={!railStation(profile.stationId)}
-          icon={ArrowRight}
-        >
-          ホームへ
+        <PrimaryButton onClick={finish} icon={ArrowRight}>
+          ドライブ先を見つける
         </PrimaryButton>
         <button className="text-button skip-button" onClick={finish}>
           スキップ

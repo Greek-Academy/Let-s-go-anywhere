@@ -1,3 +1,4 @@
+import { driveQuery } from '../../../src/domain/driveSearch'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
@@ -5,7 +6,12 @@ import { unlink, writeFile } from 'node:fs/promises'
 import { createInitialState } from '../../../src/state/model'
 
 const name = 'サンプル01・小さな喫茶店'
-const query = { region: '東京都 新宿駅周辺', stationId: '1130208', theme: '自然とカフェ' }
+const query = {
+  drive: driveQuery('free'),
+  region: '東京都 新宿駅周辺',
+  stationId: '1130208',
+  theme: '自然とカフェ',
+}
 const status = {
   demo: false,
   configured: true,
@@ -83,8 +89,8 @@ test('実サーバーの無料モードを経由し、出典・保存・詳細�
   })
   await enter(page)
   expect(posts).toBe(0)
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
-  await expect(page.locator('.web-spot-card')).toHaveCount(18)
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await expect(
     page.getByText('架空サンプルです。APIは使っていません。', { exact: true }),
   ).toBeVisible()
@@ -100,7 +106,7 @@ test('実サーバーの無料モードを経由し、出典・保存・詳細�
   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible()
   await expect(page.getByText('情報の確認日ではありません', { exact: false })).toBeVisible()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
-  await expect(page.locator('.web-spot-card')).toHaveCount(18)
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await expect(page.getByLabel('検索方法', { exact: true })).toHaveCount(0)
   await expect(page.getByRole('textbox', { name: 'お出かけを検索' })).toHaveValue(query.theme)
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
@@ -132,19 +138,22 @@ test('駅未指定・空欄を拒否し、イベントは探し方を選ばず�
     if (r.url().endsWith('/api/spot-search/compare')) posts++
   })
   await enter(page, '東京都')
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('探したい駅を入力して')
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
+  await expect(page.getByRole('dialog')).toContainText('現在地')
+  await page.getByRole('button', { name: '現在地を使わず、駅から探す', exact: true }).click()
+  await page.getByRole('button', { name: /^駅を出発地にする/ }).click()
   await page.getByRole('combobox', { name: '探したい駅' }).fill('きょうと')
   await page.getByRole('option').filter({ hasText: '京都駅（京都府）' }).first().click()
-  await page.getByRole('button', { name: 'この駅の周辺で探す', exact: true }).click()
+  await page.getByRole('button', { name: 'この駅を出発地にする', exact: true }).click()
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('')
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('ジャンルを選ぶか')
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('1〜80文字')
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill(query.theme)
   await page.getByRole('button', { name: 'イベント', exact: true }).click()
   await expect(page.getByLabel('検索方法', { exact: true })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Webでイベントを探す', exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: '趣味のイベントを探す', exact: true }),
+  ).toBeVisible()
   await expect(page.getByRole('textbox', { name: 'お出かけを検索' })).toHaveCount(0)
   expect(posts).toBe(0)
 })
@@ -153,7 +162,7 @@ test('同じ出典を再検索しても保存が増殖せず、保存時点の�
   await page.route('**/api/spot-search/comparison-status', (r) => r.fulfill({ json: status }))
   await page.route('**/api/spot-search/compare', (r) => r.fulfill({ json: live }))
   await enter(page)
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await page.getByRole('button', { name: '検証の緑地を保存', exact: true }).click()
   await page.route('**/api/spot-search/compare', (r) =>
     r.fulfill({
@@ -163,7 +172,7 @@ test('同じ出典を再検索しても保存が増殖せず、保存時点の�
       },
     }),
   )
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.getByRole('button', { name: '検証の緑地を保存解除' })).toHaveAttribute(
     'aria-pressed',
     'true',
@@ -193,7 +202,7 @@ test('キーなし・上限・利用中はPOSTしない', async ({ page }) => {
     await page.route('**/api/spot-search/comparison-status', (r) =>
       r.fulfill({ json: { ...status, ...patch } }),
     )
-    await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+    await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
     await expect(page.getByRole('alert')).toContainText(message)
   }
   expect(posts).toBe(0)
@@ -203,21 +212,21 @@ test('0件・通信失敗・不正な応答でサンプルに置き換えず、�
   await page.route('**/api/spot-search/comparison-status', (r) => r.fulfill({ json: status }))
   await page.route('**/api/spot-search/compare', (r) => r.fulfill({ json: live }))
   await enter(page)
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await page.getByRole('button', { name: '検証の緑地を保存', exact: true }).click()
   await page.route('**/api/spot-search/compare', (r) => r.fulfill({ json: { ...live, spots: [] } }))
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'この条件の候補はありません' })).toBeVisible()
   await expect(page.locator('.event-card')).toHaveCount(0)
   await page.route('**/api/spot-search/compare', (r) =>
     r.fulfill({ status: 503, json: { error: '検証用の通信失敗' } }),
   )
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('検証用の通信失敗')
   await page.route('**/api/spot-search/compare', (r) =>
     r.fulfill({ json: { ...live, query: { ...query, theme: '異なる条件' } } }),
   )
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('検索条件と結果が一致しません')
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await page.reload()
@@ -238,14 +247,12 @@ test('入力を変えても取得結果の条件を明示し、連打・戻る�
   })
   await enter(page)
   await page
-    .getByRole('button', { name: 'Webで候補を探す', exact: true })
+    .getByRole('button', { name: 'この希望で探す', exact: true })
     .evaluate((el: HTMLButtonElement) => {
       el.click()
       el.click()
     })
-  await expect(
-    page.getByRole('button', { name: '候補を探しています…', exact: true }),
-  ).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'この希望で探す', exact: true })).toBeDisabled()
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('別の希望')
   release()
   await expect(page.locator('.web-query-label')).toHaveText(
@@ -270,8 +277,8 @@ test('サンプルへ戻した後に遅延応答で画面を差し替えず、�
     await r.fulfill({ json: live }).catch(() => undefined)
   })
   await enter(page)
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
-  await page.getByRole('button', { name: 'サンプル表示に戻る', exact: true }).click()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
+  await page.getByRole('button', { name: '検索結果を閉じる', exact: true }).click()
   release()
   await expect(page.locator('.web-search-results')).toHaveCount(0)
   const rejected = await request.post('/api/spot-search/compare', {

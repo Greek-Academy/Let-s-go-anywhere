@@ -1,4 +1,6 @@
 import { sameEventDates, eventDatesLabel } from '../domain/eventSearch'
+import { sameDriveQuery } from '../domain/driveSearch'
+import type { DriveQuery } from '../domain/driveSearch'
 import type { EventDates } from '../domain/eventSearch'
 import { sameCenter } from '../domain/discoveryLocation'
 import type { DiscoveryCenter } from '../domain/discoveryLocation'
@@ -10,6 +12,7 @@ import { WebSpotCard } from './WebSpotCard'
 import { EmptyState, SectionHeading } from './ui'
 
 export function WebSearchResults({
+  drive,
   eventDates,
   stationId,
   location,
@@ -18,6 +21,7 @@ export function WebSearchResults({
   category,
   tag,
 }: {
+  drive?: DriveQuery
   eventDates?: EventDates | null
   stationId?: string
   location?: DiscoveryCenter
@@ -28,9 +32,11 @@ export function WebSearchResults({
 }) {
   const { result, loading, error, status, showSamples } = useWebSearch()
   const { state } = useApp()
+  const searchedDrive = result?.query.drive ?? drive
   const changed =
     result &&
-    (!!result.query.locationSearch ||
+    (!sameDriveQuery(result.query.drive, drive) ||
+      !!result.query.locationSearch ||
       !sameCenter(result.query.location, location) ||
       (result.kind === 'comparison' && result.query.stationId !== stationId) ||
       (result.kind === 'comparison' ? region !== result.query.region : region !== '京都府') ||
@@ -40,9 +46,19 @@ export function WebSearchResults({
   return (
     <section className="web-search-results" aria-label="Web検索の結果" aria-busy={loading}>
       <div className="web-result-heading">
-        <h2>Webで見つける</h2>
+        <h2>
+          {drive?.mode === 'events'
+            ? '趣味のイベント'
+            : drive?.mode === 'conditions'
+              ? '選んだ条件のドライブ先'
+              : drive?.mode === 'free'
+                ? '入力した希望の行き先'
+                : drive
+                  ? 'ドライブデートの行き先'
+                  : 'Webで見つける'}
+        </h2>
         <button className="text-button" onClick={showSamples}>
-          サンプル表示に戻る
+          検索結果を閉じる
         </button>
       </div>
       {loading && (
@@ -65,16 +81,31 @@ export function WebSearchResults({
         </p>
       )}
       <p className="small muted">
-        予算・帰宅時刻・避けたい運転場面への適合、距離・営業状況は未確認です。選んだ地点の周辺約2kmは探索の目安で、範囲内であることを保証するものではありません。
+        {searchedDrive
+          ? `片道${searchedDrive.duration}を目安に探した候補です。所要時間が未確認の候補は時間条件への適合も未確認です。高速道路の利用・県越え・営業時間・車の入口は訪問前に確認してください。`
+          : '距離・営業状況は未確認です。選んだ地点の周辺約2kmは探索の目安で、範囲内であることを保証するものではありません。'}
       </p>
       {result && (
         <>
           <p className="web-query-label">
             検索した条件：{result.query.region} ／{' '}
             {result.query.eventDates
-              ? `イベント・${eventDatesLabel(result.query.eventDates)}（日本時間）`
+              ? `イベント・${eventDatesLabel(result.query.eventDates)}（日本時間）${result.query.drive?.hobbies.length ? ' ／ ' + result.query.drive.hobbies.join('・') : ''}`
               : result.query.theme}
           </p>
+          {result.query.drive?.mode === 'conditions' && (
+            <p className="small muted web-drive-query-label">
+              {[
+                ...result.query.drive.activities,
+                result.query.drive.road,
+                result.query.drive.timing,
+                result.query.drive.pace,
+              ]
+                .filter((v) => v !== 'こだわらない')
+                .join('・')}{' '}
+              ／ 片道{result.query.drive.duration}
+            </p>
+          )}
           {changed && (
             <p className="notice" role="status">
               入力条件が変わっています。下は前回の検索結果です。新しい条件を検索ボタンで送信してください。
@@ -106,7 +137,7 @@ export function WebSearchResults({
           )}
           {!!result.omitted && (
             <p className="small muted">
-              出典・日付・形式・重複の確認で{result.omitted}件を除外しました。
+              出典・日付・形式・所要時間などの確認で{result.omitted}件を除外しました。
             </p>
           )}
         </>

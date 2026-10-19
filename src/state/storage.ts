@@ -1,4 +1,5 @@
 import { createInitialState } from './model'
+import { decodeDriveChoices } from '../domain/driveSearch'
 import { stateStore } from '../platform/stateStore'
 import { isNativeApp } from '../platform/runtime'
 import type { AppState } from './model'
@@ -139,6 +140,7 @@ const consultation: Rule = (v) => {
   return parsed
 }
 const schema: Record<keyof AppState, Rule> = {
+  driveChoices: decodeDriveChoices,
   realMap: shape({
     mode: oneOf(['map', 'list']),
     type: oneOf(['すべて', 'レンタカー', 'カーシェア']),
@@ -211,6 +213,8 @@ const schema: Record<keyof AppState, Rule> = {
   ),
   discover: shape(
     {
+      driveMode: oneOf(['default', 'free', 'conditions']),
+      usageSamples: bool,
       category: oneOf(['おすすめ', '今週末', 'イベント', 'スポット']),
       eventSelection: shape({ mode: oneOf(['today', 'weekend', 'custom']), date: text }),
       search: text,
@@ -219,6 +223,8 @@ const schema: Record<keyof AppState, Rule> = {
       stationId: nullable(id),
     },
     {
+      driveMode: 'default',
+      usageSamples: false,
       region: initial.discover.region,
       stationId: null,
       eventSelection: { mode: 'today', date: '' },

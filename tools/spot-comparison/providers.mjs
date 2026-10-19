@@ -8,12 +8,14 @@ import {
   combineCandidates,
 } from './core.mjs'
 import { comparisonSample } from './sample.mjs'
+import { addDrivingTimes } from './routes.mjs'
 
 export async function runComparison({
   query,
   demo = false,
   apiKey,
   anthropicApiKey,
+  routesApiKey,
   fetcher = fetch,
   timeoutMs = 110_000,
 }) {
@@ -34,7 +36,7 @@ export async function runComparison({
             {
               method: 'POST',
               redirect: 'manual',
-              signal: AbortSignal.timeout(timeoutMs),
+              signal: AbortSignal.timeout(query.drive ? Math.min(timeoutMs, 100_000) : timeoutMs),
               headers: {
                 'Content-Type': 'application/json',
                 ...(openai
@@ -94,10 +96,16 @@ export async function runComparison({
   )
   const reports = results.map((r) => r.report)
   const combined = combineCandidates(results)
+  const driving = await addDrivingTimes(combined.spots, query, {
+    apiKey: routesApiKey,
+    demo,
+    fetcher,
+  })
 
   return {
     ...combined,
-    omitted: results.reduce((sum, r) => sum + r.omitted, 0),
+    spots: driving.spots,
+    omitted: results.reduce((sum, r) => sum + r.omitted, 0) + driving.excluded,
     reports,
     query,
     mode: demo ? 'sample' : 'live',

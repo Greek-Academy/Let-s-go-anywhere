@@ -89,6 +89,10 @@ async function mockPublicSearch(context: BrowserContext) {
       queries.push(route.request().postDataJSON())
       const result = await runComparison({ demo: true, query: route.request().postDataJSON() })
       result.mode = 'live'
+      result.spots = result.spots.map((s: { travel?: unknown }) => ({
+        ...s,
+        travel: { status: 'unconfirmed' },
+      }))
       results.set(uid, result)
       return route.fulfill({ json: result })
     }
@@ -97,63 +101,52 @@ async function mockPublicSearch(context: BrowserContext) {
   return { calls, queries }
 }
 
-test('invited tester logs in, searches, saves and ranks; logout/reload isolate private cached results', async ({
+async function start(page: Page, request: APIRequestContext, email?: string) {
+  await page.goto('/#/welcome')
+  await page.getByRole('button', { name: 'まずは見てみる' }).click()
+  await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
+  await login(page, email ?? (await account(request)))
+  await participate(page)
+  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: /^駅を出発地にする/ }).click()
+  await page.getByRole('combobox', { name: '探したい駅' }).fill('しんじゅく')
+  await page.getByRole('option').filter({ hasText: '新宿駅（東京都）' }).first().click()
+  await page.getByRole('button', { name: 'この駅を出発地にする', exact: true }).click()
+  await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('自然とカフェ')
+}
+test('invited tester searches and saves; logout/reload isolate private results and participation grant', async ({
   page,
   context,
   request,
 }) => {
   const { calls } = await mockPublicSearch(context)
   const email = await account(request)
-  await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる' }).click()
+  await start(page, request, email)
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  await page.getByRole('button', { name: 'サンプル01・小さな喫茶店を保存', exact: true }).click()
+  await page.getByRole('button', { name: '好みに寄せたおすすめ', exact: true }).click()
+  await expect(page.getByText('参考にしている特徴', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
+  await page.getByRole('button', { name: 'ログアウト', exact: true }).click()
+  await login(page, await account(request))
+  await participate(page)
+  await expect(page.locator('.web-spot-card')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '前回の比較結果を開く（無料）' })).toHaveCount(0)
+  expect(calls).toHaveLength(1)
+  await page.reload()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('メール確認と参加コードの入力')
+  expect(calls).toHaveLength(1)
   await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
   await login(page, email)
   await page.getByLabel('参加コード', { exact: true }).fill('W'.repeat(43))
   await page.getByLabel('検索条件の送信・保存と、検索費用を確認しました').check()
   await page.getByRole('button', { name: '参加して見つけるへ' }).click()
   await expect(page.getByRole('alert')).toContainText('参加コードを確認')
-  expect(calls).toHaveLength(0)
   await participate(page)
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
-  await page.getByRole('button', { name: /別の駅の周辺/ }).click()
-  await page.getByRole('combobox', { name: '探したい駅' }).fill('きょうと')
-  await page.getByRole('option').filter({ hasText: '京都駅（京都府）' }).first().click()
-  await page.getByRole('button', { name: 'この駅の周辺で探す' }).click()
-  await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('自然とカフェ')
-  await page.getByRole('button', { name: 'Webで候補を探す' }).click()
-  await expect(page.getByText('18件のお店・スポット候補', { exact: true })).toBeVisible()
-  expect(calls).toHaveLength(1)
-  await page.getByRole('button', { name: 'サンプル01・小さな喫茶店を保存', exact: true }).click()
-  await page.getByRole('button', { name: '好みに寄せたおすすめ', exact: true }).click()
-  await expect(page.getByText('参考にしている特徴', { exact: true })).toBeVisible()
-  await page
-    .getByRole('button', { name: 'サンプル01・小さな喫茶店の詳細を見る', exact: true })
-    .click()
-  await expect(
-    page.getByRole('heading', { name: 'サンプル01・小さな喫茶店', exact: true }),
-  ).toBeVisible()
-  await page.getByRole('button', { name: '戻る', exact: true }).click()
-  await page.getByRole('button', { name: 'Webで候補を探す' }).click()
-  await expect(page.getByText('18件のお店・スポット候補', { exact: true })).toBeVisible()
-  expect(calls).toHaveLength(2)
-  await page.getByRole('button', { name: '前回の比較結果を開く（無料）' }).click()
-  await expect(page.getByText('18件のお店・スポット候補', { exact: true })).toBeVisible()
-  // Changing account must clear results and the in-memory participation grant.
-  await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
-  await page.getByRole('button', { name: 'ログアウト', exact: true }).click()
-  await login(page, await account(request))
-  await participate(page)
-  await page.getByRole('button', { name: '前回の比較結果を開く（無料）' }).click()
-  await expect(page.getByText(/開ける結果がありません/)).toBeVisible()
-  await expect(page.getByText('18件のお店・スポット候補', { exact: true })).toHaveCount(0)
-  await page.reload()
-  await page.getByRole('button', { name: '前回の比較結果を開く（無料）' }).click()
-  await expect(page.getByText(/メール確認と参加コードの入力をしてください/)).toBeVisible()
-  await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
-  await login(page, email)
-  await participate(page)
-  await page.getByRole('button', { name: '前回の比較結果を開く（無料）' }).click()
-  await expect(page.getByText('18件のお店・スポット候補', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await expect(
     page.getByRole('button', { name: 'サンプル01・小さな喫茶店を保存解除', exact: true }),
   ).toBeVisible()
@@ -161,125 +154,73 @@ test('invited tester logs in, searches, saves and ranks; logout/reload isolate p
   const storage = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }))
   expect(storage).not.toContain(code)
   expect(storage).not.toContain('Bearer')
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
 })
-
-test('Shinjuku station + genre searches without text; extra wish, changed genre and repeat requests use the actual conditions', async ({
+test('free text and structured drive choices reach the public search independently', async ({
   page,
   context,
   request,
 }) => {
   const { queries } = await mockPublicSearch(context)
-  await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる' }).click()
-  await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
-  await login(page, await account(request))
-  await participate(page)
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
-  await page.getByRole('button', { name: /別の駅の周辺/ }).click()
-  await page.getByRole('combobox', { name: '探したい駅' }).fill('しんじゅく')
-  await page.getByRole('option').filter({ hasText: '新宿駅（東京都）' }).first().click()
-  await page.getByRole('button', { name: 'この駅の周辺で探す' }).click()
+  await start(page, request)
   const input = page.getByRole('textbox', { name: 'お出かけを検索' })
-  const submit = page.getByRole('button', { name: 'Webで候補を探す', exact: true })
+  const submit = page.getByRole('button', { name: 'この希望で探す', exact: true })
   await input.fill('')
   await submit.click()
-  await expect(page.getByRole('alert')).toContainText('ジャンルを選ぶか')
+  await expect(page.getByRole('alert')).toContainText('1〜80文字')
   expect(queries).toHaveLength(0)
-  const genre = async (name: string) => {
-    await page.getByRole('button', { name: 'お出かけの絞り込み', exact: true }).click()
-    await page.getByRole('dialog').getByRole('button', { name, exact: true }).click()
-    await page.getByRole('button', { name: 'この条件で表示', exact: true }).click()
-  }
-  await genre('自然')
-  expect(queries).toHaveLength(0)
-  await submit.click()
-  await expect(
-    page.getByText('検索した条件：東京都 新宿駅周辺 ／ 自然', { exact: true }),
-  ).toBeVisible()
-  expect(queries).toEqual([{ stationId: '1130208', region: '東京都 新宿駅周辺', theme: '自然' }])
-  await expect(page.getByText(/下は前回の検索結果です/)).toHaveCount(0)
   await input.fill('静かな公園')
-  await expect(page.getByText(/下は前回の検索結果です/)).toBeVisible()
   await submit.click()
-  await expect(
-    page.getByText('検索した条件：東京都 新宿駅周辺 ／ 自然 / 静かな公園', { exact: true }),
-  ).toBeVisible()
-  await expect(page.getByText(/下は前回の検索結果です/)).toHaveCount(0)
-  await genre('温泉')
-  await expect(page.getByText(/下は前回の検索結果です/)).toBeVisible()
-  await input.fill('日帰り')
-  await submit.click()
-  await expect(
-    page.getByText('検索した条件：東京都 新宿駅周辺 ／ 温泉 / 日帰り', { exact: true }),
-  ).toBeVisible()
-  await genre('すべて')
-  await input.fill('静かなカフェ')
-  await submit.click()
-  await expect(
-    page.getByText('検索した条件：東京都 新宿駅周辺 ／ 静かなカフェ', { exact: true }),
-  ).toBeVisible()
-  expect(queries).toEqual([
-    { stationId: '1130208', region: '東京都 新宿駅周辺', theme: '自然' },
-    { stationId: '1130208', region: '東京都 新宿駅周辺', theme: '自然 / 静かな公園' },
-    { stationId: '1130208', region: '東京都 新宿駅周辺', theme: '温泉 / 日帰り' },
-    { stationId: '1130208', region: '東京都 新宿駅周辺', theme: '静かなカフェ' },
-  ])
-  await expect(page.getByText('比較検索 4 / 5 回（残り1回）', { exact: false })).toBeVisible()
-  await page.getByRole('button', { name: '前回の比較結果を開く（無料）' }).click()
-  await expect(page.getByText('18件のお店・スポット候補', { exact: true })).toBeVisible()
-  expect(queries).toHaveLength(4)
-  await genre('自然')
-  await input.fill('あ'.repeat(80))
-  await submit.click()
-  await expect(page.getByRole('alert')).toContainText('合わせて80文字以内')
-  expect(queries).toHaveLength(4)
-  await input.fill('')
-  await page.getByRole('button', { name: '前回の比較結果を開く（無料）' }).click()
-  await expect(page.getByText(/下は前回の検索結果です/)).toBeVisible()
-  expect(queries).toHaveLength(4)
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(queries[0]).toMatchObject({ theme: '静かな公園', drive: { mode: 'free', activities: [] } })
+  await page.getByRole('button', { name: /気分からドライブを探す/ }).click()
+  await page.getByRole('button', { name: '海を見たい', exact: true }).click()
+  await page.getByRole('button', { name: '高速道路を走りたい', exact: true }).click()
+  expect(queries).toHaveLength(1)
+  await page.getByRole('button', { name: '選んだ条件で探す', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(queries[1]).toMatchObject({
+    theme: '気分や走り方に合うドライブの行き先',
+    drive: { mode: 'conditions', activities: ['海を見たい'], road: '高速道路を走りたい' },
+  })
+  await page.getByRole('button', { name: '自由入力の結果', exact: true }).click()
+  await expect(page.locator('.web-query-label')).toContainText('静かな公園')
+  expect(queries).toHaveLength(2)
 })
-
-test('fifth search succeeds; sixth is blocked after reload/rejoin while free restore remains usable', async ({
+test('five searches across modes share one account quota; sixth is blocked after reload and saved candidates remain accessible', async ({
   page,
   context,
   request,
 }) => {
   const { calls } = await mockPublicSearch(context)
   const email = await account(request)
-  await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる' }).click()
-  await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
-  await login(page, email)
-  await participate(page)
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
-  await page.getByRole('combobox', { name: '探したい駅' }).fill('しんじゅく')
-  await page.getByRole('option').filter({ hasText: '新宿駅（東京都）' }).first().click()
-  await page.getByRole('button', { name: 'この駅の周辺で探す' }).click()
-  await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('自然')
+  await start(page, request, email)
   for (let i = 1; i <= 5; i++) {
     await page.getByRole('button', { name: i % 2 ? 'おすすめ' : 'イベント', exact: true }).click()
     await page
-      .getByRole('button', { name: i % 2 ? 'Webで候補を探す' : 'Webでイベントを探す', exact: true })
+      .getByRole('button', { name: i % 2 ? 'この希望で探す' : '趣味のイベントを探す', exact: true })
       .click()
     await expect(
       page.getByText(`比較検索 ${i} / 5 回（残り${5 - i}回）`, { exact: false }),
     ).toBeVisible()
+    if (i === 1)
+      await page
+        .getByRole('button', { name: 'サンプル01・小さな喫茶店を保存', exact: true })
+        .click()
   }
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('上限に達しました')
   expect(calls).toHaveLength(5)
   await page.getByRole('button', { name: 'イベント', exact: true }).click()
-  await page.getByRole('button', { name: 'Webでイベントを探す', exact: true }).click()
+  await page.getByRole('button', { name: '趣味のイベントを探す', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('上限に達しました')
   await page.getByRole('button', { name: 'おすすめ', exact: true }).click()
   await page.reload()
   await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
   await login(page, email)
   await participate(page)
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('上限に達しました')
-  await page.getByRole('button', { name: '前回の比較結果を開く（無料）' }).click()
-  await expect(page.getByText('18件のお店・スポット候補', { exact: true })).toBeVisible()
+  await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
+  await expect(page.locator('.saved-web-spot')).toHaveCount(1)
   expect(calls).toHaveLength(5)
 })

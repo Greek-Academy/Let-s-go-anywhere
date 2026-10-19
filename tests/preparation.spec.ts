@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { showUnscopedSamples, chooseStation } from './helpers/discovery'
 
 test.afterEach(async ({ page }, info) => {
   if (info.status === 'passed')
@@ -92,52 +91,26 @@ test('unknown and expired entrances never produce a vehicle map or stale descrip
   await expect(page.locator('.arrival-screen')).not.toContainText('湖側の道路に面した')
 })
 
-test('trip filters separate confirmed, unknown and conflicting candidates and re-evaluate when origin changes', async ({
+test('drive choices persist separately from old outing conditions without a budget input', async ({
   page,
-}, info) => {
+}) => {
   await enter(page)
-  await showUnscopedSamples(page)
   const original = await state(page)
-  await page.getByRole('button', { name: /今回のお出かけ条件/ }).click()
-  await setConditions(page)
-  await page.getByRole('button', { name: '確認済みで合う 1', exact: true }).click()
-  await expect(page.locator('.event-card')).toHaveCount(1)
-  await expect(page.locator('.event-card')).toContainText('おいしいコーヒー')
-  await page.getByRole('button', { name: /条件の理由を見る/ }).click()
-  await expect(page.getByRole('dialog')).toContainText('16:00')
-  await expect(page.getByRole('dialog')).toContainText('4,000〜6,000円')
-  await info.attach('今回の条件・根拠', {
-    body: await page.screenshot({ animations: 'disabled' }),
-    contentType: 'image/png',
-  })
-  await page.getByRole('button', { name: '閉じる', exact: true }).click()
-  await page.getByRole('button', { name: '合わない 1', exact: true }).click()
-  await page.getByRole('button', { name: /条件の理由を見る/ }).click()
-  await expect(page.getByRole('dialog')).toContainText('想定経路に夜間を含む')
-  await page.getByRole('button', { name: '閉じる', exact: true }).click()
-  await page.getByRole('button', { name: '未確認 4', exact: true }).click()
-  await expect(page.locator('.event-card')).toHaveCount(4)
+  await page.getByRole('button', { name: /気分からドライブを探す/ }).click()
+  await expect(page.getByLabel('1人あたりの予算（円）')).toHaveCount(0)
+  await page.getByRole('button', { name: '夜景を見たい', exact: true }).click()
+  await page.getByRole('button', { name: '高速道路を走りたい', exact: true }).click()
   await page.reload()
-  await expect(page.locator('.event-card')).toHaveCount(4)
+  await page.getByRole('button', { name: /気分からドライブを探す/ }).click()
+  await expect(page.getByRole('button', { name: '夜景を見たい', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  expect((await state(page)).driveChoices.road).toBe('高速道路を走りたい')
+  expect((await state(page)).searchConditions).toEqual(original.searchConditions)
   expect((await state(page)).profile).toEqual(original.profile)
   expect((await state(page)).quiz).toEqual(original.quiz)
-  await page.getByRole('button', { name: '確認済みで合う 1', exact: true }).click()
-  await page.evaluate(() => {
-    const s = JSON.parse(localStorage.getItem('driveplus.mock.v1')!)
-    s.discover.region = 'station'
-    s.discover.stationId = null
-    localStorage.setItem('driveplus.mock.v1', JSON.stringify(s))
-  })
-  await page.reload()
-  await page.locator('.location-select').click()
-  await chooseStation(page, '出発する最寄駅', 'しんじゅく', '新宿駅（東京都）')
-  await page.getByRole('button', { name: '出発エリアを保存' }).click()
-  await expect(page.locator('.event-card')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: '未確認 6', exact: true })).toBeVisible()
-  await page.getByRole('button', { name: '未確認 6', exact: true }).click()
-  await expect(page.locator('.event-card')).toHaveCount(6)
 })
-
 test('outing-specific conditions do not change search or another outing; cancel, validation and clearing work', async ({
   page,
 }) => {
@@ -234,11 +207,12 @@ test('new screens fit narrow phones and enlarged text, with usable sheet keyboar
     expect(metrics.scroll, route).toBeLessThanOrEqual(metrics.width + 1)
     expect(metrics.body, route).toBeLessThanOrEqual(metrics.height)
   }
-  await page.getByRole('button', { name: /今回のお出かけ条件/ }).click()
+  await page.goto('/#/events/fuji')
+  await page.getByRole('button', { name: /このお出かけの条件/ }).click()
   await page.keyboard.press('Shift+Tab')
   await expect(page.getByRole('button', { name: 'この条件を解除', exact: true })).toBeFocused()
   const sheet = await page.getByRole('dialog').boundingBox()
   expect(sheet!.width).toBeLessThanOrEqual(320)
   await page.getByRole('button', { name: '閉じる', exact: true }).click()
-  await expect(page.getByRole('button', { name: /今回のお出かけ条件/ })).toBeFocused()
+  await expect(page.getByRole('button', { name: /このお出かけの条件/ })).toBeFocused()
 })

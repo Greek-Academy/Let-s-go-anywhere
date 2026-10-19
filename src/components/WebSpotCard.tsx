@@ -1,4 +1,5 @@
 import { WebEventSchedule } from './WebEventSchedule'
+import { DriveTravelInfo } from './DriveTravelInfo'
 import { RecommendationBadges, RecommendationFeedback } from './RecommendationFeedback'
 import { providerNames } from '../domain/recommendations'
 import { useState } from 'react'
@@ -118,6 +119,7 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
           </span>
         </div>
         <WebEventSchedule spot={spot} />
+        <DriveTravelInfo travel={spot.travel} />
         <WebSpotSource spot={spot} />
         <RecommendationFeedback spot={spot} />
         <p className="small muted">
