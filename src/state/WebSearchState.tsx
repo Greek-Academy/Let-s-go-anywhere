@@ -96,7 +96,10 @@ function readStatus(value: unknown, method: SearchMethod): SearchStatus {
         s.attemptCount! < 0 ||
         s.demo
       : typeof s.token !== 'string' || !/^[a-f0-9]{64}$/.test(s.token)) ||
-    (!publicSearchOrigin && s.maxAttempts !== (method === 'comparison' ? 1 : 3)) ||
+    (!publicSearchOrigin &&
+      (method === 'comparison'
+        ? !Number.isSafeInteger(s.maxAttempts) || s.maxAttempts! < 1 || s.maxAttempts! > 20
+        : s.maxAttempts !== 3)) ||
     !Array.isArray(s.attempts) ||
     s.attempts.length > (s.maxAttempts ?? 1)
   )
@@ -311,7 +314,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
         throw new Error(
           publicSearchOrigin
             ? 'AI検索は1アカウント累計5回までです。上限に達しました。保存した候補は「行きたい」で引き続き確認できます。'
-            : `今回の${method === 'comparison' ? '比較検索は1回' : '実検索は3回'}までです。取得済みの「行きたい」は引き続き確認できます。`,
+            : `今回の${method === 'comparison' ? '比較検索' : '実検索'}は累計${config.maxAttempts}回までです。取得済みの「行きたい」は引き続き確認できます。`,
         )
       sent = true
       const response = await json(

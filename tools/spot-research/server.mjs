@@ -19,6 +19,7 @@ import {
 } from './core.mjs'
 import { Ledger } from './ledger.mjs'
 import { createComparison } from '../spot-comparison/service.mjs'
+import { localComparisonLimit } from '../spot-comparison/core.mjs'
 import { sampleResponse } from './sample.mjs'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
@@ -33,6 +34,7 @@ export function createPilot({
   apiKey = '',
   anthropicApiKey = '',
   routesApiKey = '',
+  comparisonLimit,
   directory = resolve(root, '.local-research'),
   fetcher = fetch,
   timeoutMs = 120_000,
@@ -44,6 +46,7 @@ export function createPilot({
     apiKey,
     anthropicApiKey,
     routesApiKey,
+    maxAttempts: comparisonLimit,
     directory: resolve(directory, 'comparison-v1'),
     fetcher,
     timeoutMs,
@@ -197,6 +200,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const portIndex = process.argv.indexOf('--port')
   const port = portIndex >= 0 ? Number(process.argv[portIndex + 1]) : 4181
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid port')
+  const limitIndex = process.argv.indexOf('--comparison-limit')
+  const comparisonLimit = localComparisonLimit(
+    limitIndex >= 0 ? (process.argv[limitIndex + 1] ?? '') : undefined,
+  )
+  const directoryIndex = process.argv.indexOf('--data-dir')
+  if (directoryIndex >= 0 && !process.argv[directoryIndex + 1])
+    throw new Error('Missing research data directory')
+  const directory = directoryIndex >= 0 ? resolve(process.argv[directoryIndex + 1]) : undefined
   let apiKey = ''
   let anthropicApiKey = ''
   let routesApiKey = ''
@@ -219,10 +230,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
       if (error.code !== 'ENOENT') throw new Error('Cannot read routes key file')
     }
   }
-  createPilot({ demo, apiKey, anthropicApiKey, routesApiKey }).listen(port, '127.0.0.1', () => {
-    console.log(
-      `Drive+ ${demo ? '架空サンプル（通信なし）' : '実検索の検証'}: http://127.0.0.1:${port}`,
-    )
-    console.log('検索は画面のボタン操作時のみ。APIキーは画面・ログに表示しません。')
-  })
+  createPilot({ demo, apiKey, anthropicApiKey, routesApiKey, comparisonLimit, directory }).listen(
+    port,
+    '127.0.0.1',
+    () => {
+      console.log(
+        `Drive+ ${demo ? '架空サンプル（通信なし）' : '実検索の検証'}: http://127.0.0.1:${port}`,
+      )
+      console.log('検索は画面のボタン操作時のみ。APIキーは画面・ログに表示しません。')
+    },
+  )
 }

@@ -13,6 +13,7 @@ import {
   combineCandidates,
   comparisonUsage,
   sourceUrl,
+  localComparisonLimit,
 } from '../../spot-comparison/core.mjs'
 import { comparisonSample } from '../../spot-comparison/sample.mjs'
 const query = { stationId: '100216', region: '京都府 京都駅周辺', theme: '自然とカフェ' }
@@ -227,6 +228,26 @@ test('one pair is reserved before either provider call, survives restart and lea
   }).lastResult()
   assert.deepEqual(cached, result)
   assert.equal(old.read().attempts.length, 1)
+})
+test('explicit local allowance preserves earlier attempts, survives restart and rejects invalid limits', async (t) => {
+  const opt = options(t)
+  await createComparison({ ...opt, fetcher: fakeFetch }).search(query)
+  const original = JSON.parse(readFileSync(join(opt.directory, 'usage.json'), 'utf8')).attempts[0]
+  const expanded = createComparison({ ...opt, maxAttempts: 2, fetcher: fakeFetch })
+  assert.equal(expanded.status().maxAttempts, 2)
+  assert.deepEqual(expanded.status().attempts, [original])
+  await expanded.search(query)
+  const restarted = createComparison({
+    ...opt,
+    maxAttempts: 2,
+    fetcher: () => assert.fail('limit must block calls'),
+  })
+  assert.deepEqual(restarted.status().attempts[0], original)
+  await assert.rejects(restarted.search(query), /2回まで/)
+  assert.equal(localComparisonLimit(), 1)
+  assert.equal(localComparisonLimit('6'), 6)
+  for (const value of [0, -1, 21, 1.5, Infinity, NaN, '', 'unlimited'])
+    assert.throws(() => localComparisonLimit(value))
 })
 test('missing second key prevents both charges; failure of one provider preserves the other and is not retried', async (t) => {
   const opt = options(t)

@@ -54,7 +54,7 @@ export function WebSearchResults({
               : drive?.mode === 'free'
                 ? '入力した希望の行き先'
                 : drive
-                  ? 'ドライブデートの行き先'
+                  ? '好きなことから見つかるドライブ先'
                   : 'Webで見つける'}
         </h2>
         <button className="text-button" onClick={showSamples}>
@@ -93,6 +93,13 @@ export function WebSearchResults({
               ? `イベント・${eventDatesLabel(result.query.eventDates)}（日本時間）${result.query.drive?.hobbies.length ? ' ／ ' + result.query.drive.hobbies.join('・') : ''}`
               : result.query.theme}
           </p>
+          {result.query.drive?.mode === 'default' && (
+            <p className="small muted web-hobby-query-label">
+              {result.query.drive.hobbies.length
+                ? `選んだ趣味：${result.query.drive.hobbies.join('・')}`
+                : '趣味は未選択のため、ジャンルを限定せずに探しました。'}
+            </p>
+          )}
           {result.query.drive?.mode === 'conditions' && (
             <p className="small muted web-drive-query-label">
               {[

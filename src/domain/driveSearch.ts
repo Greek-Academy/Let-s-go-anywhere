@@ -61,7 +61,10 @@ export function driveQuery(
   return {
     ...(mode === 'conditions' ? choices : emptyDriveChoices()),
     mode,
-    hobbies: mode === 'events' ? hobbies.filter((h) => interests.some((i) => i.name === h)) : [],
+    hobbies:
+      mode === 'default' || mode === 'events'
+        ? hobbies.filter((h) => interests.some((i) => i.name === h))
+        : [],
   }
 }
 const fail = (): never => {
@@ -104,7 +107,7 @@ export function decodeDriveQuery(value: unknown): DriveQuery {
   const parsed = decodeDriveChoices(choices)
   if (mode !== 'conditions' && JSON.stringify(parsed) !== JSON.stringify(emptyDriveChoices()))
     return fail()
-  if (mode !== 'events' && hobbies.length) return fail()
+  if (mode !== 'default' && mode !== 'events' && hobbies.length) return fail()
   return { ...parsed, mode, hobbies: [...hobbies] }
 }
 export const sameDriveQuery = (a?: DriveQuery, b?: DriveQuery) =>

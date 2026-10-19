@@ -256,6 +256,54 @@ export function Discover() {
   const sampleOutings = outings.filter(
     (o) => evaluateOuting(o, now).recommendable && !state.hiddenEvents.includes(o.id),
   )
+  const searchResults = (
+    <>
+      <p className="small muted web-search-hint">
+        検索はボタンを押したときだけ実行します。
+        {publicSearchOrigin
+          ? 'すべての探し方を合わせて1アカウント累計5回まで。'
+          : '新しい実検索にはAPI料金がかかります。'}
+      </p>
+      {web.active ? (
+        <WebSearchResults
+          drive={chosenDrive}
+          eventDates={isEvent ? dates : undefined}
+          stationId={selected?.id}
+          location={gps.enabled ? gps.fix?.center : undefined}
+          region={region}
+          theme={driveTheme(chosenDrive, state.discover.search)}
+          category={state.discover.category}
+          tag=""
+        />
+      ) : (
+        <section className="drive-empty">
+          <SectionHeading
+            title={
+              isEvent
+                ? '趣味に合うイベント'
+                : mode === 'conditions'
+                  ? '選んだ条件のドライブ先'
+                  : mode === 'free'
+                    ? 'あなたの希望に合う行き先'
+                    : '好きなことから見つかるドライブ先'
+            }
+            subtitle={
+              isEvent ? '趣味と日付から、次の楽しみを。' : 'あなたの好きなことを、次のドライブへ。'
+            }
+          />
+          <EmptyState
+            icon={CarFront}
+            title={region ? '行き先を探してみましょう' : 'まずは出発地を選びましょう'}
+            description={
+              region
+                ? '上の検索ボタンで候補を表示します。条件に合う情報が少ない場合は10件未満になることもあります。'
+                : '上のボタンで現在地を取得すると、選んだ趣味に合う候補がここに並びます。駅からも探せます。'
+            }
+          />
+        </section>
+      )}
+    </>
+  )
   return (
     <div className="screen discover-screen drive-home">
       <Header />
@@ -282,7 +330,7 @@ export function Discover() {
             </span>
           </div>
           <p className="small muted">
-            片道2〜5時間のドライブデートへ。出典のある候補を、10件を目安に探します。
+            選んだ趣味と出発地から、片道2〜5時間のドライブ先を10件を目安に探します。
           </p>
           <PrimaryButton
             icon={MapPin}
@@ -326,6 +374,19 @@ export function Discover() {
             </Chip>
           ))}
         </div>
+        {!isEvent && mode === 'default' && (
+          <section className="drive-home-hobbies" aria-label="おすすめに使う趣味">
+            <p className="body-copy">
+              {state.profile.interests.length
+                ? `${state.profile.interests.join('・')}が好きなあなたへ。`
+                : '趣味は未選択です。ジャンルを限定せず、ドライブ先を探します。'}
+            </p>
+            <button className="text-button" onClick={() => setHobbiesOpen(true)}>
+              趣味を変更する
+            </button>
+          </section>
+        )}
+        {!isEvent && mode === 'default' && searchResults}
         {isEvent ? (
           <section className="drive-event-search">
             <h2>趣味から見つかるイベント</h2>
@@ -434,50 +495,7 @@ export function Discover() {
             </div>
           </>
         )}
-        <p className="small muted web-search-hint">
-          検索はボタンを押したときだけ実行します。
-          {publicSearchOrigin
-            ? 'すべての探し方を合わせて1アカウント累計5回まで。'
-            : '新しい実検索にはAPI料金がかかります。'}
-        </p>
-        {web.active ? (
-          <WebSearchResults
-            drive={chosenDrive}
-            eventDates={isEvent ? dates : undefined}
-            stationId={selected?.id}
-            location={gps.enabled ? gps.fix?.center : undefined}
-            region={region}
-            theme={driveTheme(chosenDrive, state.discover.search)}
-            category={state.discover.category}
-            tag=""
-          />
-        ) : (
-          <section className="drive-empty">
-            <SectionHeading
-              title={
-                isEvent
-                  ? '趣味に合うイベント'
-                  : mode === 'conditions'
-                    ? '選んだ条件のドライブ先'
-                    : mode === 'free'
-                      ? 'あなたの希望に合う行き先'
-                      : 'ドライブデートに行きたい場所'
-              }
-              subtitle={
-                isEvent ? '趣味と日付から、次の楽しみを。' : '行き先までの道のりも楽しもう。'
-              }
-            />
-            <EmptyState
-              icon={CarFront}
-              title={region ? '行き先を探してみましょう' : 'まずは出発地を選びましょう'}
-              description={
-                region
-                  ? '上の検索ボタンで候補を表示します。条件に合う情報が少ない場合は10件未満になることもあります。'
-                  : '現在地を許可すると、そこを起点に探せます。許可しない場合は駅を出発地にできます。'
-              }
-            />
-          </section>
-        )}
+        {(isEvent || mode !== 'default') && searchResults}
         {source === 'sample' && !web.active && (
           <>
             <button className="text-button centered" onClick={() => setSamples(!samples)}>
@@ -547,8 +565,15 @@ export function Discover() {
           }}
         >
           <p className="body-copy">
-            現在地を一度取得し、その地点からドライブ先を探します。許可したあとに検索を1回実行します。
+            現在地を一度取得し、その地点からドライブ先を探します。許可したあとに検索を1回実行し、候補をホームに表示します。
           </p>
+          {(locationIntent === 'default' || locationIntent === 'events') && (
+            <p className="body-copy">
+              {state.profile.interests.length
+                ? `検索に使う趣味：${state.profile.interests.join('・')}`
+                : '趣味は未選択のため、ジャンルを限定せずに探します。'}
+            </p>
+          )}
           <p className="small muted">
             約100m単位に丸めた位置と検索条件をOpenAI・Anthropicへ、経路計算が有効な場合はGoogle
             Mapsへ送ります。位置は端末・検索履歴・共有リストに保存せず、移動を追跡しません。10分経過やアプリを閉じたときに位置の利用を終了します。
