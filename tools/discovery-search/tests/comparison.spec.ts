@@ -23,9 +23,7 @@ test.afterEach(async ({ page }, info) => {
   if (info.status === 'passed')
     await info.attach('比較検索の画面', { body: await page.screenshot(), contentType: 'image/png' })
 })
-test('2社の18候補→提案元フィルター→出典→保存→好み順→詳細→再読込を追加検索なしで操作', async ({
-  page,
-}) => {
+test('簡潔なカード→詳細の出典→保存→好み順→再読込を追加検索なしで操作', async ({ page }) => {
   let requests = 0
   page.on('request', (r) => {
     if (r.url().endsWith('/api/spot-search/compare')) {
@@ -45,24 +43,28 @@ test('2社の18候補→提案元フィルター→出典→保存→好み順�
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await expect(page.getByText('いいねはどう使われる？', { exact: true })).toHaveCount(0)
   await expect(page.getByText('重なった提案2件をまとめました。')).toBeVisible()
-  await page.getByRole('button', { name: 'Claude 6', exact: true }).click()
-  await expect(page.locator('.web-spot-card')).toHaveCount(6)
-  await page.getByRole('button', { name: 'すべて 10', exact: true }).click()
+  await expect(page.locator('.comparison-providers, .comparison-metrics')).toHaveCount(0)
+  await expect(page.locator('.web-spot-card').first()).not.toContainText('Web検索・内容未確認')
+  await expect(page.locator('.web-spot-card').first()).not.toContainText('OpenAIの提案')
+  await expect(page.locator('.web-spot-card .web-source')).toHaveCount(0)
+  await page.getByRole('button', { name: `${first}の詳細を見る`, exact: true }).click()
   await page.getByRole('button', { name: `${first}のClaudeの出典を確認`, exact: true }).click()
   await expect(page.getByRole('link', { name: '出典ページを開く' })).toHaveAttribute(
     'href',
     'https://example.com/shops/1',
   )
   await page.getByRole('button', { name: 'アプリに戻る', exact: true }).click()
-  await page.getByRole('button', { name: `${first}を保存`, exact: true }).click()
-  const card = page
-    .locator('.web-spot-card')
-    .filter({ has: page.getByRole('heading', { name: first, exact: true }) })
+  await page
+    .locator('.detail-body')
+    .getByRole('button', { name: '行きたいに保存', exact: true })
+    .click()
+  const card = page.locator('.event-detail')
   await card.getByRole('button', { name: 'コーヒー', exact: true }).click()
   await expect(card.getByRole('button', { name: 'コーヒー', exact: true })).toHaveAttribute(
     'aria-pressed',
     'false',
   )
+  await page.getByRole('button', { name: '戻る', exact: true }).click()
   await page.getByRole('button', { name: '好みに寄せたおすすめ', exact: true }).click()
   await expect(page.locator('.preference-summary')).toContainText('カフェ（1件）')
   await expect(page.locator('.preference-summary')).not.toContainText('コーヒー')
@@ -136,7 +138,7 @@ test('片方の失敗・件数不足を明示し、残った候補で保存と�
   await expect(page.getByRole('button', { name: '行きたいに保存済み', exact: true })).toBeVisible()
 })
 
-test('再読み込みで自動検索せず、削除した前回結果ボタンを復活させない', async ({ page }) => {
+test('位置を取得できない再起動では検索せず、前回結果ボタンを復活させない', async ({ page }) => {
   let posts = 0
   page.on('request', (r) => {
     if (r.url().endsWith('/api/spot-search/compare')) posts++

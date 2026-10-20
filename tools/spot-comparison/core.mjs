@@ -20,9 +20,10 @@ export const PROVIDERS = ['openai', 'anthropic']
 export const MODELS = { openai: 'gpt-5-mini', anthropic: 'claude-haiku-4-5-20251001' }
 export const SEARCH_LIMIT = 2
 export const OUTPUT_LIMIT = 6000
-export const COMPARISON_LIMIT = 1
-// Explicit local test setting; the public per-account limit is separate.
+export const COMPARISON_LIMIT = null
+// Unlimited by default. An operator can still opt into a bounded standalone test.
 export function localComparisonLimit(value = COMPARISON_LIMIT) {
+  if (value === null || value === 'unlimited') return null
   const limit = Number(value)
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 20)
     throw new Error('Local comparison limit must be an integer from 1 to 20')

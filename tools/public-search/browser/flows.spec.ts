@@ -71,7 +71,7 @@ async function mockPublicSearch(context: BrowserContext) {
           configured: true,
           enabled: true,
           busy: false,
-          maxAttempts: 5,
+          maxAttempts: null,
           attemptCount: calls.filter((x) => x === uid).length,
           attempts: results.has(uid) ? [{ state: 'completed' }] : [],
           globalRemaining: null,
@@ -83,8 +83,6 @@ async function mockPublicSearch(context: BrowserContext) {
         body: JSON.stringify(results.get(uid) ?? null),
       })
     if (path === 'compare') {
-      if (calls.filter((x) => x === uid).length >= 5)
-        return route.fulfill({ status: 429, json: { error: '累計5回の上限です。' } })
       calls.push(uid)
       queries.push(route.request().postDataJSON())
       const result = await runComparison({ demo: true, query: route.request().postDataJSON() })
@@ -186,7 +184,7 @@ test('free text and structured drive choices reach the public search independent
   await expect(page.locator('.web-query-label')).toContainText('静かな公園')
   expect(queries).toHaveLength(2)
 })
-test('five searches across modes share one account quota; sixth is blocked after reload and saved candidates remain accessible', async ({
+test('more than five searches across modes and reload retain saved candidates', async ({
   page,
   context,
   request,
@@ -194,33 +192,26 @@ test('five searches across modes share one account quota; sixth is blocked after
   const { calls } = await mockPublicSearch(context)
   const email = await account(request)
   await start(page, request, email)
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 6; i++) {
     await page.getByRole('button', { name: i % 2 ? 'おすすめ' : 'イベント', exact: true }).click()
     await page
       .getByRole('button', { name: i % 2 ? 'この希望で探す' : '趣味のイベントを探す', exact: true })
       .click()
-    await expect(
-      page.getByText(`比較検索 ${i} / 5 回（残り${5 - i}回）`, { exact: false }),
-    ).toBeVisible()
+    await expect(page.locator('.web-spot-card')).toHaveCount(10)
+    expect(calls).toHaveLength(i)
     if (i === 1)
       await page
         .getByRole('button', { name: 'サンプル01・小さな喫茶店を保存', exact: true })
         .click()
   }
-  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('上限に達しました')
-  expect(calls).toHaveLength(5)
-  await page.getByRole('button', { name: 'イベント', exact: true }).click()
-  await page.getByRole('button', { name: '趣味のイベントを探す', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('上限に達しました')
   await page.getByRole('button', { name: 'おすすめ', exact: true }).click()
   await page.reload()
   await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
   await login(page, email)
   await participate(page)
   await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('上限に達しました')
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(calls).toHaveLength(7)
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await expect(page.locator('.saved-web-spot')).toHaveCount(1)
-  expect(calls).toHaveLength(5)
 })

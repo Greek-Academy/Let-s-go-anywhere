@@ -124,7 +124,7 @@ test('authenticated comparison, private free restore, no key leakage or extra AI
   const status = await (await f.send('owner', 'comparison-status')).json()
   assert.equal(status.attempts.length, 1)
   assert.equal(status.globalRemaining, null)
-  assert.equal(status.maxAttempts, 5)
+  assert.equal(status.maxAttempts, null)
   assert.equal(status.attemptCount, 1)
   assert.equal((await f.send('owner')).status, 200)
   assert.equal(f.paid().length, 4)
@@ -139,7 +139,7 @@ test('authenticated comparison, private free restore, no key leakage or extra AI
   assert.equal(r.headers.get('Cache-Control'), 'no-store')
 })
 
-test('five lifetime attempts per account, atomic fifth request, existing usage and free restore', async () => {
+test('unlimited attempts preserve usage and free restore, with atomic per-account concurrency', async () => {
   const f = fixture({ wait: () => new Promise((r) => setTimeout(r, 10)) })
   const responses = await Promise.all(Array.from({ length: 8 }, (_, i) => f.send(`user-${i}`)))
   assert.equal(responses.filter((r) => r.status === 200).length, 8)
@@ -153,18 +153,21 @@ test('five lifetime attempts per account, atomic fifth request, existing usage a
     ),
   )
   assert.equal(final.filter((r) => r.status === 200).length, 1)
-  assert.equal(final.filter((r) => r.status === 429).length, 9)
+  assert.equal(final.filter((r) => r.status === 409).length, 9)
   assert.equal(f.paid().length, 24)
-  assert.equal((await f.send('user-0')).status, 429)
-  assert.equal((await (await f.send('user-0', 'comparison-status')).json()).attemptCount, 5)
+  assert.equal((await f.send('user-0')).status, 200)
+  assert.equal((await (await f.send('user-0', 'comparison-status')).json()).attemptCount, 6)
   const restored = await (await f.send('user-0', 'comparison-result')).json()
   assert.equal(restored.spots.length, 18)
-  // Rollout never resets accounts already above the new limit.
+  // Removing the cap never resets existing usage.
   f.database.exec('UPDATE attempts SET attempt_count = 9')
-  assert.equal((await f.send('user-0')).status, 429)
-  assert.equal((await (await f.send('user-0', 'comparison-status')).json()).attemptCount, 9)
-  assert.deepEqual(await (await f.send('user-0', 'comparison-result')).json(), restored)
-  assert.equal(f.paid().length, 24)
+  assert.equal((await f.send('user-0')).status, 200)
+  assert.equal((await (await f.send('user-0', 'comparison-status')).json()).attemptCount, 10)
+  assert.deepEqual(
+    (await (await f.send('user-0', 'comparison-result')).json()).spots,
+    restored.spots,
+  )
+  assert.equal(f.paid().length, 28)
   const g = fixture({ wait: () => new Promise((r) => setTimeout(r, 20)) })
   const same = await Promise.all(Array.from({ length: 10 }, () => g.send('same')))
   assert.equal(same.filter((r) => r.status === 200).length, 1)
@@ -263,8 +266,8 @@ test('provider failures are counted, preserve manual retry and never retry autom
     assert(!JSON.stringify(result).includes('secret-provider-body'))
     assert.equal(f.database.prepare('SELECT state FROM attempts').get().state, 'failed')
     for (let i = 2; i < 5; i++) assert.equal((await f.send('owner')).status, 200)
-    assert.equal((await f.send('owner')).status, 429)
-    assert.equal(f.paid().length, 10)
+    assert.equal((await f.send('owner')).status, 200)
+    assert.equal(f.paid().length, 12)
   }
 })
 
@@ -409,7 +412,7 @@ test('expired in-flight lease can recover; late result cannot overwrite a newer 
   assert.equal((await (await f.send('owner', 'comparison-status')).json()).attemptCount, 2)
 })
 
-test('place/event searches share the original five-attempt counter; invalid dates cost nothing', async () => {
+test('place/event searches continue past the old limit and preserve their usage count; invalid dates cost nothing', async () => {
   const f = fixture()
   const dates = eventDates({ mode: 'today', date: '' })
   const events = { ...query, theme: 'イベント', purpose: 'events', eventDates: dates }
@@ -432,11 +435,11 @@ test('place/event searches share the original five-attempt counter; invalid date
     assert.equal(result.spots.length, 18)
     assert.equal(Boolean(result.spots[0].event), i % 2 === 0)
   }
-  assert.equal((await f.send('mixed')).status, 429)
-  assert.equal((await f.send('mixed', 'compare', { query: events })).status, 429)
-  assert.equal((await (await f.send('mixed', 'comparison-status')).json()).attemptCount, 5)
+  assert.equal((await f.send('mixed')).status, 200)
+  assert.equal((await f.send('mixed', 'compare', { query: events })).status, 200)
+  assert.equal((await (await f.send('mixed', 'comparison-status')).json()).attemptCount, 7)
   assert.equal((await (await f.send('mixed', 'comparison-result')).json()).query.purpose, 'events')
-  assert.equal(f.paid().length, 10)
+  assert.equal(f.paid().length, 14)
   const nearby = {
     ...events,
     stationId: undefined,

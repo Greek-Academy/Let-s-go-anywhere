@@ -37,7 +37,7 @@ function Participation({ parentBusy }: { parentBusy: boolean }) {
     >
       <h2>AI検索の公開テストに参加</h2>
       <p className="body-copy">
-        案内された参加コードを入力してください。AI検索はおすすめ・イベントを合わせて1アカウントにつき累計5回までです（これまでの利用・送信後の失敗も含みます）。ここではまだ検索しません。
+        案内された参加コードを入力してください。検索回数の上限はありません。ホームでは現在地を取得できるとおすすめを自動で検索します。新しい検索にはAPI料金がかかります。
       </p>
       <label className="field-label">
         参加コード

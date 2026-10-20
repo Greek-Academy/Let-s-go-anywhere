@@ -127,7 +127,9 @@ test('closing a pending sheet ignores its late GPS result', async ({ page }) => 
   await enter(page, { delayed: true })
   await chooseLocation(page)
   await acquire(page)
-  await expect(page.getByRole('button', { name: '現在地を取得中…' })).toBeDisabled()
+  await expect(
+    page.getByRole('dialog').getByRole('button', { name: '現在地を取得中…' }),
+  ).toBeDisabled()
   await page.getByRole('dialog').getByRole('button', { name: '閉じる', exact: true }).click()
   await page.evaluate(() => (window as unknown as { deliver: () => void }).deliver())
   await expect(page.locator('.drive-origin-card strong')).toHaveText('京都駅（京都府）')

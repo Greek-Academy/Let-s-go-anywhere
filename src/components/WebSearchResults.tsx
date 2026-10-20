@@ -71,13 +71,9 @@ export function WebSearchResults({
           {error}
         </p>
       )}
-      {status && (
+      {status?.demo && (
         <p className="small muted">
-          {status.demo
-            ? '架空サンプルで接続を確認中です。実検索・API費用は発生しません。'
-            : status.maxAttempts === null
-              ? `これまでの検索：${status.attemptCount}回。回数上限なし。新しい検索にはAPI料金がかかります。`
-              : `${status.kind === 'comparison' ? '比較検索' : '実検索'} ${status.attemptCount ?? status.attempts.length} / ${status.maxAttempts} 回（残り${Math.max(0, status.maxAttempts - (status.attemptCount ?? status.attempts.length))}回）。再読み込み・保存・詳細表示では検索しません。`}
+          架空サンプルで接続を確認中です。実検索・API費用は発生しません。
         </p>
       )}
       <p className="small muted">

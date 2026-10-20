@@ -70,7 +70,7 @@ export function DiscoveryLocationProvider({ children }: { children: ReactNode })
   useEffect(() => {
     if (!state.onboarded) reset()
   }, [state.onboarded, reset])
-  const locate = async () => {
+  const locate = useCallback(async () => {
     if (controller.current) return false
     const request = ++sequence.current
     const abort = new AbortController()
@@ -97,7 +97,7 @@ export function DiscoveryLocationProvider({ children }: { children: ReactNode })
         setLoading(false)
       }
     }
-  }
+  }, [])
   return (
     <Context.Provider value={{ enabled, fix, loading, error, locate, cancel, reset }}>
       {children}

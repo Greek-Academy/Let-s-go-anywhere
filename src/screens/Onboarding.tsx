@@ -80,6 +80,9 @@ export function Onboarding() {
         </p>
       </div>
       <div className="onboarding-footer">
+        <p className="small muted">
+          ホームを開くと現在地を取得しておすすめを探します。約100m単位の位置と趣味をAI検索に、位置を経路計算に使用します。許可しない場合は駅からも探せます。
+        </p>
         <PrimaryButton onClick={finish} icon={ArrowRight}>
           ドライブ先を見つける
         </PrimaryButton>

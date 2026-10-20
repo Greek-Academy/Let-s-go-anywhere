@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare'
 import { comparisonSample } from '../spot-comparison/sample.mjs'
 
-test('built Worker runs with real local D1 and enforces five searches across web and native while preserving account isolation', async () => {
+test('built Worker runs with real local D1 and permits searches beyond five across web and native while preserving account isolation', async () => {
   let paid = 0
   const code = 'T'.repeat(43)
   const mf = new Miniflare(
@@ -115,12 +115,12 @@ test('built Worker runs with real local D1 and enforces five searches across web
     assert.equal((await send(owner)).status, 200)
     const fifth = await Promise.all(Array.from({ length: 5 }, () => send(owner)))
     assert.equal(fifth.filter((r) => r.status === 200).length, 1)
-    assert.equal(fifth.filter((r) => r.status === 429).length, 4)
-    assert.equal((await send(owner, 'compare', 'capacitor://localhost')).status, 429)
+    assert.equal(fifth.filter((r) => r.status === 409).length, 4)
+    assert.equal((await send(owner, 'compare', 'capacitor://localhost')).status, 200)
     const status = await (await send(owner, 'comparison-status')).json()
-    assert.equal(status.attemptCount, 5)
-    assert.equal(status.maxAttempts, 5)
-    assert.equal(paid, 24)
+    assert.equal(status.attemptCount, 6)
+    assert.equal(status.maxAttempts, null)
+    assert.equal(paid, 26)
     assert.equal((await (await send(owner, 'comparison-result')).json()).spots.length, 18)
   } finally {
     await mf.dispose()

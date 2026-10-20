@@ -5174,3 +5174,24 @@ small {
   white-space: nowrap;
   color: #5e5e5e;
 }
+
+/* Compact discovery cards keep supporting facts in the detail screen. */
+.web-spot-card .card-title-button {
+  width: 100%;
+  text-align: left;
+}
+.web-spot-card .drive-travel-compact {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+.web-spot-card .drive-travel-compact p {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+.web-spot-card .drive-travel-compact .drive-maps-attribution {
+  display: block;
+  margin-top: 6px;
+}

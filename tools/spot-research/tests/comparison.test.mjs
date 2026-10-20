@@ -207,7 +207,7 @@ test('Claude usage includes search, cache and tokens; absent usage never becomes
   assert.equal(usage.estimatedUsd, 0.031175)
 })
 test('one pair is reserved before either provider call, survives restart and leaves the old ledger untouched', async (t) => {
-  const opt = options(t)
+  const opt = { ...options(t), maxAttempts: 1 }
   const old = new Ledger(join(opt.directory, '..', 'old-' + opt.directory.split('/').pop()))
   t.after(() => rmSync(old.directory, { recursive: true, force: true }))
   old.reserve()
@@ -244,9 +244,10 @@ test('explicit local allowance preserves earlier attempts, survives restart and 
   })
   assert.deepEqual(restarted.status().attempts[0], original)
   await assert.rejects(restarted.search(query), /2回まで/)
-  assert.equal(localComparisonLimit(), 1)
+  assert.equal(localComparisonLimit(), null)
+  assert.equal(localComparisonLimit('unlimited'), null)
   assert.equal(localComparisonLimit('6'), 6)
-  for (const value of [0, -1, 21, 1.5, Infinity, NaN, '', 'unlimited'])
+  for (const value of [0, -1, 21, 1.5, Infinity, NaN, ''])
     assert.throws(() => localComparisonLimit(value))
 })
 test('missing second key prevents both charges; failure of one provider preserves the other and is not retried', async (t) => {
@@ -285,7 +286,7 @@ test('missing second key prevents both charges; failure of one provider preserve
   assert.equal(service.status().attempts[0].state, 'failed')
 })
 test('concurrent requests and provider exceptions cannot retry, leak secrets, or reset spent count', async (t) => {
-  const opt = options(t)
+  const opt = { ...options(t), maxAttempts: 1 }
   let release,
     calls = 0
   const gate = new Promise((resolve) => {
@@ -395,4 +396,19 @@ test('nearby comparison persists result without coordinates and rejects ambiguou
   })
   assert(!readFileSync(join(config.directory, 'result.json'), 'utf8').includes('35.691'))
   assert.throws(() => validateComparisonQuery({ ...query, location: nearby.location }))
+})
+
+test('unlimited comparison preserves the full ledger and continues past the old cap after restart', async (t) => {
+  const opt = options(t)
+  const bounded = createComparison({ ...opt, maxAttempts: 1, fetcher: fakeFetch })
+  await bounded.search(query)
+  const original = bounded.status().attempts[0]
+  const unlimited = createComparison({ ...opt, fetcher: fakeFetch })
+  assert.equal(unlimited.status().maxAttempts, null)
+  for (let i = 0; i < 6; i++) await unlimited.search(query)
+  const restarted = createComparison({ ...opt, fetcher: fakeFetch })
+  assert.equal(restarted.status().attempts.length, 7)
+  assert.deepEqual(restarted.status().attempts[0], original)
+  await restarted.search(query)
+  assert.equal(restarted.status().attempts.length, 8)
 })

@@ -13,7 +13,7 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
   const isEvent = result.query.purpose === 'events'
   const { state } = useApp()
   const {
-    comparisonView: { order, provider },
+    comparisonView: { order },
     setComparisonView,
   } = useWebSearch()
   const { weights, likes } = preferenceWeights(state.savedWebSpots, result.mode)
@@ -21,9 +21,6 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
     !isEvent && order === 'personal'
       ? personalRecommendations(result.spots, state.savedWebSpots, result.mode)
       : result.spots
-  const visible = ordered.filter(
-    (s) => provider === 'all' || s.recommendations?.some((r) => r.provider === provider),
-  )
   return (
     <div className="comparison-results">
       <SectionHeading
@@ -31,7 +28,7 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
         subtitle={
           result.mode === 'sample'
             ? '架空サンプルです。APIは使っていません。'
-            : '2社の提案を、出典と一緒に見比べましょう。'
+            : '気になる場所をタップして、詳しい情報を確認できます。'
         }
       />
       {!!result.duplicates && (
@@ -86,46 +83,6 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
           開催日・会場を出典からAIが整理した候補です。開催の変更や中止、予約の要否は、訪問前に主催者の情報で確認してください。件数を増やすための自動再検索はしません。
         </p>
       )}
-      <div className="chips comparison-providers" aria-label="提案元で絞り込み">
-        {(['all', 'openai', 'anthropic'] as const).map((value) => (
-          <Chip
-            key={value}
-            selected={provider === value}
-            onClick={() => setComparisonView({ provider: value })}
-          >
-            {value === 'all' ? 'すべて' : providerNames[value]}{' '}
-            {value === 'all'
-              ? result.spots.length
-              : result.spots.filter((s) => s.recommendations?.some((r) => r.provider === value))
-                  .length}
-          </Chip>
-        ))}
-      </div>
-      <details className="comparison-metrics">
-        <summary>検索の結果・待ち時間・参考料金</summary>
-        {result.reports?.map((r) => (
-          <div key={r.provider} className="comparison-metric">
-            <h3>
-              {providerNames[r.provider]} <span>{r.count}件</span>
-            </h3>
-            <p className="small muted">
-              {r.model} ／ {(r.elapsedMs / 1000).toFixed(1)}秒
-            </p>
-            <p className="small">
-              {result.mode === 'sample'
-                ? 'サンプルのため課金なし'
-                : r.usage
-                  ? `参考 $${r.usage.estimatedUsd.toFixed(4)} ／ Web検索${r.usage.searchCalls}回`
-                  : '料金は未確定です。0円とは限りません。'}
-            </p>
-            {!!r.omitted && <p className="small">出典・形式の確認で{r.omitted}件を除外</p>}
-            {r.error && <p className="field-error">{r.error}</p>}
-          </div>
-        ))}
-        <p className="small muted">
-          参考額は税・為替・前払い残高を含みません。最終的な請求は各社の利用明細で確認してください。
-        </p>
-      </details>
       {result.reports
         ?.filter((r) => r.state === 'failed')
         .map((r) => (
@@ -133,16 +90,16 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
             {providerNames[r.provider]}：{r.error} 自動では再検索しません。
           </p>
         ))}
-      {visible.length ? (
+      {ordered.length ? (
         <div className="event-list">
-          {visible.map((spot) => (
+          {ordered.map((spot) => (
             <WebSpotCard key={spot.id} spot={spot} />
           ))}
         </div>
       ) : (
         <EmptyState
           title="この条件の候補はありません"
-          description="取得できた候補は、別の提案元に切り替えて確認できます。"
+          description="希望の言葉や出発地を変えて探せます。"
         />
       )}
     </div>

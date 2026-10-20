@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test'
 import { createInitialState } from '../../../src/state/model'
 import { driveQuery, emptyDriveChoices } from '../../../src/domain/driveSearch'
 const first = 'サンプル01・小さな喫茶店'
-async function enter(page: Page) {
+async function enter(page: Page, start = '/#/discover') {
   const state = createInitialState()
   state.onboarded = true
   state.profile.interests = ['音楽', '自然']
@@ -26,7 +26,7 @@ async function enter(page: Page) {
       },
     })
   }, state)
-  await page.goto('/#/discover')
+  await page.goto(start)
 }
 test.afterEach(async ({ page }, info) => {
   if (info.status === 'passed')
@@ -42,10 +42,6 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   await enter(page)
   await expect(page.getByRole('button', { name: 'お出かけの絞り込み' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: '前回の比較結果を開く（無料）' })).toHaveCount(0)
-  expect(bodies).toHaveLength(0)
-  await page.getByRole('button', { name: '現在地からドライブ先を探す', exact: true }).click()
-  await expect(page.getByRole('dialog')).toContainText('Google')
-  await page.getByRole('button', { name: '現在地を取得して検索', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(bodies).toHaveLength(1)
   expect(bodies[0]).toMatchObject({
@@ -102,9 +98,10 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
     expect(raw).not.toContain(secret)
   expect(JSON.parse(raw).savedWebSpots).toHaveLength(1)
   await page.reload()
-  await expect(page.locator('.web-spot-card')).toHaveCount(0)
-  expect(bodies).toHaveLength(4)
-  await page.goto('/#/saved')
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(bodies).toHaveLength(5)
+  await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
+  await page.reload()
   await page.locator('.saved-web-spot').getByRole('button').first().click()
   await expect(page.locator('.event-detail .drive-travel-info')).toContainText('未確認')
 })
@@ -115,16 +112,11 @@ test('onboarding hobbies feed the home search; editing hobbies labels old result
   page.on('request', (r) => {
     if (r.url().endsWith('/api/spot-search/compare')) bodies.push(r.postDataJSON())
   })
-  await enter(page)
-  await page.goto('/#/onboarding/1')
+  await enter(page, '/#/onboarding/1')
   await page.getByRole('button', { name: '音楽', exact: true }).click()
   await page.getByRole('button', { name: '温泉', exact: true }).click()
   await page.getByRole('button', { name: 'ドライブ先を見つける', exact: true }).click()
   await expect(page.getByRole('region', { name: 'おすすめに使う趣味' })).toContainText('自然・温泉')
-  expect(bodies).toHaveLength(0)
-  await page.getByRole('button', { name: '現在地からドライブ先を探す', exact: true }).click()
-  await expect(page.getByRole('dialog')).toContainText('検索に使う趣味：自然・温泉')
-  await page.getByRole('button', { name: '現在地を取得して検索', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(bodies).toHaveLength(1)
   expect(bodies[0].drive.hobbies).toEqual(['自然', '温泉'])
@@ -151,47 +143,77 @@ test('onboarding hobbies feed the home search; editing hobbies labels old result
   expect(bodies).toHaveLength(2)
   expect(bodies[1].drive.hobbies).toEqual(['自然'])
 })
-test('configured local quota is displayed and exhausted allowance prevents an API call', async ({
+test('unlimited status with historical attempts allows an automatic search and another manual search', async ({
   page,
 }) => {
   let calls = 0
-  await enter(page)
   await page.route('**/api/spot-search/comparison-status', async (r) => {
     const response = await r.fetch()
-    const json = await response.json()
     await r.fulfill({
       json: {
-        ...json,
-        demo: false,
-        maxAttempts: 6,
-        attempts: Array.from({ length: 6 }, () => ({})),
+        ...(await response.json()),
+        maxAttempts: null,
+        attempts: Array.from({ length: 25 }, () => ({})),
       },
     })
   })
   page.on('request', (r) => {
     if (r.url().endsWith('/api/spot-search/compare')) calls++
   })
-  await page.getByRole('button', { name: '現在地からドライブ先を探す', exact: true }).click()
-  await page.getByRole('button', { name: '現在地を取得して検索', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('累計6回まで')
-  await expect(page.getByText(/比較検索 6 \/ 6 回/)).toBeVisible()
-  expect(calls).toBe(0)
+  await enter(page)
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(calls).toBe(1)
+  await page.getByRole('button', { name: 'この出発地からドライブ先を探す', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(calls).toBe(2)
 })
 test('failed route calculations retain candidates with unconfirmed labels and no invented duration', async ({
   page,
 }) => {
-  await enter(page)
   await page.route('**/api/spot-search/compare', async (r) => {
     const response = await r.fetch()
     const json = await response.json()
     json.spots = json.spots.map((s: object) => ({ ...s, travel: { status: 'unconfirmed' } }))
     await r.fulfill({ json })
   })
-  await page.getByRole('button', { name: '現在地からドライブ先を探す', exact: true }).click()
-  await page.getByRole('button', { name: '現在地を取得して検索', exact: true }).click()
+  await enter(page)
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await expect(page.locator('.web-spot-card .drive-travel-info').first()).toContainText(
     '所要時間は未確認',
   )
   await expect(page.getByText(/車で片道 約/)).toHaveCount(0)
+})
+
+test('location denial ends startup without AI calls, permits station search, and never loops on returning home', async ({
+  page,
+}) => {
+  let calls = 0
+  page.on('request', (r) => {
+    if (r.url().endsWith('/api/spot-search/compare')) calls++
+  })
+  await enter(page, '/#/onboarding/1')
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition(_success: unknown, error: (e: unknown) => void) {
+          error({ code: 1 })
+        },
+      },
+    }),
+  )
+  await page.getByRole('button', { name: 'ドライブ先を見つける', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('許可されていません')
+  expect(calls).toBe(0)
+  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: /^駅を出発地にする/ }).click()
+  await page.getByRole('combobox', { name: '探したい駅' }).fill('しんじゅく')
+  await page.getByRole('option').filter({ hasText: '新宿駅（東京都）' }).first().click()
+  await page.getByRole('button', { name: 'この駅を出発地にする', exact: true }).click()
+  await page.getByRole('button', { name: 'この出発地からドライブ先を探す', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  await page.getByRole('navigation').getByRole('button', { name: '学ぶ', exact: true }).click()
+  await page.getByRole('navigation').getByRole('button', { name: '見つける', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(calls).toBe(1)
 })

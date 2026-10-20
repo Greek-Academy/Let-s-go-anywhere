@@ -94,6 +94,7 @@ test('実サーバーの無料モードを経由し、出典・保存・詳細�
   await expect(
     page.getByText('架空サンプルです。APIは使っていません。', { exact: true }),
   ).toBeVisible()
+  await page.getByRole('button', { name: `${name}の詳細を見る`, exact: true }).click()
   await page.getByRole('button', { name: `${name}のOpenAIの出典を確認`, exact: true }).click()
   await expect(page.getByRole('dialog')).toContainText('内容・現在の営業状況は未確認')
   await expect(page.getByRole('link', { name: '出典ページを開く', exact: true })).toHaveAttribute(
@@ -101,8 +102,10 @@ test('実サーバーの無料モードを経由し、出典・保存・詳細�
     'https://example.com/shops/1',
   )
   await page.getByRole('button', { name: 'アプリに戻る', exact: true }).click()
-  await page.getByRole('button', { name: `${name}を保存`, exact: true }).click()
-  await page.getByRole('button', { name: `${name}の詳細を見る`, exact: true }).click()
+  await page
+    .locator('.detail-body')
+    .getByRole('button', { name: '行きたいに保存', exact: true })
+    .click()
   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible()
   await expect(page.getByText('情報の確認日ではありません', { exact: false })).toBeVisible()
   await page.getByRole('button', { name: '戻る', exact: true }).click()

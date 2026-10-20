@@ -1,4 +1,4 @@
-import { decodeDriveQuery, driveTheme, withoutDriveTravel } from '../domain/driveSearch'
+import { decodeDriveQuery, driveQuery, driveTheme, withoutDriveTravel } from '../domain/driveSearch'
 import type { DriveQuery } from '../domain/driveSearch'
 import { eventDateError } from '../domain/eventSearch'
 import type { EventDates } from '../domain/eventSearch'
@@ -49,6 +49,7 @@ interface SearchStatus {
   attempts: unknown[]
 }
 interface SearchContext {
+  startHomeSearch: () => void
   savedSpots: WebSpot[]
   comparisonView: ComparisonView
   setComparisonView: (patch: Partial<ComparisonView>) => void
@@ -91,17 +92,17 @@ function readStatus(value: unknown, method: SearchMethod): SearchStatus {
     (publicSearchOrigin
       ? typeof s.enabled !== 'boolean' ||
         s.globalRemaining !== null ||
-        s.maxAttempts !== 5 ||
+        (s.maxAttempts !== null && (!Number.isSafeInteger(s.maxAttempts) || s.maxAttempts < 1)) ||
         !Number.isSafeInteger(s.attemptCount) ||
         s.attemptCount! < 0 ||
         s.demo
       : typeof s.token !== 'string' || !/^[a-f0-9]{64}$/.test(s.token)) ||
     (!publicSearchOrigin &&
       (method === 'comparison'
-        ? !Number.isSafeInteger(s.maxAttempts) || s.maxAttempts! < 1 || s.maxAttempts! > 20
+        ? s.maxAttempts !== null && (!Number.isSafeInteger(s.maxAttempts) || s.maxAttempts < 1)
         : s.maxAttempts !== 3)) ||
     !Array.isArray(s.attempts) ||
-    s.attempts.length > (s.maxAttempts ?? 1)
+    (s.maxAttempts !== null && s.attempts.length > s.maxAttempts)
   )
     throw new Error('検索の利用状態を確認できません。自動では再検索しません。')
   return { ...s, ...(method === 'comparison' ? { kind: 'comparison' as const } : {}) }
@@ -110,6 +111,8 @@ function readStatus(value: unknown, method: SearchMethod): SearchStatus {
 export function WebSearchProvider({ children }: { children: ReactNode }) {
   const { state, update, toast, memoryOnly, storageProtected } = useApp()
   const gps = useDiscoveryLocation()
+  const launchStarted = useRef(false)
+  const [startup, setStartup] = useState<'idle' | 'locating' | 'ready' | 'done'>('idle')
   const locationRequest = useRef(false)
   const requestCenter = useRef<DiscoveryCenter | undefined>(undefined)
   const [comparisonView, setView] = useState<ComparisonView>({ order: 'general', provider: 'all' })
@@ -161,8 +164,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
         ...v,
         [key]: {
           ...v[key],
-          error:
-            '現在地の利用を終了しました。送信済みの検索は回数に含まれます。保存した候補は「行きたい」で確認できます。',
+          error: '現在地の利用を終了しました。保存した候補は「行きたい」で確認できます。',
         },
       }))
     }
@@ -170,6 +172,8 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!publicSearchOrigin) return
     const clear = () => {
+      launchStarted.current = false
+      setStartup('idle')
       sequence.current++
       controller.current?.abort()
       running.current = false
@@ -313,7 +317,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       )
         throw new Error(
           publicSearchOrigin
-            ? 'AI検索は1アカウント累計5回までです。上限に達しました。保存した候補は「行きたい」で引き続き確認できます。'
+            ? `この接続先の検索上限（${config.maxAttempts}回）に達しました。保存した候補は引き続き確認できます。`
             : `今回の${method === 'comparison' ? '比較検索' : '実検索'}は累計${config.maxAttempts}回までです。取得済みの「行きたい」は引き続き確認できます。`,
         )
       sent = true
@@ -341,7 +345,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       if (request === sequence.current)
         setError(
           abort.signal.aborted
-            ? '検索結果を受け取れませんでした。送信後の試行は回数に含まれる場合があります。自動では再検索しません。'
+            ? '検索結果を受け取れませんでした。送信済みの処理には料金が発生する場合があります。自動では再検索しません。'
             : e instanceof Error
               ? e.message
               : '検索を完了できませんでした。',
@@ -373,6 +377,39 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       }
     }
   }
+  // Kept in the app provider: visiting another tab/detail does not start a paid search again.
+  // A fresh app load (or a new signed-in session) gets one automatic attempt, with no retries.
+  const startHomeSearch = () => {
+    if (
+      launchStarted.current ||
+      !state.onboarded ||
+      memoryOnly ||
+      (!publicSearchOrigin && (!import.meta.env.DEV || isNativeApp))
+    )
+      return
+    launchStarted.current = true
+    update((s) => ({
+      ...s,
+      discover: { ...s.discover, category: 'おすすめ', driveMode: 'default', usageSamples: false },
+    }))
+    setStartup('locating')
+    void gps.locate().then((ok) => setStartup(ok ? 'ready' : 'done'))
+  }
+  useEffect(() => {
+    if (startup !== 'ready') return
+    setStartup('done')
+    // A different search/selection made while GPS was pending takes precedence.
+    if (!gps.fix || viewKey !== 'default' || running.current) return
+    const drive = driveQuery('default', state.driveChoices, state.profile.interests)
+    void search({
+      drive,
+      region: LOCATION_REGION,
+      location: gps.fix.center,
+      theme: driveTheme(drive, ''),
+      category: 'おすすめ',
+      tag: '',
+    })
+  }, [startup, gps.fix, viewKey])
   const restoreComparison = async () => {
     if (running.current) return
     setActive(true)
@@ -470,6 +507,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   return (
     <Context.Provider
       value={{
+        startHomeSearch,
         savedSpots: groupPlaces(state.savedWebSpots),
         comparisonView,
         setComparisonView: (patch) => setView((v) => ({ ...v, ...patch })),

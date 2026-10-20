@@ -3,7 +3,13 @@ import { useEffect, useState } from 'react'
 import type { DriveTravel } from '../domain/driveSearch'
 import { travelTimeLabel } from '../domain/driveSearch'
 
-export function DriveTravelInfo({ travel }: { travel?: DriveTravel }) {
+export function DriveTravelInfo({
+  travel,
+  compact = false,
+}: {
+  travel?: DriveTravel
+  compact?: boolean
+}) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
     if (!travel || travel.status === 'unconfirmed') return
@@ -15,6 +21,27 @@ export function DriveTravelInfo({ travel }: { travel?: DriveTravel }) {
   }, [travel])
   const current =
     travel && travel.status !== 'unconfirmed' && Date.parse(travel.expiresAt) > now ? travel : null
+  if (compact)
+    return (
+      <div className="drive-travel-info drive-travel-compact">
+        <p>
+          <Clock3 size={16} aria-hidden="true" />
+          <span>
+            {current
+              ? `車で片道 約${travelTimeLabel(current.durationSeconds)}`
+              : '車での所要時間は未確認'}
+          </span>
+        </p>
+        {current?.status === 'calculated' && (
+          <span className="drive-maps-attribution" translate="no">
+            Google Maps
+          </span>
+        )}
+        {current?.status === 'sample' && (
+          <span className="small muted">操作確認用の架空の時間</span>
+        )}
+      </div>
+    )
   return (
     <div className="drive-travel-info">
       <p>

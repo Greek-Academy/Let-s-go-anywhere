@@ -226,7 +226,12 @@ export function Discover() {
     setSamples(false)
     setPending(draft)
   }
-  // A request is caused only by a form/location confirmation, never mounting or switching tabs.
+  // Defer until the mount is committed, including React StrictMode's setup/cleanup cycle.
+  useEffect(() => {
+    const timer = setTimeout(web.startHomeSearch, 0)
+    return () => clearTimeout(timer)
+  }, [web.startHomeSearch])
+  // Manual searches remain separate from the single automatic launch search.
   useEffect(() => {
     if (!pending || web.loading) return
     const expected = pending.drive?.mode
@@ -259,10 +264,7 @@ export function Discover() {
   const searchResults = (
     <>
       <p className="small muted web-search-hint">
-        検索はボタンを押したときだけ実行します。
-        {publicSearchOrigin
-          ? 'すべての探し方を合わせて1アカウント累計5回まで。'
-          : '新しい実検索にはAPI料金がかかります。'}
+        起動時に現在地と趣味から一度検索します。新しい実検索にはAPI料金がかかります。
       </p>
       {web.active ? (
         <WebSearchResults
@@ -293,11 +295,19 @@ export function Discover() {
           />
           <EmptyState
             icon={CarFront}
-            title={region ? '行き先を探してみましょう' : 'まずは出発地を選びましょう'}
+            title={
+              gps.loading
+                ? '現在地を取得しています…'
+                : region
+                  ? '行き先を探してみましょう'
+                  : '出発地を選んで探せます'
+            }
             description={
-              region
-                ? '上の検索ボタンで候補を表示します。条件に合う情報が少ない場合は10件未満になることもあります。'
-                : '上のボタンで現在地を取得すると、選んだ趣味に合う候補がここに並びます。駅からも探せます。'
+              gps.loading
+                ? '位置情報の許可が表示されたら、許可するとおすすめを探します。'
+                : region
+                  ? '上の検索ボタンで候補を表示します。条件に合う情報が少ない場合は10件未満になることもあります。'
+                  : '上のボタンで現在地を取得すると、選んだ趣味に合う候補がここに並びます。駅からも探せます。'
             }
           />
         </section>
@@ -332,6 +342,18 @@ export function Discover() {
           <p className="small muted">
             選んだ趣味と出発地から、片道2〜5時間のドライブ先を10件を目安に探します。
           </p>
+          <details className="small muted">
+            <summary>現在地の使い方</summary>
+            <p>
+              起動時に一度取得し、約100m単位の位置と趣味をOpenAI・Anthropicに、経路計算のためGoogle
+              Mapsに送ります。移動は追跡せず、位置は保存・共有しません。10分経過やアプリを閉じると位置の利用を終了します。
+            </p>
+          </details>
+          {gps.error && !locationOpen && !regionOpen && !web.active && (
+            <p className="field-error" role="alert">
+              {gps.error}
+            </p>
+          )}
           <PrimaryButton
             icon={MapPin}
             disabled={web.loading || gps.loading}
@@ -344,7 +366,13 @@ export function Discover() {
               setLocationOpen(true)
             }}
           >
-            {region ? 'この出発地からドライブ先を探す' : '現在地からドライブ先を探す'}
+            {gps.loading
+              ? '現在地を取得中…'
+              : web.loading
+                ? 'おすすめを探しています…'
+                : region
+                  ? 'この出発地からドライブ先を探す'
+                  : '現在地からドライブ先を探す'}
           </PrimaryButton>
           <button
             className="text-button"
@@ -578,12 +606,7 @@ export function Discover() {
             約100m単位に丸めた位置と検索条件をOpenAI・Anthropicへ、経路計算が有効な場合はGoogle
             Mapsへ送ります。位置は端末・検索履歴・共有リストに保存せず、移動を追跡しません。10分経過やアプリを閉じたときに位置の利用を終了します。
           </p>
-          <p className="small muted">
-            {publicSearchOrigin
-              ? 'おすすめ・イベント・条件検索を合わせて1アカウント累計5回まで。'
-              : ''}
-            新しい実検索にはAPI料金がかかります。
-          </p>
+          <p className="small muted">新しい実検索にはAPI料金がかかります。</p>
           {gps.error && (
             <p className="field-error" role="alert">
               {gps.error}

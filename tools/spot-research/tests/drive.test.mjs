@@ -1,3 +1,4 @@
+import { eventDates } from '../../../src/domain/eventSearch.ts'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { addDrivingTimes } from '../../spot-comparison/routes.mjs'
@@ -26,7 +27,7 @@ const query = (mode = 'default', changes = {}) => {
     theme: driveTheme(drive, '海辺のカフェ'),
     drive,
     ...(mode === 'events'
-      ? { purpose: 'events', eventDates: { start: '2026-10-20', end: '2026-10-20' } }
+      ? { purpose: 'events', eventDates: eventDates({ mode: 'today', date: '' }) }
       : {}),
   }
 }

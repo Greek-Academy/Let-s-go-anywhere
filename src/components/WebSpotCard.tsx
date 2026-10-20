@@ -1,10 +1,8 @@
-import { WebEventSchedule } from './WebEventSchedule'
 import { DriveTravelInfo } from './DriveTravelInfo'
-import { RecommendationBadges, RecommendationFeedback } from './RecommendationFeedback'
 import { providerNames } from '../domain/recommendations'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Heart, MapPin, ExternalLink } from 'lucide-react'
+import { Heart, ExternalLink } from 'lucide-react'
 import { SpotIllustration } from './SpotIllustration'
 import { spotIllustrationKind } from '../data/spotIllustrations'
 import type { WebSpot } from '../domain/webSearch'
@@ -92,9 +90,6 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
         onClick={() => navigate(`/web-spots/${spot.id}`)}
       >
         <WebSpotImage spot={spot} className="event-photo" />
-        <span className="photo-category">
-          {spot.event ? 'イベントの候補' : '常設スポットの候補'}
-        </span>
       </button>
       <button
         className={`save-heart ${saved ? 'saved' : ''}`}
@@ -106,27 +101,10 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
         <Heart size={20} fill={saved ? 'currentColor' : 'none'} strokeWidth={1.8} />
       </button>
       <div className="event-card-body">
-        <WebSpotStatus spot={spot} />
-        <RecommendationBadges spot={spot} />
         <button className="card-title-button" onClick={() => navigate(`/web-spots/${spot.id}`)}>
           <h3>{spot.name}</h3>
+          <DriveTravelInfo travel={spot.travel} compact />
         </button>
-        <p className="event-subtitle">{spot.summary}</p>
-        <div className="event-meta">
-          <span>
-            <MapPin size={12} />
-            {spot.area}
-          </span>
-        </div>
-        <WebEventSchedule spot={spot} />
-        <DriveTravelInfo travel={spot.travel} />
-        <WebSpotSource spot={spot} />
-        <RecommendationFeedback spot={spot} />
-        <p className="small muted">
-          検索：{searchDate(spot.retrievedAt)}
-          <br />
-          営業状況・料金・駐車場：未確認
-        </p>
       </div>
     </article>
   )
