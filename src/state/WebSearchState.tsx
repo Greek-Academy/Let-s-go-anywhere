@@ -316,6 +316,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     let waitingForSlot = false
     let waitDeadline: number | null = null
     const waitForSlot = async () => {
+      abort.signal.throwIfAborted()
       waitDeadline ??= Date.now() + 120_000
       if (Date.now() >= waitDeadline)
         throw new Error(
