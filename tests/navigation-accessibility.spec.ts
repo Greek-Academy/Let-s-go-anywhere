@@ -64,7 +64,10 @@ test('detail back and browser forward restore the originating card and its scrol
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   await keyboardActivate(page, page.getByRole('button', { name: '戻る', exact: true }))
   await expect(page.getByRole('button', { name: label!, exact: true })).toBeFocused()
-  expect(await page.locator('#app-scroll').evaluate((el) => el.scrollTop)).toBeCloseTo(scroll, 0)
+  // WebKit can round the restored offset by one CSS pixel in the scaled phone frame.
+  // Keep checking the originating card's focus above and the actual scroll offset here.
+  const restoredScroll = await page.locator('#app-scroll').evaluate((el) => el.scrollTop)
+  expect(Math.abs(restoredScroll - scroll)).toBeLessThanOrEqual(1)
   await page.goForward()
   await expect(page.getByRole('button', { name: '戻る', exact: true })).toBeFocused()
   await page.goBack()
