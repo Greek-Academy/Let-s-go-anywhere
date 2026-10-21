@@ -6,6 +6,7 @@ import { comparisonSample } from '../spot-comparison/sample.mjs'
 
 test('built Worker runs with real local D1 and permits searches beyond five across web and native while preserving account isolation', async () => {
   let paid = 0
+  let paidGate = Promise.resolve()
   const code = 'T'.repeat(43)
   const mf = new Miniflare(
     convertV4MiniflareOptions({
@@ -35,6 +36,7 @@ test('built Worker runs with real local D1 and permits searches beyond five acro
         )
           throw new Error('Unexpected upstream; no network is permitted in this test')
         paid++
+        await paidGate
         return Response.json(
           comparisonSample(request.url.includes('openai') ? 'openai' : 'anthropic', {
             stationId: '100216',
@@ -113,7 +115,38 @@ test('built Worker runs with real local D1 and permits searches beyond five acro
     assert.equal((await send(owner, 'compare', 'capacitor://localhost')).status, 200)
     assert.equal(paid, 20)
     assert.equal((await send(owner)).status, 200)
-    const fifth = await Promise.all(Array.from({ length: 5 }, () => send(owner)))
+    // Hold the winning request upstream until the other four requests are rejected.
+    // Promise.all alone does not guarantee overlap when fake providers reply instantly.
+    let releasePaid
+    paidGate = new Promise((resolve) => {
+      releasePaid = resolve
+    })
+    let timer
+    let completed = 0
+    let markCompleted
+    const fourResponses = new Promise((resolve, reject) => {
+      timer = setTimeout(
+        () => reject(new Error('Concurrent requests did not reject while the winner was pending')),
+        10_000,
+      )
+      markCompleted = () => {
+        if (++completed === 4) resolve()
+      }
+    })
+    const pending = Array.from({ length: 5 }, () =>
+      send(owner).then((response) => {
+        markCompleted()
+        return response
+      }),
+    )
+    try {
+      await fourResponses
+    } finally {
+      clearTimeout(timer)
+      releasePaid()
+    }
+    const fifth = await Promise.all(pending)
+    assert.equal(paid, 24)
     assert.equal(fifth.filter((r) => r.status === 200).length, 1)
     assert.equal(fifth.filter((r) => r.status === 409).length, 4)
     assert.equal((await send(owner, 'compare', 'capacitor://localhost')).status, 200)
