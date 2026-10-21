@@ -5,14 +5,25 @@ import { WebSpotCard } from './WebSpotCard'
 import { EmptyState } from './ui'
 
 export function WebSearchResults() {
-  const { result, loading, error, status } = useWebSearch()
+  const { result, loading, waiting, cancelSearch, error, status } = useWebSearch()
   const { state } = useApp()
   return (
     <section className="web-search-results" aria-label="Web検索の結果" aria-busy={loading}>
       {loading && (
-        <p className="notice" role="status">
-          候補を探しています。最大2分ほどかかる場合があります。
-        </p>
+        <div className="notice" role="status">
+          <div>
+            <p>
+              {waiting
+                ? '前の検索が終わるのを待っています。このままお待ちください。'
+                : '候補を探しています。最大2分ほどかかる場合があります。'}
+            </p>
+            {waiting && (
+              <button className="text-button" onClick={cancelSearch}>
+                待機をやめる
+              </button>
+            )}
+          </div>
+        </div>
       )}
       {error && (
         <p className="notice web-search-error" role="alert">

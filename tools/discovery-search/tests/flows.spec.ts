@@ -192,7 +192,7 @@ test('同じ出典を再検索しても保存が増殖せず、保存時点の�
   await expect(page.getByRole('heading', { name: '検証の緑地', exact: true })).toBeVisible()
 })
 
-test('キーなし・上限・利用中はPOSTしない', async ({ page }) => {
+test('キーなし・上限ではPOSTしない', async ({ page }) => {
   let posts = 0
   await page.route('**/api/spot-search/compare', (r) => {
     posts++
@@ -202,7 +202,6 @@ test('キーなし・上限・利用中はPOSTしない', async ({ page }) => {
   for (const [patch, message] of [
     [{ configured: false }, '両方のAPIキー'],
     [{ attempts: [{}] }, '1回まで'],
-    [{ busy: true }, '別の検索を実行中'],
   ] as const) {
     await page.route('**/api/spot-search/comparison-status', (r) =>
       r.fulfill({ json: { ...status, ...patch } }),

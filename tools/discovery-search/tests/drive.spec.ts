@@ -245,3 +245,117 @@ test('location denial ends startup without AI calls, permits station search, and
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(calls).toBe(1)
 })
+
+const waitingMessage = '前の検索が終わるのを待っています。このままお待ちください。'
+async function busyStatus(page: Page, isBusy: () => boolean) {
+  await page.route('**/api/spot-search/comparison-status', (r) =>
+    r.fulfill({
+      json: {
+        demo: true,
+        configured: true,
+        token: 'a'.repeat(64),
+        busy: isBusy(),
+        maxAttempts: null,
+        attempts: [],
+      },
+    }),
+  )
+}
+test('startup waits for an existing search, then sends only its own query once and shows cards', async ({
+  page,
+}) => {
+  let busy = true
+  let posts = 0
+  // Preserve the real demo server token when the queue becomes available.
+  await page.route('**/api/spot-search/comparison-status', async (r) => {
+    const response = await r.fetch()
+    await r.fulfill({ json: { ...(await response.json()), busy } })
+  })
+  page.on('request', (r) => {
+    if (r.url().endsWith('/api/spot-search/compare')) posts++
+  })
+  await enter(page)
+  await expect(page.getByText(waitingMessage)).toBeVisible()
+  await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'true')
+  expect(posts).toBe(0)
+  busy = false
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  expect(posts).toBe(1)
+  await page.getByRole('navigation').getByRole('button', { name: '学ぶ', exact: true }).click()
+  await page.getByRole('navigation').getByRole('button', { name: '見つける', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(posts).toBe(1)
+})
+test('a busy rejection after the status check waits and retries; an upstream failure never retries', async ({
+  page,
+}) => {
+  let requests = 0
+  let accepted = 0
+  let fail = false
+  await page.route('**/api/spot-search/compare', async (r) => {
+    requests++
+    if (requests === 1)
+      return r.fulfill({ status: 409, json: { error: '比較検索中です。結果を待ってください。' } })
+    accepted++
+    if (fail) return r.fulfill({ status: 503, json: { error: '検証用の通信失敗' } })
+    return r.continue()
+  })
+  await enter(page)
+  await expect(page.getByText(waitingMessage)).toBeVisible()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(requests).toBe(2)
+  expect(accepted).toBe(1)
+  fail = true
+  await page.getByRole('button', { name: 'この出発地からドライブ先を探す', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('検証用の通信失敗')
+  await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
+  await page.clock.install()
+  await page.clock.fastForward(5000)
+  expect(requests).toBe(3)
+  expect(accepted).toBe(2)
+})
+test('waiting times out without a paid POST and offers a way to search again', async ({ page }) => {
+  let posts = 0
+  await busyStatus(page, () => true)
+  page.on('request', (r) => {
+    if (r.url().endsWith('/api/spot-search/compare')) posts++
+  })
+  await enter(page)
+  await expect(page.getByText(waitingMessage)).toBeVisible()
+  await page.clock.install()
+  await page.clock.fastForward(121_000)
+  await expect(page.getByRole('alert')).toContainText('検索が混み合っています')
+  await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
+  expect(posts).toBe(0)
+  await expect(
+    page.getByRole('button', { name: 'この出発地からドライブ先を探す', exact: true }),
+  ).toBeEnabled()
+})
+for (const cancel of ['button', 'location'] as const) {
+  test(`waiting stops on ${cancel} cancellation and never starts a delayed search`, async ({
+    page,
+  }) => {
+    let busy = true
+    let posts = 0
+    await busyStatus(page, () => busy)
+    page.on('request', (r) => {
+      if (r.url().endsWith('/api/spot-search/compare')) posts++
+    })
+    await enter(page)
+    await expect(page.getByText(waitingMessage)).toBeVisible()
+    if (cancel === 'button')
+      await page.getByRole('button', { name: '待機をやめる', exact: true }).click()
+    else {
+      await page.evaluate(() => window.dispatchEvent(new Event('pagehide')))
+      await expect(page.getByRole('alert')).toContainText('現在地の利用を終了しました')
+    }
+    await expect(page.getByText(waitingMessage)).toHaveCount(0)
+    busy = false
+    await page.clock.install()
+    await page.clock.fastForward(5000)
+    expect(posts).toBe(0)
+    await expect(page.locator('.web-spot-card')).toHaveCount(0)
+  })
+}

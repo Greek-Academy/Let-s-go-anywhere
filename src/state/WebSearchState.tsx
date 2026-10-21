@@ -49,6 +49,8 @@ interface SearchContext {
   savedSpots: WebSpot[]
   active: boolean
   loading: boolean
+  waiting: boolean
+  cancelSearch: () => void
   error: string
   result: WebSearchResult | null
   status: SearchStatus | null
@@ -68,10 +70,32 @@ async function requestApi(path: string, options: RequestInit = {}) {
   }
   return fetch(path, options)
 }
+class SearchBusyError extends Error {}
+const busyMessages = new Set([
+  '別の検索を実行中です。完了してから操作してください。',
+  '比較検索中です。結果を待ってください。',
+  '検索中です。結果を待ってください。',
+])
+function pauseForSearch(signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    signal.throwIfAborted()
+    const stop = () => {
+      clearTimeout(timer)
+      reject(signal.reason)
+    }
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', stop)
+      resolve()
+    }, 2000)
+    signal.addEventListener('abort', stop, { once: true })
+  })
+}
 async function json(response: Response): Promise<unknown> {
   if (!response.headers.get('content-type')?.includes('application/json'))
     throw new Error('検索サーバーから結果を受け取れませんでした。接続を確認してください。')
   const data = await response.json()
+  if (response.status === 409 && busyMessages.has(data?.error))
+    throw new SearchBusyError(data.error)
   if (!response.ok)
     throw new Error(typeof data?.error === 'string' ? data.error : '検索を完了できませんでした。')
   return data
@@ -110,6 +134,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   const locationRequest = useRef(false)
   const requestCenter = useRef<DiscoveryCenter | undefined>(undefined)
   const [loading, setLoading] = useState(false)
+  const [waiting, setWaiting] = useState(false)
   type ViewKey = 'places' | 'events' | 'default' | 'conditions'
   type View = { active: boolean; error: string; result: WebSearchResult | null }
   const emptyView = (): View => ({ active: false, error: '', result: null })
@@ -152,6 +177,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       running.current = false
       locationRequest.current = false
       setLoading(false)
+      setWaiting(false)
       const key = requestView.current
       setViews((v) => ({
         ...v,
@@ -172,6 +198,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       running.current = false
       locationRequest.current = false
       setLoading(false)
+      setWaiting(false)
       setViews({
         places: emptyView(),
         events: emptyView(),
@@ -192,6 +219,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     running.current = false
     locationRequest.current = false
     setLoading(false)
+    setWaiting(false)
     setActive(false)
     setError('')
   }
@@ -281,63 +309,104 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     const request = ++sequence.current
     const abort = new AbortController()
     controller.current = abort
-    const timer = setTimeout(() => abort.abort(), 130_000)
+    // Waiting and the provider request have separate deadlines. Only an explicit busy
+    // rejection can be retried: timeouts/network failures may already have been charged.
+    let timer = setTimeout(() => abort.abort(), 130_000)
     let sent = false
+    let waitingForSlot = false
+    let waitDeadline: number | null = null
+    const waitForSlot = async () => {
+      waitDeadline ??= Date.now() + 120_000
+      if (Date.now() >= waitDeadline)
+        throw new Error(
+          '検索が混み合っています。時間をおいて、下の検索ボタンからもう一度お試しください。',
+        )
+      waitingForSlot = true
+      setWaiting(true)
+      await pauseForSearch(abort.signal)
+    }
     try {
-      const config = readStatus(
-        await json(await requestApi(statusPath, { signal: abort.signal, cache: 'no-store' })),
-        method,
-      )
-      if (request !== sequence.current) return
-      setStatus(config)
-      if (!config.configured)
-        throw new Error(
-          publicSearchOrigin
-            ? '検索サービスの接続準備中です。案内した担当者にお知らせください。'
-            : method === 'comparison'
-              ? '比較検索にはOpenAI・Anthropic両方のAPIキーが必要です。Macの .env.research.local を設定して検索サーバーを再起動してください。'
-              : 'APIキーが未設定です。Macの .env.research.local を設定して検索サーバーを再起動してください。',
+      while (true) {
+        abort.signal.throwIfAborted()
+        const config = readStatus(
+          await json(await requestApi(statusPath, { signal: abort.signal, cache: 'no-store' })),
+          method,
         )
-      if (publicSearchOrigin && config.enabled === false)
-        throw new Error(
-          '新しい検索は現在停止しています。保存した候補は「行きたい」で確認できます。',
+        if (request !== sequence.current) return
+        setStatus(config)
+        if (!config.configured)
+          throw new Error(
+            publicSearchOrigin
+              ? '検索サービスの接続準備中です。案内した担当者にお知らせください。'
+              : method === 'comparison'
+                ? '比較検索にはOpenAI・Anthropic両方のAPIキーが必要です。Macの .env.research.local を設定して検索サーバーを再起動してください。'
+                : 'APIキーが未設定です。Macの .env.research.local を設定して検索サーバーを再起動してください。',
+          )
+        if (publicSearchOrigin && config.enabled === false)
+          throw new Error(
+            '新しい検索は現在停止しています。保存した候補は「行きたい」で確認できます。',
+          )
+        if (config.busy) {
+          await waitForSlot()
+          continue
+        }
+        if (
+          !config.demo &&
+          config.maxAttempts !== null &&
+          (config.attemptCount ?? config.attempts.length) >= config.maxAttempts
         )
-      if (config.busy) throw new Error('別の検索を実行中です。完了してから操作してください。')
-      if (
-        !config.demo &&
-        config.maxAttempts !== null &&
-        (config.attemptCount ?? config.attempts.length) >= config.maxAttempts
-      )
-        throw new Error(
-          publicSearchOrigin
-            ? `この接続先の検索上限（${config.maxAttempts}回）に達しました。保存した候補は引き続き確認できます。`
-            : `今回の${method === 'comparison' ? '比較検索' : '実検索'}は累計${config.maxAttempts}回までです。取得済みの「行きたい」は引き続き確認できます。`,
-        )
-      sent = true
-      const response = await json(
-        await requestApi(`/api/spot-search/${method === 'comparison' ? 'compare' : 'search'}`, {
-          method: 'POST',
-          signal: abort.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            ...(!publicSearchOrigin ? { 'X-Pilot-Token': config.token! } : {}),
-          },
-          body: JSON.stringify(query),
-        }),
-      )
-      const next = await parseWebSearchResult(response, query)
-      if ((method === 'comparison') !== (next.kind === 'comparison'))
-        throw new Error('検索方法と結果が一致しません。')
-      if ((config.demo ? 'sample' : 'live') !== next.mode)
-        throw new Error('検索モードと結果が一致しません。')
-      if (request === sequence.current) {
-        setResult(next)
+          throw new Error(
+            publicSearchOrigin
+              ? `この接続先の検索上限（${config.maxAttempts}回）に達しました。保存した候補は引き続き確認できます。`
+              : `今回の${method === 'comparison' ? '比較検索' : '実検索'}は累計${config.maxAttempts}回までです。取得済みの「行きたい」は引き続き確認できます。`,
+          )
+        waitingForSlot = false
+        setWaiting(false)
+        clearTimeout(timer)
+        timer = setTimeout(() => abort.abort(), 130_000)
+        sent = true
+        let response: unknown
+        try {
+          response = await json(
+            await requestApi(`/api/spot-search/${method === 'comparison' ? 'compare' : 'search'}`, {
+              method: 'POST',
+              signal: abort.signal,
+              headers: {
+                'Content-Type': 'application/json',
+                ...(!publicSearchOrigin ? { 'X-Pilot-Token': config.token! } : {}),
+              },
+              body: JSON.stringify(query),
+            }),
+          )
+        } catch (e) {
+          if (!(e instanceof SearchBusyError)) throw e
+          // Another tab can acquire the slot between GET status and POST compare.
+          sent = false
+          clearTimeout(timer)
+          timer = setTimeout(
+            () => abort.abort(),
+            Math.max(1, (waitDeadline ?? Date.now() + 120_000) - Date.now()) + 10_000,
+          )
+          await waitForSlot()
+          continue
+        }
+        const next = await parseWebSearchResult(response, query)
+        if ((method === 'comparison') !== (next.kind === 'comparison'))
+          throw new Error('検索方法と結果が一致しません。')
+        if ((config.demo ? 'sample' : 'live') !== next.mode)
+          throw new Error('検索モードと結果が一致しません。')
+        if (request === sequence.current) {
+          setResult(next)
+        }
+        break
       }
     } catch (e) {
       if (request === sequence.current)
         setError(
           abort.signal.aborted
-            ? '検索結果を受け取れませんでした。送信済みの処理には料金が発生する場合があります。自動では再検索しません。'
+            ? waitingForSlot
+              ? '検索が混み合っています。時間をおいて、下の検索ボタンからもう一度お試しください。'
+              : '検索結果を受け取れませんでした。送信済みの処理には料金が発生する場合があります。自動では再検索しません。'
             : e instanceof Error
               ? e.message
               : '検索を完了できませんでした。',
@@ -365,6 +434,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
           running.current = false
           locationRequest.current = false
           setLoading(false)
+          setWaiting(false)
         }
       }
     }
@@ -475,6 +545,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       if (request === sequence.current) {
         running.current = false
         setLoading(false)
+        setWaiting(false)
       }
     }
   }
@@ -503,6 +574,8 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
         savedSpots: groupPlaces(state.savedWebSpots),
         active,
         loading,
+        waiting,
+        cancelSearch: showSamples,
         error,
         result,
         status,

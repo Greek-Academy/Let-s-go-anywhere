@@ -49,7 +49,7 @@ test.afterEach(async ({ page }, info) => {
     await info.attach('確認画面', { body: await page.screenshot(), contentType: 'image/png' })
 })
 
-async function mockPublicSearch(context: BrowserContext) {
+async function mockPublicSearch(context: BrowserContext, isBusy = () => false) {
   const results = new Map<string, unknown>()
   const calls: string[] = []
   const queries: { region: string; theme: string }[] = []
@@ -70,7 +70,7 @@ async function mockPublicSearch(context: BrowserContext) {
           demo: false,
           configured: true,
           enabled: true,
-          busy: false,
+          busy: isBusy(),
           maxAttempts: null,
           attemptCount: calls.filter((x) => x === uid).length,
           attempts: results.has(uid) ? [{ state: 'completed' }] : [],
@@ -216,4 +216,39 @@ test('more than five searches across modes and reload retain saved candidates', 
   expect(calls).toHaveLength(7)
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await expect(page.locator('.saved-web-spot')).toHaveCount(1)
+})
+
+test('public search waits, then a logout cancels waiting without a request under either account', async ({
+  page,
+  context,
+  request,
+}) => {
+  let busy = true
+  const { calls } = await mockPublicSearch(context, () => busy)
+  await start(page, request)
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
+  await expect(
+    page.getByText('前の検索が終わるのを待っています。このままお待ちください。'),
+  ).toBeVisible()
+  expect(calls).toHaveLength(0)
+  busy = false
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(calls).toHaveLength(1)
+  busy = true
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
+  await expect(
+    page.getByText('前の検索が終わるのを待っています。このままお待ちください。'),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
+  await page.getByRole('button', { name: 'ログアウト', exact: true }).click()
+  busy = false
+  await login(page, await account(request))
+  await participate(page)
+  await expect(page.locator('.web-spot-card')).toHaveCount(0)
+  await expect(
+    page.getByText('前の検索が終わるのを待っています。このままお待ちください。'),
+  ).toHaveCount(0)
+  await page.clock.install()
+  await page.clock.fastForward(5000)
+  expect(calls).toHaveLength(1)
 })
