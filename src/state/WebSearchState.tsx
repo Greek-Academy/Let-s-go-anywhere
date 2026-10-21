@@ -189,7 +189,6 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     }
   }, [gps.fix])
   useEffect(() => {
-    if (!publicSearchOrigin) return
     const clear = () => {
       launchStarted.current = false
       setStartup('idle')
@@ -207,12 +206,16 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       })
       setStatus(null)
     }
+    // Deleting saved data also ends the in-memory search session. Otherwise old
+    // cards survive without their origin/time and the next onboarding skips startup.
+    if (!state.onboarded) clear()
+    if (!publicSearchOrigin) return
     window.addEventListener('driveplus-search-session-change', clear)
     return () => {
       window.removeEventListener('driveplus-search-session-change', clear)
       controller.current?.abort()
     }
-  }, [])
+  }, [state.onboarded])
   const showSamples = () => {
     sequence.current++
     controller.current?.abort()
