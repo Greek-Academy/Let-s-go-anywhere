@@ -291,6 +291,7 @@ export function Discover() {
     <div className="screen discover-screen drive-home">
       <div className="page-pad">
         <div className="drive-home-feed" ref={resultsRef}>
+          <h1 className="sr-only">今日は、どこまで走ろう？</h1>
           <div className="chips discovery-chips" aria-label="見つけるの種類">
             {['おすすめ', 'イベント'].map((category) => (
               <Chip
@@ -308,7 +309,7 @@ export function Discover() {
           <Header />
           <div className="discover-title">
             <span className="eyebrow teal">LET'S GO FOR A DRIVE</span>
-            <h1>今日は、どこまで走ろう？</h1>
+            <h2>今日は、どこまで走ろう？</h2>
           </div>
           <p className="discover-lead">走る時間も、ふたりの思い出に。</p>
           <section className="drive-origin-card">

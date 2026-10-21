@@ -25,6 +25,7 @@ test.afterEach(async ({ page }, info) => {
 
 test('keyboard onboarding and all four tabs move focus to the new screen without opening a text field', async ({
   page,
+  browserName,
 }) => {
   await page.goto('/#/welcome')
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
@@ -34,6 +35,9 @@ test('keyboard onboarding and all four tabs move focus to the new screen without
   await keyboardActivate(page, page.getByRole('button', { name: 'スキップ', exact: true }))
   await expect(page).toHaveURL(/#\/discover$/)
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+  // WebKit uses Option+Tab to include buttons in keyboard navigation by default.
+  await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab')
+  await expect(page.getByRole('button', { name: 'おすすめ', exact: true })).toBeFocused()
   for (const name of ['行きたい', '車を探す', '学ぶ', '見つける']) {
     await keyboardActivate(
       page,
