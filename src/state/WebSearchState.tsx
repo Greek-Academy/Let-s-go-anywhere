@@ -32,10 +32,6 @@ export interface SearchDraft {
   tag: string
 }
 type SearchMethod = 'comparison' | 'legacy'
-export interface ComparisonView {
-  order: 'general' | 'personal'
-  provider: 'all' | 'openai' | 'anthropic'
-}
 interface SearchStatus {
   kind?: 'comparison'
   demo: boolean
@@ -51,8 +47,6 @@ interface SearchStatus {
 interface SearchContext {
   startHomeSearch: () => void
   savedSpots: WebSpot[]
-  comparisonView: ComparisonView
-  setComparisonView: (patch: Partial<ComparisonView>) => void
   active: boolean
   loading: boolean
   error: string
@@ -115,7 +109,6 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   const [startup, setStartup] = useState<'idle' | 'locating' | 'ready' | 'done'>('idle')
   const locationRequest = useRef(false)
   const requestCenter = useRef<DiscoveryCenter | undefined>(undefined)
-  const [comparisonView, setView] = useState<ComparisonView>({ order: 'general', provider: 'all' })
   const [loading, setLoading] = useState(false)
   type ViewKey = 'places' | 'events' | 'default' | 'conditions'
   type View = { active: boolean; error: string; result: WebSearchResult | null }
@@ -339,7 +332,6 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
         throw new Error('検索モードと結果が一致しません。')
       if (request === sequence.current) {
         setResult(next)
-        setView({ order: 'general', provider: 'all' })
       }
     } catch (e) {
       if (request === sequence.current)
@@ -509,8 +501,6 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       value={{
         startHomeSearch,
         savedSpots: groupPlaces(state.savedWebSpots),
-        comparisonView,
-        setComparisonView: (patch) => setView((v) => ({ ...v, ...patch })),
         active,
         loading,
         error,

@@ -92,7 +92,9 @@ test('実サーバーの無料モードを経由し、出典・保存・詳細�
   await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await expect(
-    page.getByText('架空サンプルです。APIは使っていません。', { exact: true }),
+    page.getByText('架空サンプルで接続を確認中です。実検索・API費用は発生しません。', {
+      exact: true,
+    }),
   ).toBeVisible()
   await page.getByRole('button', { name: `${name}の詳細を見る`, exact: true }).click()
   await page.getByRole('button', { name: `${name}のOpenAIの出典を確認`, exact: true }).click()
@@ -236,7 +238,7 @@ test('0件・通信失敗・不正な応答でサンプルに置き換えず、�
   await expect(page.locator('.saved-web-spot')).toContainText('検証の緑地')
 })
 
-test('入力を変えても取得結果の条件を明示し、連打・戻るで追加検索しない', async ({ page }) => {
+test('入力を変えても取得済みの候補を維持し、連打で追加検索しない', async ({ page }) => {
   await page.route('**/api/spot-search/comparison-status', (r) => r.fulfill({ json: status }))
   let release!: () => void
   let posts = 0
@@ -258,15 +260,13 @@ test('入力を変えても取得結果の条件を明示し、連打・戻る�
   await expect(page.getByRole('button', { name: 'この希望で探す', exact: true })).toBeDisabled()
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('別の希望')
   release()
-  await expect(page.locator('.web-query-label')).toHaveText(
-    '検索した条件：東京都 新宿駅周辺 ／ 自然とカフェ',
-  )
-  await expect(page.getByText('下は前回の検索結果です', { exact: false })).toBeVisible()
+  await expect(page.locator('.web-query-label')).toHaveCount(0)
+  await expect(page.getByText('下は前回の検索結果です', { exact: false })).toHaveCount(0)
   await expect(page.locator('.web-spot-card')).toHaveCount(1)
   expect(posts).toBe(1)
 })
 
-test('サンプルへ戻した後に遅延応答で画面を差し替えず、不正なOriginをブリッジで拒否する', async ({
+test('イベントへ移った後に遅延応答で画面を差し替えず、不正なOriginをブリッジで拒否する', async ({
   page,
   request,
 }) => {
@@ -281,7 +281,7 @@ test('サンプルへ戻した後に遅延応答で画面を差し替えず、�
   })
   await enter(page)
   await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
-  await page.getByRole('button', { name: '検索結果を閉じる', exact: true }).click()
+  await page.getByRole('button', { name: 'イベント', exact: true }).click()
   release()
   await expect(page.locator('.web-search-results')).toHaveCount(0)
   const rejected = await request.post('/api/spot-search/compare', {

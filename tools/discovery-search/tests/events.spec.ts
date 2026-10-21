@@ -41,7 +41,8 @@ test('地域＋日付でイベント検索、タブ間の入力と結果保持�
   await page.getByRole('button', { name: '今日', exact: true }).click()
   expect(posts).toHaveLength(1)
   await page.getByRole('button', { name: '趣味のイベントを探す', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '10件のイベント候補' })).toBeVisible()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  await expect(page.locator('.web-spot-card').first()).toContainText(first)
   expect(posts[1]).toEqual({
     stationId: '1130208',
     region: '東京都 新宿駅周辺',
@@ -58,15 +59,16 @@ test('地域＋日付でイベント検索、タブ間の入力と結果保持�
   await expect(page.getByRole('textbox', { name: 'お出かけを検索' })).toHaveValue(
     '落ち着いたカフェ',
   )
-  await expect(page.locator('.web-query-label')).toContainText('落ち着いたカフェ')
-  await expect(page.getByRole('heading', { name: '10件のお店・スポット候補' })).toBeVisible()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  await expect(page.locator('.web-spot-card').first()).toContainText('サンプル01・小さな喫茶店')
   await page.getByRole('button', { name: 'イベント', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await page.getByRole('button', { name: '日付を選ぶ', exact: true }).click()
   await page
     .getByLabel('イベントの日付', { exact: true })
     .fill(addDays(eventDates({ mode: 'today', date: '' })!.start, 1))
-  await expect(page.getByText('下は前回の検索結果です', { exact: false })).toBeVisible()
+  await expect(page.getByText('下は前回の検索結果です', { exact: false })).toHaveCount(0)
+  expect(posts).toHaveLength(2)
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await page.reload()
   await page.locator('.saved-web-spot').getByRole('button').first().click()

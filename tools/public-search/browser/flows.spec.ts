@@ -123,8 +123,9 @@ test('invited tester searches and saves; logout/reload isolate private results a
   await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await page.getByRole('button', { name: 'サンプル01・小さな喫茶店を保存', exact: true }).click()
-  await page.getByRole('button', { name: '好みに寄せたおすすめ', exact: true }).click()
-  await expect(page.getByText('参考にしている特徴', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '好みに寄せたおすすめ', exact: true })).toHaveCount(
+    0,
+  )
   await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
   await page.getByRole('button', { name: 'ログアウト', exact: true }).click()
   await login(page, await account(request))
@@ -181,7 +182,8 @@ test('free text and structured drive choices reach the public search independent
     drive: { mode: 'conditions', activities: ['海を見たい'], road: '高速道路を走りたい' },
   })
   await page.getByRole('button', { name: '自由入力の結果', exact: true }).click()
-  await expect(page.locator('.web-query-label')).toContainText('静かな公園')
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  await expect(page.getByRole('textbox', { name: 'お出かけを検索' })).toHaveValue('静かな公園')
   expect(queries).toHaveLength(2)
 })
 test('more than five searches across modes and reload retain saved candidates', async ({

@@ -23,7 +23,7 @@ test.afterEach(async ({ page }, info) => {
   if (info.status === 'passed')
     await info.attach('比較検索の画面', { body: await page.screenshot(), contentType: 'image/png' })
 })
-test('簡潔なカード→詳細の出典→保存→好み順→再読込を追加検索なしで操作', async ({ page }) => {
+test('簡潔なカード→詳細の出典→保存→順番維持→再読込を追加検索なしで操作', async ({ page }) => {
   let requests = 0
   page.on('request', (r) => {
     if (r.url().endsWith('/api/spot-search/compare')) {
@@ -58,32 +58,29 @@ test('簡潔なカード→詳細の出典→保存→好み順→再読込を�
     .locator('.detail-body')
     .getByRole('button', { name: '行きたいに保存', exact: true })
     .click()
-  const card = page.locator('.event-detail')
-  await card.getByRole('button', { name: 'コーヒー', exact: true }).click()
-  await expect(card.getByRole('button', { name: 'コーヒー', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'false',
-  )
+  await expect(page.locator('.recommendation-feedback')).toContainText('コーヒー')
+  await expect(page.locator('.recommendation-feedback button')).toHaveCount(0)
   await page.getByRole('button', { name: '戻る', exact: true }).click()
-  await page.getByRole('button', { name: '好みに寄せたおすすめ', exact: true }).click()
-  await expect(page.locator('.preference-summary')).toContainText('カフェ（1件）')
-  await expect(page.locator('.preference-summary')).not.toContainText('コーヒー')
+  await expect(page.locator('.comparison-order, .preference-summary')).toHaveCount(0)
+  await expect(page.locator('.web-spot-card').first()).toContainText(first)
   await page.getByRole('button', { name: `${first}の詳細を見る`, exact: true }).click()
   await expect(page.getByRole('heading', { name: 'OpenAIの提案理由' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Claudeの提案理由' })).toBeVisible()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
-  await expect(
-    page.getByRole('button', { name: '好みに寄せたおすすめ', exact: true }),
-  ).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: '好みに寄せたおすすめ', exact: true })).toHaveCount(
+    0,
+  )
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await page.reload()
   await expect(page.locator('.saved-web-spot')).toHaveCount(1)
   await page.locator('.saved-web-spot').getByRole('button').first().click()
   await expect(page.getByRole('heading', { name: first, exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'このいいねを好み順に使わない', exact: true }).click()
+  await expect(
+    page.getByRole('button', { name: 'このいいねを好み順に使わない', exact: true }),
+  ).toHaveCount(0)
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('driveplus.mock.v1')!))
-  expect(stored.savedWebSpots[0].likedFor).toEqual([])
+  expect(stored.savedWebSpots).toHaveLength(1)
   expect(stored.memo.questions).toBe('共有しない不安のメモ')
   expect(requests).toBe(1)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -110,7 +107,7 @@ test('不足キー・1回上限・地域未指定で比較POSTせず、入力変
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('別の希望')
   expect(posts).toBe(0)
 })
-test('片方の失敗・件数不足を明示し、残った候補で保存と詳細を使える', async ({ page }) => {
+test('片方の失敗を明示し、残った候補で保存と詳細を使える', async ({ page }) => {
   await enter(page)
   await page.route('**/api/spot-search/compare', async (r) => {
     const response = await r.fetch()
@@ -130,10 +127,10 @@ test('片方の失敗・件数不足を明示し、残った候補で保存と�
   await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(6)
   await expect(page.getByRole('alert')).toContainText('Claude：検証用の通信失敗')
-  await expect(page.getByText('今回は6件です', { exact: false })).toBeVisible()
+  await expect(page.getByText('今回は6件です', { exact: false })).toHaveCount(0)
   await page.getByRole('button', { name: `${first}を保存`, exact: true }).click()
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('違う条件')
-  await expect(page.getByText('下は前回の検索結果です', { exact: false })).toBeVisible()
+  await expect(page.getByText('下は前回の検索結果です', { exact: false })).toHaveCount(0)
   await page.getByRole('button', { name: `${first}の詳細を見る`, exact: true }).click()
   await expect(page.getByRole('button', { name: '行きたいに保存済み', exact: true })).toBeVisible()
 })
@@ -168,7 +165,7 @@ test('Mac内の比較結果・台帳は開発サーバーの直接URLから配�
   }
 })
 
-test('住所表記が違う旧保存を1枚にまとめ、両社の出典・保存解除・好みの変更を維持する', async ({
+test('住所表記が違う旧保存を1枚にまとめ、両社の出典・保存解除・旧データを維持する', async ({
   page,
 }) => {
   const query = { region: '京都府', theme: 'カフェ' }
@@ -260,15 +257,17 @@ test('住所表記が違う旧保存を1枚にまとめ、両社の出典・保�
   await page.locator('.saved-outing').getByRole('button').first().click()
   await expect(page.getByRole('heading', { name: 'OpenAIの提案理由' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Claudeの提案理由' })).toBeVisible()
-  await page.getByRole('button', { name: 'このいいねを好み順に使わない', exact: true }).click()
+  await expect(
+    page.getByRole('button', { name: 'このいいねを好み順に使わない', exact: true }),
+  ).toHaveCount(0)
   expect(
     await page.evaluate(() =>
       JSON.parse(localStorage.getItem('driveplus.mock.v1')!).savedWebSpots.map(
         (s: { likedFor: string[] }) => s.likedFor,
       ),
     ),
-  ).toEqual([[], []])
-  await page.getByRole('button', { name: '自然', exact: true }).click()
+  ).toEqual([['自然'], ['自然']])
+  await expect(page.locator('.recommendation-feedback')).toContainText('自然')
   // An old bookmark still works after the search result has one canonical card.
   await page.evaluate((id) => {
     location.hash = `/web-spots/${id}`

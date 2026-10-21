@@ -1,6 +1,6 @@
 import { WebEventSchedule } from '../components/WebEventSchedule'
 import { DriveTravelInfo } from '../components/DriveTravelInfo'
-import { RecommendationBadges, RecommendationFeedback } from '../components/RecommendationFeedback'
+import { RecommendationBadges, RecommendationFeatures } from '../components/RecommendationFeedback'
 import { providerNames } from '../domain/recommendations'
 import { ShareCandidateButton } from '../sharing/components'
 import { fromWebSpot } from '../sharing/candidates'
@@ -92,7 +92,7 @@ export function WebSpotDetail() {
         ) : (
           <p className="body-copy">{spot.matchReason}</p>
         )}
-        <RecommendationFeedback spot={spot} />
+        <RecommendationFeatures spot={spot} />
         <p className="notice">
           {spot.mode === 'sample'
             ? '架空の検索サンプルです。出典リンクも動作確認用です。'

@@ -5195,3 +5195,20 @@ small {
   display: block;
   margin-top: 6px;
 }
+
+/* Start discovery with the category switch and destination cards. */
+.drive-home-feed {
+  padding-top: 12px;
+  scroll-margin-top: 12px;
+}
+.drive-home-feed .discovery-chips {
+  margin: 0 0 18px;
+}
+.drive-home-controls {
+  border-top: 1px solid var(--line);
+  margin-top: 28px;
+  padding-top: 16px;
+}
+.drive-home-controls .app-header {
+  padding-inline: 0;
+}

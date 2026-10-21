@@ -44,6 +44,32 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   await expect(page.getByRole('button', { name: '前回の比較結果を開く（無料）' })).toHaveCount(0)
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(bodies).toHaveLength(1)
+  const layout = await page.evaluate(() => {
+    const tabs = document.querySelector('.discovery-chips')!.getBoundingClientRect()
+    const firstCard = document.querySelector('.web-spot-card')!.getBoundingClientRect()
+    const controls = document.querySelector('.drive-home-controls')!
+    const cards = document.querySelectorAll('.web-spot-card')
+    const last = cards[cards.length - 1]
+    const bottom = document.querySelector('.bottom-nav')?.getBoundingClientRect().top ?? innerHeight
+    return {
+      afterTabs: firstCard.top >= tabs.bottom,
+      gap: firstCard.top - tabs.bottom,
+      visible: firstCard.top < bottom,
+      controlsAfterCards: !!(
+        last.compareDocumentPosition(controls) & Node.DOCUMENT_POSITION_FOLLOWING
+      ),
+    }
+  })
+  expect(layout.afterTabs).toBe(true)
+  expect(layout.gap).toBeLessThan(32)
+  expect(layout.visible).toBe(true)
+  expect(layout.controlsAfterCards).toBe(true)
+  await expect(
+    page.locator(
+      '.web-result-heading, .web-query-label, .web-hobby-query-label, .web-drive-query-label, .comparison-order',
+    ),
+  ).toHaveCount(0)
+  await expect(page.getByText(/10件を目安に探していますが/)).toHaveCount(0)
   expect(bodies[0]).toMatchObject({
     location: { lat: 35.691, lng: 139.7 },
     drive: driveQuery('default', undefined, ['音楽', '自然']),
@@ -54,7 +80,9 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   await expect(page.locator('.web-spot-card .drive-travel-info').first()).toContainText(
     '架空の時間',
   )
-  await expect(page.locator('.web-hobby-query-label')).toContainText('音楽・自然')
+  await expect(page.getByRole('button', { name: '好みに寄せたおすすめ', exact: true })).toHaveCount(
+    0,
+  )
   await page.getByRole('button', { name: first + 'を保存', exact: true }).click()
   await page.getByRole('button', { name: first + 'の詳細を見る', exact: true }).click()
   await expect(page.locator('.event-detail .drive-travel-info')).toContainText('車で片道 約')
@@ -62,7 +90,7 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   const free = page.getByRole('textbox', { name: 'お出かけを検索' })
   await free.fill('海鮮を食べたい')
   await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
-  await expect(page.locator('.web-query-label')).toContainText('海鮮を食べたい')
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(bodies[1].drive).toEqual(driveQuery('free'))
   await page.getByRole('button', { name: /気分からドライブを探す/ }).click()
@@ -71,7 +99,7 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   await page.getByRole('button', { name: '1〜2時間', exact: true }).click()
   expect(bodies).toHaveLength(2)
   await page.getByRole('button', { name: '選んだ条件で探す', exact: true }).click()
-  await expect(page.locator('.web-drive-query-label')).toContainText('夜景を見たい')
+  await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(bodies[2].theme).not.toContain('海鮮')
   expect(bodies[2].drive).toEqual(
@@ -83,15 +111,15 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
     }),
   )
   await page.getByRole('button', { name: '自由入力の結果', exact: true }).click()
-  await expect(page.locator('.web-query-label')).toContainText('海鮮を食べたい')
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await page.getByRole('button', { name: 'イベント', exact: true }).click()
   await page.getByRole('button', { name: '趣味のイベントを探す', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '10件のイベント候補' })).toBeVisible()
+  await expect(page.locator('.web-spot-card').first()).toContainText('イベントサンプル')
   expect(bodies[3].drive).toEqual(driveQuery('events', undefined, ['音楽', '自然']))
   expect(bodies[3].theme).toBe('イベント')
   await page.getByRole('button', { name: 'おすすめ', exact: true }).click()
   await page.getByRole('button', { name: 'ドライブデート', exact: true }).click()
-  await expect(page.locator('.web-query-label')).toContainText('ドライブデートを楽しめる行き先')
+  await expect(page.locator('.web-spot-card').first()).toContainText(first)
   expect(bodies).toHaveLength(4)
   const raw = await page.evaluate(() => localStorage.getItem('driveplus.mock.v1')!)
   for (const secret of ['35.691', '139.7', 'durationSeconds', 'distanceMeters', 'travel'])
@@ -105,7 +133,7 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   await page.locator('.saved-web-spot').getByRole('button').first().click()
   await expect(page.locator('.event-detail .drive-travel-info')).toContainText('未確認')
 })
-test('onboarding hobbies feed the home search; editing hobbies labels old results without a charge', async ({
+test('onboarding hobbies feed the home search; editing hobbies does not change results or start a paid search', async ({
   page,
 }) => {
   const bodies: Record<string, any>[] = []
@@ -135,11 +163,11 @@ test('onboarding hobbies feed the home search; editing hobbies labels old result
   await page.getByRole('button', { name: '趣味を変更する', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: '温泉', exact: true }).click()
   await page.getByRole('button', { name: 'この趣味にする', exact: true }).click()
-  await expect(page.getByText(/入力条件が変わっています/)).toBeVisible()
-  await expect(page.locator('.web-hobby-query-label')).toContainText('自然・温泉')
+  await expect(page.getByText(/入力条件が変わっています/)).toHaveCount(0)
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(bodies).toHaveLength(1)
   await page.getByRole('button', { name: 'この出発地からドライブ先を探す', exact: true }).click()
-  await expect(page.locator('.web-hobby-query-label')).toHaveText('選んだ趣味：自然')
+  await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
   expect(bodies).toHaveLength(2)
   expect(bodies[1].drive.hobbies).toEqual(['自然'])
 })
