@@ -136,7 +136,9 @@ test('closing a pending sheet ignores its late GPS result', async ({ page }) => 
   expect(await calls(page)).toBe(1)
 })
 
-test('background and ten-minute expiry require explicit reacquisition', async ({ page }) => {
+test('tab switching keeps the fix without extending its ten-minute lifetime; page exit clears it', async ({
+  page,
+}) => {
   await enter(page)
   await page.clock.install()
   await chooseLocation(page)
@@ -147,11 +149,22 @@ test('background and ten-minute expiry require explicit reacquisition', async ({
   await chooseLocation(page)
   await acquire(page)
   await expect(page.locator('.drive-origin-card strong')).toHaveText('取得した現在地')
+  await page.clock.fastForward(540000)
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: true })
     document.dispatchEvent(new Event('visibilitychange'))
     Object.defineProperty(document, 'hidden', { configurable: true, value: false })
+    document.dispatchEvent(new Event('visibilitychange'))
   })
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('取得した現在地')
+  expect(await calls(page)).toBe(2)
+  await page.clock.fastForward(60001)
   await expect(page.locator('.drive-origin-card strong')).toHaveText('現在地を再取得してください')
   expect(await calls(page)).toBe(2)
+  await chooseLocation(page)
+  await acquire(page)
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('取得した現在地')
+  await page.evaluate(() => window.dispatchEvent(new Event('pagehide')))
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('現在地を再取得してください')
+  expect(await calls(page)).toBe(3)
 })
