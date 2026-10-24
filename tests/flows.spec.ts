@@ -1,5 +1,6 @@
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
+import { createInitialState } from '../src/state/model'
 import { showUnscopedSamples, chooseStation } from './helpers/discovery'
 
 test.beforeEach(async ({ page }) => {
@@ -24,26 +25,21 @@ async function readState(page: Page) {
   return page.evaluate(() => JSON.parse(localStorage.getItem('driveplus.mock.v1') || '{}'))
 }
 
-test('three-question onboarding supports back, multiple interests, tabs and reload', async ({
-  page,
-}) => {
+test('hobby onboarding supports back, completion, tabs and reload', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'はじめる', exact: true }).click()
-  await chooseStation(page, '出発する最寄駅', 'しんじゅく', '新宿駅（東京都）')
-  await page.getByRole('button', { name: '次へ', exact: true }).click()
-  await page.getByRole('button', { name: /恋人・パートナー/ }).click()
+  await expect(page.getByRole('combobox')).toHaveCount(0)
+  await page.getByRole('button', { name: '自然', exact: true }).click()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
-  await expect(page.getByRole('combobox', { name: '出発する最寄駅' })).toHaveValue('新宿')
-  await page.getByRole('button', { name: '次へ', exact: true }).click()
-  await expect(page.getByRole('button', { name: /恋人・パートナー/ })).toHaveAttribute(
+  await expect(page).toHaveURL(/#\/welcome$/)
+  await page.getByRole('button', { name: 'はじめる', exact: true }).click()
+  await expect(page.getByRole('button', { name: '自然', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   )
-  await page.getByRole('button', { name: '次へ', exact: true }).click()
-  await page.getByRole('button', { name: '自然 心ほどける景色' }).click()
-  await page.getByRole('button', { name: '温泉 ゆっくり、ひと休み' }).click()
-  await page.getByRole('button', { name: 'おすすめを見る' }).click()
+  await page.getByRole('button', { name: 'ドライブ先を見つける', exact: true }).click()
   await expect(page).toHaveURL(/#\/discover$/)
+  await expect(page.getByRole('button', { name: /ラーメンタイプ診断/ })).toHaveCount(0)
   for (const name of ['行きたい', '車を探す', '学ぶ', '見つける']) {
     await page.getByRole('navigation').getByRole('button', { name, exact: true }).click()
     await expect(
@@ -53,13 +49,73 @@ test('three-question onboarding supports back, multiple interests, tabs and relo
   await page.reload()
   const state = await readState(page)
   expect(state.profile).toMatchObject({
-    area: '東京都 新宿駅周辺',
-    stationId: '1130208',
-    companion: '恋人・パートナー',
-    interests: ['自然', '温泉'],
+    area: '',
+    stationId: null,
+    companion: '',
+    interests: ['自然'],
   })
   expect(state.onboarded).toBe(true)
   await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(4)
+})
+
+test('retired setup URLs return to the hobby setup and a single skip completes it', async ({
+  page,
+}) => {
+  for (const route of ['/onboarding/2', '/onboarding/3']) {
+    await page.goto('/#' + route)
+    await expect(page).toHaveURL(/#\/onboarding\/1$/)
+    await expect(page.getByRole('group', { name: '趣味を選ぶ' })).toBeVisible()
+  }
+  await page.getByRole('button', { name: 'スキップ', exact: true }).click()
+  await expect(page).toHaveURL(/#\/discover$/)
+  await page.reload()
+  expect((await readState(page)).onboarded).toBe(true)
+  expect((await readState(page)).profile.stationId).toBeNull()
+  for (const route of ['/onboarding/2', '/onboarding/3']) {
+    await page.goto('/#' + route)
+    await expect(page).toHaveURL(/#\/discover$/)
+  }
+})
+
+test('withdrawn diagnosis links and saved answers do not block existing saved outings or profile writes', async ({
+  page,
+}) => {
+  const initial = createInitialState()
+  const old = {
+    ...initial,
+    onboarded: true,
+    savedEvents: ['fuji'],
+    profile: { ...initial.profile, name: '引き継ぎ確認', companion: '友人', interests: ['自然'] },
+    ramen: {
+      dataset: '2774febf7f831725e3da3564bfe1f5506d263e66ea2f94146903bb7609207c74',
+      cursor: 1,
+      answers: { q001: 'yes', q002: 'maybe' },
+    },
+  }
+  await page.addInitScript((old) => {
+    if (!localStorage.getItem('driveplus.mock.v1'))
+      localStorage.setItem('driveplus.mock.v1', JSON.stringify(old))
+  }, old)
+  for (const route of ['/ramen', '/ramen/question/2', '/ramen/result', '/ramen/about']) {
+    await page.goto('/#' + route)
+    await expect(page).toHaveURL(/#\/discover$/)
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  }
+  await page.goto('/#/profile/edit')
+  await chooseStation(page, '出発する最寄駅', 'きょうと', '京都駅（京都府）')
+  await page.getByRole('button', { name: '変更を保存', exact: true }).click()
+  await expect.poll(async () => (await readState(page)).profile.stationId).toBe('100216')
+  await page.reload()
+  const saved = await readState(page)
+  expect(saved).not.toHaveProperty('ramen')
+  expect(saved.savedEvents).toEqual(['fuji'])
+  expect(saved.profile).toMatchObject({
+    name: '引き継ぎ確認',
+    companion: '友人',
+    interests: ['自然'],
+  })
+  await page.goto('/#/saved')
+  await expect(page.getByRole('button', { name: /富士山/ }).first()).toBeVisible()
 })
 
 test('saved outings stay synchronized; back restores scroll; unverified SNS stays personal', async ({
@@ -295,7 +351,7 @@ test('phone contains scroll; all routes render without errors, overflow or broke
 
 test('sheets stay inside the phone, trap focus and can close', async ({ page }, testInfo) => {
   await enter(page)
-  await page.getByRole('button', { name: 'お出かけの絞り込み' }).click()
+  await page.getByRole('button', { name: '現在地からドライブ先を探す' }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   const bounds = await dialog.boundingBox()
@@ -303,9 +359,11 @@ test('sheets stay inside the phone, trap focus and can close', async ({ page }, 
   expect(bounds!.x).toBeGreaterThanOrEqual(phone!.x - 1)
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(phone!.x + phone!.width + 1)
   await page.keyboard.press('Shift+Tab')
-  await expect(page.getByRole('button', { name: '条件をリセット', exact: true })).toBeFocused()
+  await expect(
+    page.getByRole('button', { name: '現在地を使わず、駅から探す', exact: true }),
+  ).toBeFocused()
   if (testInfo.project.name === 'desktop') await page.keyboard.press('Escape')
   else await page.getByRole('button', { name: '閉じる', exact: true }).click()
   await expect(dialog).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'お出かけの絞り込み' })).toBeFocused()
+  await expect(page.getByRole('button', { name: '現在地からドライブ先を探す' })).toBeFocused()
 })

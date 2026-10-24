@@ -46,23 +46,30 @@ export function DiscoveryLocationProvider({ children }: { children: ReactNode })
   }, [expire])
   useEffect(() => {
     if (!fix) return
-    const timer = setTimeout(expire, Math.max(0, fix.timestamp + locationLifetime - Date.now()))
-    return () => clearTimeout(timer)
+    const expiresAt = fix.timestamp + locationLifetime
+    const expireIfNeeded = () => {
+      if (Date.now() >= expiresAt) expire()
+    }
+    const resume = () => {
+      if (!document.hidden) expireIfNeeded()
+    }
+    const timer = setTimeout(expire, Math.max(0, expiresAt - Date.now()))
+    // A temporary tab/app switch keeps the original ten-minute fix and search.
+    // Check wall time on return as background timers may have been suspended.
+    document.addEventListener('visibilitychange', resume)
+    const listener = isNativeApp ? NativeApp.addListener('resume', expireIfNeeded) : null
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('visibilitychange', resume)
+      void listener?.then((h) => h.remove()).catch(() => {})
+    }
   }, [fix, expire])
   useEffect(() => {
-    const hide = () => {
-      // OS permission dialogs may briefly hide the document. Native pause handles real backgrounding.
-      if (document.hidden && !controller.current) expire()
-    }
-    document.addEventListener('visibilitychange', hide)
     window.addEventListener('pagehide', expire)
     window.addEventListener('driveplus-search-session-change', reset)
-    const listener = isNativeApp ? NativeApp.addListener('pause', expire) : null
     return () => {
-      document.removeEventListener('visibilitychange', hide)
       window.removeEventListener('pagehide', expire)
       window.removeEventListener('driveplus-search-session-change', reset)
-      void listener?.then((h) => h.remove()).catch(() => {})
       sequence.current++
       controller.current?.abort()
     }
@@ -70,7 +77,7 @@ export function DiscoveryLocationProvider({ children }: { children: ReactNode })
   useEffect(() => {
     if (!state.onboarded) reset()
   }, [state.onboarded, reset])
-  const locate = async () => {
+  const locate = useCallback(async () => {
     if (controller.current) return false
     const request = ++sequence.current
     const abort = new AbortController()
@@ -97,7 +104,7 @@ export function DiscoveryLocationProvider({ children }: { children: ReactNode })
         setLoading(false)
       }
     }
-  }
+  }, [])
   return (
     <Context.Provider value={{ enabled, fix, loading, error, locate, cancel, reset }}>
       {children}

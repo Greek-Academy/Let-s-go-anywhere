@@ -1,5 +1,6 @@
 import { WebEventSchedule } from '../components/WebEventSchedule'
-import { RecommendationBadges, RecommendationFeedback } from '../components/RecommendationFeedback'
+import { DriveTravelInfo } from '../components/DriveTravelInfo'
+import { RecommendationBadges, RecommendationFeatures } from '../components/RecommendationFeedback'
 import { providerNames } from '../domain/recommendations'
 import { ShareCandidateButton } from '../sharing/components'
 import { fromWebSpot } from '../sharing/candidates'
@@ -79,6 +80,7 @@ export function WebSpotDetail() {
         <p className="detail-subtitle">{spot.area}</p>
         <p className="body-copy">{spot.summary}</p>
         <WebEventSchedule spot={spot} />
+        <DriveTravelInfo travel={spot.travel} />
         <SectionHeading title={spot.event ? 'イベントを提案した理由' : '希望に合うと考えた理由'} />
         {spot.recommendations ? (
           spot.recommendations.map((r) => (
@@ -90,7 +92,7 @@ export function WebSpotDetail() {
         ) : (
           <p className="body-copy">{spot.matchReason}</p>
         )}
-        <RecommendationFeedback spot={spot} />
+        <RecommendationFeatures spot={spot} />
         <p className="notice">
           {spot.mode === 'sample'
             ? '架空の検索サンプルです。出典リンクも動作確認用です。'
@@ -104,7 +106,6 @@ export function WebSpotDetail() {
             ['営業状況・営業時間', '未確認'],
             ['料金・予約条件', '未確認'],
             ['駐車場・車の入口', '未確認'],
-            ['距離・所要時間', '未確認'],
             ['画像', 'ジャンルのイメージイラスト'],
             ['実際の場所の写真・利用条件', '未取得・未確認'],
           ]}

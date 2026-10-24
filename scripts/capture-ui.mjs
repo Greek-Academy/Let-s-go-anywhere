@@ -12,11 +12,10 @@ await page.goto('http://127.0.0.1:5173/')
 await page.waitForFunction(() => Array.from(document.images).every((img) => img.complete))
 await page.screenshot({ animations: 'disabled', path: `${directory}/01-welcome-desktop.png` })
 await page.getByRole('button', { name: 'はじめる', exact: true }).click()
-await page.getByRole('button', { name: '次へ', exact: true }).click()
-await page.getByRole('button', { name: /恋人・パートナー/ }).click()
+await page.getByRole('combobox', { name: '出発する最寄駅' }).fill('しんじゅく')
+await page.getByRole('option').filter({ hasText: '新宿駅（東京都）' }).first().click()
 await page.screenshot({ animations: 'disabled', path: `${directory}/02-onboarding-desktop.png` })
-await page.getByRole('button', { name: '次へ', exact: true }).click()
-await page.getByRole('button', { name: 'おすすめを見る' }).click()
+await page.getByRole('button', { name: 'ホームへ', exact: true }).click()
 for (const [name, route] of [
   ['03-discover', '/discover'],
   ['04-cars', '/cars'],

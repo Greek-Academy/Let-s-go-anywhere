@@ -23,7 +23,7 @@ export class Ledger {
       if (
         value.version !== 1 ||
         !Array.isArray(value.attempts) ||
-        value.attempts.length > this.maxAttempts ||
+        (this.maxAttempts !== null && value.attempts.length > this.maxAttempts) ||
         !value.attempts.every(
           (a) => typeof a.id === 'string' && ['reserved', 'completed', 'failed'].includes(a.state),
         )
@@ -66,7 +66,7 @@ export class Ledger {
   }
   reserve() {
     return this.update((data) => {
-      if (data.attempts.length >= this.maxAttempts)
+      if (this.maxAttempts !== null && data.attempts.length >= this.maxAttempts)
         throw new PilotError(
           'limit',
           `今回の実検索は${this.maxAttempts}回までです。結果を確認してから次の検証を決めます。`,

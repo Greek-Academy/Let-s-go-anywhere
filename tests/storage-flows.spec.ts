@@ -212,7 +212,7 @@ test('markup and hostile URLs stay text and do not become published content or n
   await expect(page.getByRole('dialog').getByRole('link')).toHaveCount(0)
   await page.getByRole('button', { name: 'アプリに戻る', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '見つける', exact: true }).click()
-  await expect(page.locator('.event-list')).not.toContainText(markup)
+  await expect(page.locator('.discover-screen')).not.toContainText(markup)
   expect(requests).toEqual([])
   expect(await stored(page)).toBe(raw)
 })

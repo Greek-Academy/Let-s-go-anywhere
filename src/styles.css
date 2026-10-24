@@ -1030,7 +1030,6 @@ small {
   border-color: var(--teal);
 }
 .choice-stack,
-.companion-choices,
 .filter-options {
   display: flex;
   flex-direction: column;
@@ -1380,22 +1379,6 @@ small {
   order: 2;
   margin-left: 6px;
 }
-.welcome-dots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 21px;
-}
-.welcome-dots span {
-  background: #ffffff4d;
-  width: 4px;
-  height: 4px;
-  border-radius: 4px;
-}
-.welcome-dots .active {
-  background: #fff;
-  width: 17px;
-}
 .welcome-skip {
   min-height: 46px;
   color: #f2f8ef;
@@ -1428,26 +1411,9 @@ small {
   gap: 24px;
   flex-shrink: 0;
 }
-.step-progress {
-  display: flex;
-  gap: 5px;
-  flex: 1;
-  max-width: 124px;
-  margin: 0 auto;
-}
-.step-progress > span {
-  width: 33.33%;
-  height: 4px;
-  border-radius: 5px;
-  background: #e9efea;
-}
-.step-progress > span.active {
-  background: var(--teal);
-}
-.step-count {
-  color: #8d9e92;
-  font-size: 10px;
-  padding-right: 8px;
+.onboarding-label {
+  color: #6b8179;
+  font-size: 12px;
 }
 .onboarding-content {
   padding: 26px 25px 10px;
@@ -1590,80 +1556,6 @@ small {
   margin-top: 13px;
   font-size: 10px;
 }
-.companion-choices .choice {
-  padding: 14px;
-  min-height: 71px;
-}
-.companion-choices .choice-icon {
-  margin-right: 2px;
-  font-size: 25px;
-  background: #f6f6ef;
-  border-radius: 12px;
-  width: 39px;
-  height: 39px;
-}
-.companion-choices .selected .choice-icon {
-  background: #e3f2e6;
-}
-.interest-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.interest-tile {
-  border: 1.5px solid #e8ede6;
-  border-radius: 13px;
-  padding: 5px 5px 9px;
-  position: relative;
-  text-align: left;
-  overflow: hidden;
-  background: #fff;
-}
-.interest-tile.selected {
-  border-color: #4dae8d;
-  background: #f0f8ef;
-}
-.interest-tile img {
-  width: 100%;
-  height: 74px;
-  border-radius: 8px;
-}
-.interest-tile strong {
-  display: block;
-  font-size: 12px;
-  padding: 8px 5px 2px;
-}
-.interest-tile small {
-  font-size: 8px;
-  color: #91a08d;
-  padding: 0 5px;
-}
-.interest-check {
-  position: absolute;
-  top: 11px;
-  right: 11px;
-  border: 1px solid #ffffffd1;
-  color: #fff;
-  background: #ffffff50;
-  width: 19px;
-  height: 19px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-}
-.selected .interest-check {
-  border-color: #fff;
-  background: var(--teal);
-}
-.interest-selection {
-  font-size: 11px;
-  color: #8b9d87;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  margin: 17px 0 3px;
-}
 .onboarding-footer {
   padding: 18px 25px 2px;
   margin-top: auto;
@@ -1775,7 +1667,8 @@ small {
   font-size: 7px;
   margin-bottom: 7px;
 }
-.discover-title h1 {
+.discover-title h1,
+.drive-home .discover-title h2 {
   font-size: 24px;
   line-height: 1.55;
   letter-spacing: -0.8px;
@@ -5088,4 +4981,235 @@ small {
 }
 .web-event-schedule p {
   margin: 3px 0;
+}
+
+/* Drive discovery: scoped to the home and new hobby setup. */
+.hobby-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.hobby-choice {
+  position: relative;
+  overflow: hidden;
+  border: 1.5px solid var(--line);
+  border-radius: 15px;
+  background: #fff;
+  text-align: left;
+  padding: 5px 5px 10px;
+  min-width: 0;
+}
+.hobby-choice img {
+  display: block;
+  width: 100%;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.hobby-choice span {
+  display: block;
+  padding: 7px 5px 0;
+}
+.hobby-choice strong {
+  font-size: 13px;
+  display: block;
+}
+.hobby-choice small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.hobby-choice.selected {
+  border-color: var(--teal);
+  background: #f0f8f4;
+}
+.hobby-choice > svg {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--teal);
+  color: white;
+  border-radius: 50%;
+  padding: 2px;
+  box-sizing: content-box;
+}
+.hobbies-onboarding .onboarding-content {
+  padding-top: 12px;
+}
+.hobbies-onboarding .onboarding-footer {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  box-shadow: 0 -8px 20px #ffffffed;
+  padding-bottom: 10px;
+}
+.drive-home .discover-title {
+  display: block;
+  margin-top: 12px;
+}
+.drive-home .discover-title h2 {
+  font-size: 25px;
+  letter-spacing: -0.04em;
+  margin-top: 8px;
+}
+.drive-home .discover-lead {
+  margin-bottom: 24px;
+}
+.drive-origin-card {
+  background: #f0f7f3;
+  border: 1px solid #dbece3;
+  border-radius: 19px;
+  padding: 17px;
+  margin-bottom: 24px;
+}
+.drive-origin-card > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--teal);
+}
+.drive-origin-card small,
+.drive-origin-card strong {
+  display: block;
+}
+.drive-origin-card small {
+  font-size: 10px;
+  margin-bottom: 3px;
+  color: var(--muted);
+}
+.drive-origin-card strong {
+  font-size: 14px;
+}
+.drive-origin-card .text-button {
+  width: 100%;
+  margin-top: 7px;
+}
+.drive-free-search {
+  margin: 16px 0 22px;
+}
+.drive-free-search textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.drive-mood-section {
+  border: 1px solid #e1ebe4;
+  border-radius: 17px;
+  background: #f8faf6;
+  margin: 14px 0 22px;
+  overflow: hidden;
+}
+.drive-mood-section .condition-edit-button {
+  border: 0;
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.drive-mood-section form {
+  padding: 0 16px 16px;
+}
+.drive-conditions fieldset {
+  border: 0;
+  padding: 0;
+  margin: 22px 0;
+  min-width: 0;
+}
+.drive-conditions legend {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 11px;
+}
+.drive-conditions legend small {
+  font-weight: 400;
+  color: var(--muted);
+}
+.drive-conditions .chip {
+  white-space: normal;
+  text-align: left;
+}
+.drive-conditions .chips {
+  gap: 8px;
+}
+.drive-results-switch {
+  gap: 7px;
+  margin-top: 25px;
+}
+.drive-results-switch .chip {
+  font-size: 11px;
+  padding-inline: 10px;
+}
+.drive-event-search {
+  padding: 16px 0;
+}
+.drive-event-search h2 {
+  font-size: 20px;
+}
+.drive-empty .empty-state {
+  padding-inline: 5px;
+}
+.drive-travel-info {
+  background: #eef7f3;
+  border: 1px solid #d9ebe1;
+  border-radius: 12px;
+  padding: 11px 12px;
+  margin: 12px 0;
+}
+.drive-travel-info p {
+  margin: 3px 0;
+}
+.drive-travel-info p:first-child {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 13px;
+  color: #206658;
+}
+.drive-travel-info .small {
+  font-size: 10px;
+  line-height: 1.65;
+}
+.drive-maps-attribution {
+  font-family: Roboto, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: normal;
+  white-space: nowrap;
+  color: #5e5e5e;
+}
+
+/* Compact discovery cards keep supporting facts in the detail screen. */
+.web-spot-card .card-title-button {
+  width: 100%;
+  text-align: left;
+}
+.web-spot-card .drive-travel-compact {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+.web-spot-card .drive-travel-compact p {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+.web-spot-card .drive-travel-compact .drive-maps-attribution {
+  display: block;
+  margin-top: 6px;
+}
+
+/* Start discovery with the category switch and destination cards. */
+.drive-home-feed {
+  padding-top: 12px;
+  scroll-margin-top: 12px;
+}
+.drive-home-feed .discovery-chips {
+  margin: 0 0 18px;
+}
+.drive-home-controls {
+  border-top: 1px solid var(--line);
+  margin-top: 28px;
+  padding-top: 16px;
+}
+.drive-home-controls .app-header {
+  padding-inline: 0;
 }

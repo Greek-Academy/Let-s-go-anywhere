@@ -49,7 +49,7 @@ async function enter(
 }
 async function chooseLocation(page: Page) {
   await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
-  await page.getByRole('button', { name: /現在地の周辺/ }).click()
+  await page.getByRole('button', { name: /現在地から出発/ }).click()
 }
 const acquire = (page: Page) =>
   page.getByRole('button', { name: '現在地を取得して設定', exact: true }).click()
@@ -82,8 +82,12 @@ test('explicit acquisition keeps departure station, does not search/save/share G
   await expect(page.getByRole('dialog')).toContainText('約100m単位')
   await acquire(page)
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(page.locator('#discovery-region-label')).toHaveText('取得した現在地の周辺')
-  await expect(page.locator('#discovery-origin-label')).toContainText('京都駅')
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('取得した現在地')
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem('driveplus.mock.v1')!).profile.stationId,
+    ),
+  ).toBe('100216')
   expect(await calls(page)).toBe(1)
   expect(searches).toHaveLength(0)
   const storage = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }))
@@ -91,16 +95,16 @@ test('explicit acquisition keeps departure station, does not search/save/share G
     expect(storage).not.toContain(value)
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '見つける', exact: true }).click()
-  await expect(page.locator('#discovery-region-label')).toHaveText('取得した現在地の周辺')
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('取得した現在地')
   await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
-  await page.getByRole('button', { name: /出発駅の周辺/ }).click()
-  await page.getByRole('button', { name: 'この駅の周辺で探す' }).click()
-  await expect(page.locator('#discovery-region-label')).toHaveText('京都府 京都駅周辺')
+  await page.getByRole('button', { name: /保存した駅から出発/ }).click()
+  await page.getByRole('button', { name: 'この駅を出発地にする' }).click()
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('京都駅（京都府）')
   expect(await calls(page)).toBe(1)
   await chooseLocation(page)
   await acquire(page)
   await page.reload()
-  await expect(page.locator('#discovery-region-label')).toHaveText('京都府 京都駅周辺')
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('京都駅（京都府）')
   expect(await calls(page)).toBe(0)
 })
 
@@ -114,38 +118,53 @@ for (const [options, message] of [
     await chooseLocation(page)
     await acquire(page)
     await expect(page.getByRole('alert')).toContainText(message)
-    await page.getByRole('button', { name: /出発駅の周辺/ }).click()
-    await page.getByRole('button', { name: 'この駅の周辺で探す' }).click()
-    await expect(page.locator('#discovery-region-label')).toHaveText('京都府 京都駅周辺')
+    await page.getByRole('button', { name: /保存した駅から出発/ }).click()
+    await page.getByRole('button', { name: 'この駅を出発地にする' }).click()
+    await expect(page.locator('.drive-origin-card strong')).toHaveText('京都駅（京都府）')
   })
 
 test('closing a pending sheet ignores its late GPS result', async ({ page }) => {
   await enter(page, { delayed: true })
   await chooseLocation(page)
   await acquire(page)
-  await expect(page.getByRole('button', { name: '現在地を取得中…' })).toBeDisabled()
+  await expect(
+    page.getByRole('dialog').getByRole('button', { name: '現在地を取得中…' }),
+  ).toBeDisabled()
   await page.getByRole('dialog').getByRole('button', { name: '閉じる', exact: true }).click()
   await page.evaluate(() => (window as unknown as { deliver: () => void }).deliver())
-  await expect(page.locator('#discovery-region-label')).toHaveText('京都府 京都駅周辺')
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('京都駅（京都府）')
   expect(await calls(page)).toBe(1)
 })
 
-test('background and ten-minute expiry require explicit reacquisition', async ({ page }) => {
+test('tab switching keeps the fix without extending its ten-minute lifetime; page exit clears it', async ({
+  page,
+}) => {
   await enter(page)
   await page.clock.install()
   await chooseLocation(page)
   await acquire(page)
-  await expect(page.locator('#discovery-region-label')).toHaveText('取得した現在地の周辺')
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('取得した現在地')
   await page.clock.fastForward(600001)
-  await expect(page.locator('#discovery-region-label')).toHaveText('現在地を再取得')
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('現在地を再取得してください')
   await chooseLocation(page)
   await acquire(page)
-  await expect(page.locator('#discovery-region-label')).toHaveText('取得した現在地の周辺')
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('取得した現在地')
+  await page.clock.fastForward(540000)
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: true })
     document.dispatchEvent(new Event('visibilitychange'))
     Object.defineProperty(document, 'hidden', { configurable: true, value: false })
+    document.dispatchEvent(new Event('visibilitychange'))
   })
-  await expect(page.locator('#discovery-region-label')).toHaveText('現在地を再取得')
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('取得した現在地')
   expect(await calls(page)).toBe(2)
+  await page.clock.fastForward(60001)
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('現在地を再取得してください')
+  expect(await calls(page)).toBe(2)
+  await chooseLocation(page)
+  await acquire(page)
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('取得した現在地')
+  await page.evaluate(() => window.dispatchEvent(new Event('pagehide')))
+  await expect(page.locator('.drive-origin-card strong')).toHaveText('現在地を再取得してください')
+  expect(await calls(page)).toBe(3)
 })

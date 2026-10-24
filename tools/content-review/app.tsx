@@ -23,6 +23,8 @@ root.render(<p>入力ツールの「アプリで確認する」から開いて�
     const initialState = createInitialState()
     initialState.onboarded = true
     initialState.discover.region = 'all'
+    // The editor explicitly opens its supplied candidate, without any AI search.
+    initialState.discover.usageSamples = true
     root.render(
       <StrictMode>
         <App
