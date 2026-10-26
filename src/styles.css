@@ -1657,25 +1657,6 @@ small {
 .discovery-empty .empty-state p {
   margin-bottom: 12px;
 }
-.discover-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 12px 0 3px;
-}
-.discover-title .eyebrow {
-  font-size: 7px;
-  margin-bottom: 7px;
-}
-.discover-title h1,
-.drive-home .discover-title h2 {
-  font-size: 24px;
-  line-height: 1.55;
-  letter-spacing: -0.8px;
-}
-.discover-title h1 span {
-  color: #335a4b;
-}
 .sun-decoration {
   font-size: 59px;
   line-height: 1;
@@ -1683,12 +1664,6 @@ small {
   transform: rotate(13deg);
   margin: 18px 16px 0 0;
   font-weight: 300;
-}
-.discover-lead {
-  color: #889784;
-  font-size: 10px;
-  line-height: 1.8;
-  margin: 7px 0 17px;
 }
 .discover-search-row {
   display: flex;
@@ -5042,18 +5017,6 @@ small {
   box-shadow: 0 -8px 20px #ffffffed;
   padding-bottom: 10px;
 }
-.drive-home .discover-title {
-  display: block;
-  margin-top: 12px;
-}
-.drive-home .discover-title h2 {
-  font-size: 25px;
-  letter-spacing: -0.04em;
-  margin-top: 8px;
-}
-.drive-home .discover-lead {
-  margin-bottom: 24px;
-}
 .drive-origin-card {
   background: #f0f7f3;
   border: 1px solid #dbece3;
@@ -5209,7 +5172,4 @@ small {
   border-top: 1px solid var(--line);
   margin-top: 28px;
   padding-top: 16px;
-}
-.drive-home-controls .app-header {
-  padding-inline: 0;
 }

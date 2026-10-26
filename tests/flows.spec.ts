@@ -40,7 +40,7 @@ test('hobby onboarding supports back, completion, tabs and reload', async ({ pag
   await page.getByRole('button', { name: 'ドライブ先を見つける', exact: true }).click()
   await expect(page).toHaveURL(/#\/discover$/)
   await expect(page.getByRole('button', { name: /ラーメンタイプ診断/ })).toHaveCount(0)
-  for (const name of ['行きたい', '車を探す', '学ぶ', '見つける']) {
+  for (const name of ['行きたい', '車を探す', '学ぶ', 'マイページ', '見つける']) {
     await page.getByRole('navigation').getByRole('button', { name, exact: true }).click()
     await expect(
       page.getByRole('navigation').getByRole('button', { name, exact: true }),
@@ -55,7 +55,7 @@ test('hobby onboarding supports back, completion, tabs and reload', async ({ pag
     interests: ['自然'],
   })
   expect(state.onboarded).toBe(true)
-  await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(4)
+  await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(5)
 })
 
 test('retired setup URLs return to the hobby setup and a single skip completes it', async ({
@@ -257,7 +257,11 @@ test('map pins, station details, provider filters, lists and zero-result search'
 
 test('profile, reflection and data reset preserve honest user outcomes', async ({ page }) => {
   await enter(page)
-  await page.getByRole('button', { name: 'マイページを開く' }).click()
+  const profileTab = page
+    .getByRole('navigation')
+    .getByRole('button', { name: 'マイページ', exact: true })
+  await profileTab.click()
+  await expect(profileTab).toHaveAttribute('aria-current', 'page')
   await page.getByRole('button', { name: 'プロフィール・出発エリア' }).click()
   await page.getByRole('textbox', { name: /呼ばれたい名前/ }).fill('たろう')
   await page.getByRole('button', { name: '自然', exact: true }).click()
@@ -269,6 +273,7 @@ test('profile, reflection and data reset preserve honest user outcomes', async (
   await page.getByRole('button', { name: '振り返りを保存' }).click()
   await expect(page.locator('.reflection-card')).toContainText('別の交通手段を選んだ')
   await page.goto('/#/settings')
+  await expect(profileTab).toHaveAttribute('aria-current', 'page')
   await page.getByRole('switch', { name: /文字を少し大きくする/ }).check()
   await expect(page.locator('.mobile-frame')).toHaveClass(/large-text/)
   await page.getByRole('button', { name: 'モックの保存データを削除' }).click()

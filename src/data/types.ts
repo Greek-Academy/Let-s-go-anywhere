@@ -2,7 +2,7 @@ import type { ListingLinks } from '../domain/externalLinks'
 import type { OutingLifecycle } from '../domain/outingLifecycle'
 import type { Prefecture } from './regions'
 
-export type Tab = 'discover' | 'saved' | 'cars' | 'learn'
+export type Tab = 'discover' | 'saved' | 'cars' | 'learn' | 'profile'
 export type StationType = 'すべて' | 'レンタカー' | 'カーシェア'
 export interface Outing {
   links?: ListingLinks
