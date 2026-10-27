@@ -68,6 +68,8 @@ function AppRoutes() {
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/onboarding/:step" element={<Onboarding />} />
         <Route path="/discover" element={<Discover />} />
+        {/* The unmerged diagnosis pilot was withdrawn; old preview links return home. */}
+        <Route path="/ramen/*" element={<Navigate to="/discover" replace />} />
         {__PLACE_PHOTO_PILOT__ && (
           <Route
             path="/photo-pilot"

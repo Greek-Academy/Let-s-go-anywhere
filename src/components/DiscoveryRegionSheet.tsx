@@ -22,18 +22,22 @@ export function DiscoveryRegionSheet({
   useEffect(() => () => gps.cancel(), [gps.cancel])
   const origin = railStation(originId)
   const [mode, setMode] = useState<'origin' | 'station' | 'location'>(
-    gps.enabled ? 'location' : value === 'origin' && origin ? 'origin' : 'station',
+    gps.enabled || (!origin && !stationId)
+      ? 'location'
+      : value === 'origin' && origin
+        ? 'origin'
+        : 'station',
   )
   const [chosen, setChosen] = useState<string | null>(railStation(stationId)?.id ?? null)
   return (
-    <BottomSheet title="探す地域を変更" onClose={onClose}>
+    <BottomSheet title="出発地を選ぶ・変更する" onClose={onClose}>
       <p className="body-copy">
-        駅や現在地を起点に、お店・スポットを探せます。出発駅とは別に指定できます。
+        現在地をドライブの出発地にできます。位置情報を使わない場合は、駅を出発地に指定できます。
       </p>
       <div className="region-choices">
         {origin && (
           <Choice
-            title="出発駅の周辺"
+            title="保存した駅から出発"
             description={stationLabel(origin)}
             selected={mode === 'origin'}
             onClick={() => {
@@ -42,11 +46,8 @@ export function DiscoveryRegionSheet({
             }}
           />
         )}
-        {!origin && (
-          <p className="small muted">出発駅はまだ未設定です。ここで探したい駅を指定できます。</p>
-        )}
         <Choice
-          title="別の駅の周辺"
+          title="駅を出発地にする"
           description="駅名を入力して選ぶ"
           selected={mode === 'station'}
           onClick={() => {
@@ -55,7 +56,7 @@ export function DiscoveryRegionSheet({
           }}
         />
         <Choice
-          title="現在地の周辺"
+          title="現在地から出発"
           description="位置情報を取得して探す"
           selected={mode === 'location'}
           onClick={() => setMode('location')}
@@ -63,10 +64,11 @@ export function DiscoveryRegionSheet({
         {mode === 'location' && (
           <div className="notice discovery-location-notice">
             <p>
-              許可したときだけ一度取得します。位置は約100m単位に丸め、次の画面で「Webで候補を探す」を押すとOpenAI・Anthropicへ送信します。
+              許可したときだけ一度取得します。位置は約100m単位に丸め、ホームの検索ボタンを押したときにOpenAI・Anthropicへ、経路計算が有効な場合はGoogle
+              Mapsへ送ります。
             </p>
             <p className="small muted">
-              座標は端末や検索結果の保管先に保存せず、共有しません。10分経過・アプリを閉じると再取得が必要です。送信先での扱いは各社のデータポリシーに従います。
+              座標は端末や検索結果の保管先に保存せず、共有しません。取得から10分間だけメモリ内で利用します。一時的なタブ・アプリの切り替えでは検索を続け、再読み込みや終了で位置を破棄します。送信先での扱いは各社のデータポリシーに従います。
             </p>
             {gps.error && (
               <p className="field-error" role="alert">
@@ -80,7 +82,7 @@ export function DiscoveryRegionSheet({
         )}
       </div>
       <p className="small muted">
-        選んだ地点の周辺約2kmを目安に探します。候補までの実際の距離・所要時間は未確認です。
+        この操作では出発地だけを設定します。行き先はホームの検索ボタンから探せます。
       </p>
       {mode === 'location' ? (
         <PrimaryButton
@@ -100,7 +102,7 @@ export function DiscoveryRegionSheet({
             onClose()
           }}
         >
-          この駅の周辺で探す
+          この駅を出発地にする
         </PrimaryButton>
       )}
     </BottomSheet>

@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-20",
+  "origin": "新宿駅の座標をブラウザの検証用現在地として指定（実機GPSではない）",
+  "hobbies": [
+    "自然",
+    "温泉"
+  ],
+  "mode": "live",
+  "automaticRetries": 0,
+  "httpStatus": 200,
+  "hobbiesSent": [
+    "自然",
+    "温泉"
+  ],
+  "providers": [
+    {
+      "provider": "openai",
+      "state": "completed",
+      "count": 7,
+      "omitted": 1,
+      "searchCalls": 2,
+      "error": null
+    },
+    {
+      "provider": "anthropic",
+      "state": "completed",
+      "count": 2,
+      "omitted": 8,
+      "searchCalls": 2,
+      "error": null
+    }
+  ],
+  "cards": 4,
+  "calculatedTimes": 4,
+  "unconfirmedTimes": 0,
+  "omitted": 14,
+  "duplicates": 0,
+  "savedAndDetailPassed": true,
+  "savedCoordinatesAndTravelAbsent": true,
+  "requests": 1,
+  "tabSwitchAndReturnNoExtraRequest": true,
+  "screenshotNote": "Googleの経路数値は保存しないため、画像では時間欄をマスク。画面上では実取得値を確認済み。"
+}

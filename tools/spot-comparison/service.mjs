@@ -9,13 +9,24 @@ import {
   MODELS,
   SEARCH_LIMIT,
   COMPARISON_LIMIT,
+  localComparisonLimit,
   validateComparisonQuery,
   combineCandidates,
 } from './core.mjs'
 import { runComparison } from './providers.mjs'
 
-export function createComparison({ demo, apiKey, anthropicApiKey, directory, fetcher, timeoutMs }) {
-  const ledger = new Ledger(directory, COMPARISON_LIMIT)
+export function createComparison({
+  demo,
+  apiKey,
+  anthropicApiKey,
+  routesApiKey,
+  directory,
+  fetcher,
+  timeoutMs,
+  maxAttempts = COMPARISON_LIMIT,
+}) {
+  const limit = localComparisonLimit(maxAttempts)
+  const ledger = new Ledger(directory, limit)
   let busy = false
   let sampleResult = null
   const resultFile = join(directory, 'result.json')
@@ -44,7 +55,7 @@ export function createComparison({ demo, apiKey, anthropicApiKey, directory, fet
       demo,
       configured: configured(),
       busy,
-      maxAttempts: COMPARISON_LIMIT,
+      maxAttempts: limit,
       attempts: demo ? [] : ledger.read().attempts,
       providers: PROVIDERS.map((provider) => ({
         provider,
@@ -71,6 +82,7 @@ export function createComparison({ demo, apiKey, anthropicApiKey, directory, fet
           demo,
           apiKey,
           anthropicApiKey,
+          routesApiKey,
           fetcher,
           timeoutMs,
         })

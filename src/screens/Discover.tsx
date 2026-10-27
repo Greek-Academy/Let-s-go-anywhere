@@ -1,8 +1,11 @@
 import { EventDatePicker } from '../components/EventDatePicker'
-import { defaultEventSelection, eventDates, eventDatesLabel } from '../domain/eventSearch'
+import { defaultEventSelection, eventDates } from '../domain/eventSearch'
 import { useDiscoveryLocation } from '../state/DiscoveryLocationState'
 import { LOCATION_REGION } from '../domain/discoveryLocation'
-import { discoveryTags, searchTheme } from '../domain/searchTheme'
+import { driveQuery, driveTheme } from '../domain/driveSearch'
+import type { DriveMode } from '../domain/driveSearch'
+import { DriveConditions, HobbyChoices } from '../components/DriveSearchControls'
+import type { SearchDraft } from '../state/WebSearchState'
 import { publicSearchOrigin } from '../domain/publicSearchConfig'
 import { ShareCandidateButton } from '../sharing/components'
 import { fromOuting } from '../sharing/candidates'
@@ -10,41 +13,33 @@ import { ExternalModal } from '../components/ExternalLinkModal'
 import { evaluateOuting, outingStateLabels } from '../domain/outingLifecycle'
 import { OutingImage, OutingStatus, OutingPhotoCredit } from '../components/OutingStatus'
 import { useContent, useContentTime } from '../content/ContentProvider'
-import { useId, useState } from 'react'
+import { useId, useState, useEffect, useRef } from 'react'
 import type { FormEvent } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
   CarFront,
-  ChevronDown,
   ExternalLink,
   Heart,
+  Leaf,
   Link2,
   MapPin,
   MoreHorizontal,
   Plus,
+  PencilLine,
   Search,
-  SlidersHorizontal,
   Sparkles,
+  SlidersHorizontal,
 } from 'lucide-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { normalizeSavedUrl, savedUrlKey } from '../domain/savedUrls'
-import { inDiscoveryRegion, resolveDiscoveryRegion } from '../domain/discoveryRegion'
-import { railStation, stationLabel, stationRegion } from '../domain/railStations'
-import { StationPicker } from '../components/StationPicker'
+import { resolveDiscoveryRegion } from '../domain/discoveryRegion'
+import { stationLabel, stationRegion } from '../domain/railStations'
 import { DiscoveryRegionSheet } from '../components/DiscoveryRegionSheet'
 
-import type { Outing } from '../data/types'
 import { useApp } from '../state/AppState'
-import { ConditionsSheet, ConditionReasons, OutingConditions } from '../components/TripConditions'
-import {
-  evaluateConditions,
-  hasConditions,
-  overallMatch,
-  matchLabels,
-} from '../domain/tripConditions'
-import type { ConditionFilter } from '../domain/tripConditions'
+import { OutingConditions } from '../components/TripConditions'
 
 import { ArrivalTeaser } from './Arrival'
 import { EventCard } from '../components/Cards'
@@ -169,369 +164,388 @@ export function SnsSheet({ onClose }: { onClose: () => void }) {
   )
 }
 export function Discover() {
-  const { outings, tripFacts, source } = useContent()
+  const { outings, source } = useContent()
   const now = useContentTime()
   const { state, update } = useApp()
   const web = useWebSearch()
   const gps = useDiscoveryLocation()
   const navigate = useNavigate()
-  const [conditionsOpen, setConditionsOpen] = useState(false)
+  const resultsRef = useRef<HTMLDivElement>(null)
   const [sns, setSns] = useState(false)
-  const [filter, setFilter] = useState(false)
-  const [reason, setReason] = useState<Outing | null>(null)
-  const [areaOpen, setAreaOpen] = useState(false)
   const [regionOpen, setRegionOpen] = useState(false)
-  const [areaDraft, setAreaDraft] = useState<string | null>(state.profile.stationId ?? null)
-  const { category, search, tag, region } = state.discover
-  const isEvent = category === 'イベント'
-  const eventSelection = state.discover.eventSelection ?? defaultEventSelection
-  const dates = eventDates(eventSelection, now)
-  const setFilterState = (value: Partial<typeof state.discover>) =>
-    update((s) => ({ ...s, discover: { ...s.discover, ...value } }))
-  const conditionsActive = hasConditions(state.searchConditions)
-  const matchResults = (id: string) =>
-    evaluateConditions(state.searchConditions, tripFacts[id], state.profile.area)
-  const selectedStation = gps.enabled
+  const [hobbiesOpen, setHobbiesOpen] = useState(false)
+  const [searchMethod, setSearchMethod] = useState<'free' | 'conditions'>(
+    state.discover.driveMode === 'conditions' ? 'conditions' : 'free',
+  )
+  const searchMethodId = useId()
+  const [locationOpen, setLocationOpen] = useState(false)
+  const [locationIntent, setLocationIntent] = useState<DriveMode>('default')
+  const [pending, setPending] = useState<SearchDraft | null>(null)
+  const [acquired, setAcquired] = useState(false)
+  const samples = state.discover.usageSamples ?? false
+  const setSamples = (usageSamples: boolean) =>
+    update((s) => ({ ...s, discover: { ...s.discover, usageSamples } }))
+  const isEvent = state.discover.category === 'イベント'
+  const mode = isEvent ? 'events' : (state.discover.driveMode ?? 'default')
+  const selected = gps.enabled
     ? null
-    : resolveDiscoveryRegion(region, state.profile.stationId, state.discover.stationId)
-  const selectedRegion = gps.enabled
+    : resolveDiscoveryRegion(
+        state.discover.region,
+        state.profile.stationId,
+        state.discover.stationId,
+      )
+  const originLabel = gps.enabled
+    ? gps.fix
+      ? '取得した現在地'
+      : '現在地を再取得してください'
+    : selected
+      ? stationLabel(selected)
+      : '現在地から行き先を探そう'
+  const dates = eventDates(state.discover.eventSelection ?? defaultEventSelection, now)
+  const region = gps.enabled
     ? gps.fix
       ? LOCATION_REGION
       : null
-    : selectedStation
-      ? stationRegion(selectedStation)
+    : selected
+      ? stationRegion(selected)
       : null
-  const regionLabel = selectedRegion ?? (gps.enabled ? '現在地を再取得' : '駅を選択')
-  const originStation = railStation(state.profile.stationId)
-  const recommendable = outings.filter((o) => evaluateOuting(o, now).recommendable)
-  const regionalOutings = gps.enabled
-    ? []
-    : selectedStation
-      ? recommendable.filter((o) => inDiscoveryRegion(o, selectedStation, source === 'sample'))
-      : source === 'sample'
-        ? recommendable
-        : []
-  const candidates = regionalOutings
-    .filter(
-      (o) =>
-        !state.hiddenEvents.includes(o.id) &&
-        (isEvent
-          ? o.kind === 'event' &&
-            !!dates &&
-            !!o.lifecycle?.occurrence?.startsAt &&
-            !!o.lifecycle?.occurrence?.endsAt &&
-            Date.parse(o.lifecycle.occurrence.startsAt) <
-              Date.parse(`${dates.end}T00:00:00+09:00`) + 86400000 &&
-            Date.parse(o.lifecycle.occurrence.endsAt) > Date.parse(`${dates.start}T00:00:00+09:00`)
-          : (!tag || o.tags.includes(tag)) &&
-            (!search || `${o.title}${o.area}${o.tags.join('')}`.includes(search))),
-    )
-    .sort(
-      (a, b) =>
-        b.tags.filter((t) => state.profile.interests.includes(t)).length -
-        a.tags.filter((t) => state.profile.interests.includes(t)).length,
-    )
-  const filtered = candidates.filter(
-    (o) =>
-      isEvent ||
-      !conditionsActive ||
-      state.conditionFilter === 'all' ||
-      overallMatch(matchResults(o.id)) === state.conditionFilter,
-  )
-  const openCars = () => {
-    update((s) => ({ ...s, map: { ...s.map, area: s.profile.area, query: '', selected: null } }))
-    navigate('/cars')
+  const patch = (value: Partial<typeof state.discover>) =>
+    update((s) => ({ ...s, discover: { ...s.discover, ...value } }))
+  const requestSearch = (nextMode: DriveMode) => {
+    const drive = driveQuery(nextMode, state.driveChoices, state.profile.interests)
+    const draft: SearchDraft = {
+      drive,
+      region,
+      stationId: selected?.id,
+      location: gps.enabled ? gps.fix?.center : undefined,
+      theme: driveTheme(drive, state.discover.search),
+      category: nextMode === 'events' ? 'イベント' : 'おすすめ',
+      tag: '',
+      eventDates: nextMode === 'events' ? dates : undefined,
+    }
+    if (nextMode === 'free' && !state.discover.search.trim()) {
+      patch({ driveMode: 'free' })
+      setPending(draft)
+      return
+    }
+    if (!region) {
+      setLocationIntent(nextMode)
+      setLocationOpen(true)
+      return
+    }
+    patch({ category: draft.category, ...(nextMode !== 'events' ? { driveMode: nextMode } : {}) })
+    setSamples(false)
+    setPending(draft)
   }
+  // Defer until the mount is committed, including React StrictMode's setup/cleanup cycle.
+  useEffect(() => {
+    const timer = setTimeout(web.startHomeSearch, 0)
+    return () => clearTimeout(timer)
+  }, [web.startHomeSearch])
+  // Manual searches remain separate from the single automatic launch search.
+  useEffect(() => {
+    if (!pending || web.loading) return
+    const expected = pending.drive?.mode
+    if (expected !== mode) return
+    setPending(null)
+    resultsRef.current?.scrollIntoView({ block: 'start' })
+    void web.search(pending)
+  }, [pending, mode, web.loading])
+  useEffect(() => {
+    if (!acquired || !gps.fix) return
+    setAcquired(false)
+    const drive = driveQuery(locationIntent, state.driveChoices, state.profile.interests)
+    patch({
+      category: locationIntent === 'events' ? 'イベント' : 'おすすめ',
+      ...(locationIntent !== 'events' ? { driveMode: locationIntent } : {}),
+    })
+    setSamples(false)
+    setPending({
+      drive,
+      region: LOCATION_REGION,
+      location: gps.fix.center,
+      theme: driveTheme(drive, state.discover.search),
+      category: locationIntent === 'events' ? 'イベント' : 'おすすめ',
+      tag: '',
+      eventDates: locationIntent === 'events' ? dates : undefined,
+    })
+  }, [acquired, gps.fix])
+  const sampleOutings = outings.filter(
+    (o) => evaluateOuting(o, now).recommendable && !state.hiddenEvents.includes(o.id),
+  )
+  const searchResults = web.active ? (
+    <WebSearchResults />
+  ) : (
+    <section className="drive-empty" aria-label="おすすめの候補">
+      <EmptyState
+        icon={CarFront}
+        title={
+          gps.loading
+            ? '現在地を取得しています…'
+            : isEvent
+              ? '趣味に合うイベントを探そう'
+              : region
+                ? '行き先を探してみましょう'
+                : '出発地を選んで探せます'
+        }
+        description={
+          gps.loading
+            ? '位置情報の許可が表示されたら、許可するとおすすめを探します。'
+            : isEvent
+              ? '下で日付や趣味を選んで検索できます。'
+              : '下で出発地や希望を選んで検索できます。'
+        }
+      />
+    </section>
+  )
   return (
-    <div className="screen discover-screen">
-      <Header />
+    <div className="screen discover-screen drive-home">
       <div className="page-pad">
-        <button
-          className="location-select"
-          aria-label="出発エリアを変更"
-          aria-describedby="discovery-origin-label"
-          data-focus-key="discover-origin"
-          onClick={() => {
-            setAreaDraft(state.profile.stationId ?? null)
-            setAreaOpen(true)
-          }}
-        >
-          <MapPin size={14} />
-          <span id="discovery-origin-label">
-            出発：{originStation ? stationLabel(originStation) : '最寄駅を選択'}
-          </span>
-          <ChevronDown size={13} />
-        </button>
-        <div className="discover-title">
-          <h1>今度の休日、どこに行く？</h1>
-        </div>
-        <p className="discover-lead">あなたの「好き」から、楽しみを見つけよう。</p>
-        <button
-          className="discovery-region-button"
-          aria-label="探す地域を変更"
-          aria-describedby="discovery-region-label"
-          data-focus-key="discover-region"
-          onClick={() => setRegionOpen(true)}
-        >
-          <MapPin size={18} />
-          <span>
-            <small>探す地域</small>
-            <strong id="discovery-region-label">{regionLabel}</strong>
-          </span>
-          <span className="region-change">変更</span>
-          <ChevronDown size={15} />
-        </button>
-        <p className="discovery-region-caption">
-          {gps.enabled
-            ? gps.fix
-              ? `取得した位置を起点に約2kmを目安に探します（端末の位置誤差：約${gps.fix.accuracy}m）。移動の追跡はしません。`
-              : '現在地の利用期限が切れました。探す地域から再取得するか、駅を選んでください。'
-            : selectedStation
-              ? region === 'origin'
-                ? '出発駅の周辺から探しています。'
-                : '出発駅とは別の駅周辺を探しています。'
-              : '候補から駅を選んでください。以前の地域設定から駅を推測することはありません。'}
-          {selectedStation && ' 駅周辺約2kmが目安です。実際の距離は未確認です。'}
-        </p>
-        {publicSearchOrigin && (
-          <div className="notice discover-search-invitation">
-            <strong>招待された方のAI検索テスト</strong>
-            <p>ログインと参加コードで利用できます。新しい検索にはAPI料金がかかります。</p>
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => navigate('/search/access')}
-            >
-              AI検索の参加・ログイン
-            </button>
+        <div className="drive-home-feed" ref={resultsRef}>
+          <h1 className="sr-only">見つける</h1>
+          <div className="chips discovery-chips" aria-label="見つけるの種類">
+            {['おすすめ', 'イベント'].map((category) => (
+              <Chip
+                key={category}
+                selected={category === state.discover.category}
+                onClick={() => patch({ category })}
+              >
+                {category}
+              </Chip>
+            ))}
           </div>
-        )}
-        <div className="chips discovery-chips" aria-label="見つけるの種類">
-          {['おすすめ', 'イベント'].map((c) => (
-            <Chip selected={c === category} key={c} onClick={() => setFilterState({ category: c })}>
-              {c}
-            </Chip>
-          ))}
+          {searchResults}
         </div>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault()
-            void web.search(
-              {
-                region: selectedRegion,
-                stationId: selectedStation?.id,
-                location: gps.enabled ? gps.fix?.center : undefined,
-                theme: isEvent ? '' : search,
-                category,
-                tag: isEvent ? '' : tag,
-                eventDates: isEvent ? dates : undefined,
-              },
-              'comparison',
-            )
-          }}
-        >
-          {isEvent ? (
-            <EventDatePicker
-              value={eventSelection}
-              now={now}
-              onChange={(eventSelection) => setFilterState({ eventSelection })}
-            />
-          ) : (
-            <>
-              <div className="discover-search-row">
-                <label className="search-field">
-                  <Search size={17} />
-                  <input
-                    aria-label="お出かけを検索"
-                    value={search}
-                    maxLength={80}
-                    onChange={(e) => setFilterState({ search: e.target.value })}
-                    placeholder="気になる場所や、したいこと"
-                  />
-                </label>
-                <IconButton
-                  icon={SlidersHorizontal}
-                  label="お出かけの絞り込み"
-                  className={`filter-button ${tag ? 'has-filter' : ''}`}
-                  onClick={() => setFilter(true)}
-                />
+        <div className="drive-home-controls">
+          <section
+            className="drive-search-card drive-origin-card"
+            aria-labelledby="drive-hobby-heading"
+          >
+            <h2 className="drive-search-heading" id="drive-hobby-heading">
+              <span aria-hidden="true">1</span>
+              出発地と趣味から探す
+            </h2>
+            <div className="drive-origin-row">
+              <MapPin size={22} aria-hidden="true" />
+              <div className="drive-origin-label">
+                <span>ドライブの出発地</span>
+                <strong>{originLabel}</strong>
+                <small>
+                  {gps.enabled && gps.fix
+                    ? '現在地を出発地に設定中'
+                    : selected
+                      ? '駅を出発地に設定中'
+                      : '現在地または駅を選べます'}
+                </small>
               </div>
-              <p className="small muted" aria-live="polite">
-                {tag
-                  ? `選択中：${tag}。追加の希望は任意です。`
-                  : 'ジャンルを選ぶか、気になる場所や、したいことを入力してください。'}{' '}
-                検索条件は合わせて80文字まで。
+              <button
+                className="drive-origin-change"
+                aria-label="出発地を選ぶ・変更する"
+                data-focus-key="discover-region"
+                onClick={() => setRegionOpen(true)}
+              >
+                変更
+              </button>
+            </div>
+            <section className="drive-home-hobbies" aria-label="おすすめに使う趣味">
+              <Leaf size={20} aria-hidden="true" />
+              <p>
+                {state.profile.interests.length
+                  ? `${state.profile.interests.join('・')}が好きなあなたへ`
+                  : '趣味を選んで、ドライブのきっかけに'}
               </p>
-              {!!searchTheme(search, tag) && (
-                <p className="small muted">Web検索の希望：{searchTheme(search, tag)}</p>
-              )}
-            </>
-          )}
-          <PrimaryButton
-            type="submit"
-            icon={Search}
-            disabled={web.loading}
-            className="web-search-submit"
-          >
-            {web.loading
-              ? '候補を探しています…'
-              : isEvent
-                ? 'Webでイベントを探す'
-                : 'Webで候補を探す'}
-          </PrimaryButton>
-          <p className="small muted web-search-hint">
-            {publicSearchOrigin
-              ? `選んだ駅または取得した現在地の周辺と、${isEvent ? '日付' : 'ジャンル・希望'}を2社へ送信します。おすすめ・イベント合計で1アカウント累計5回まで（これまでの利用・送信後の失敗を含む）。前回結果の再表示は無料です。`
-              : `${isEvent ? 'イベント' : 'お店・常設スポット'}を2社で調べます。比較はまず1回、各社API1回・Web検索最大2回。`}
-          </p>
-          <button
-            type="button"
-            className="text-button centered"
-            disabled={web.loading}
-            onClick={() => void web.restoreComparison()}
-          >
-            前回の比較結果を開く（無料）
-          </button>
-        </form>
-        {!isEvent && (
-          <button
-            className="condition-edit-button discovery-conditions"
-            onClick={() => setConditionsOpen(true)}
-          >
-            <SlidersHorizontal size={18} />
-            <span>
-              <strong>今回のお出かけ条件</strong>
-              <small>
-                {conditionsActive
-                  ? '時間・予算・避けたい場面を変更'
-                  : '無理のない休日の条件を決める'}
-              </small>
-            </span>
-            <ChevronDown size={16} />
-          </button>
-        )}
-        {!isEvent && conditionsActive && !web.active && (
-          <div className="condition-filter">
-            <p className="small muted">確認状態で絞り込み（架空の条件データ）</p>
-            <div className="chips wrap">
-              {(
-                [
-                  ['all', 'すべて'],
-                  ['match', '確認済みで合う'],
-                  ['unknown', '未確認'],
-                  ['mismatch', '合わない'],
-                ] as [ConditionFilter, string][]
-              ).map(([value, label]) => (
-                <Chip
-                  key={value}
-                  selected={state.conditionFilter === value}
-                  onClick={() => update((s) => ({ ...s, conditionFilter: value }))}
-                >
-                  {label}{' '}
-                  {
-                    candidates.filter(
-                      (o) => value === 'all' || overallMatch(matchResults(o.id)) === value,
-                    ).length
-                  }
-                </Chip>
-              ))}
-            </div>
-          </div>
-        )}
-        {web.active ? (
-          <WebSearchResults
-            eventDates={isEvent ? dates : undefined}
-            stationId={selectedStation?.id}
-            location={gps.enabled ? gps.fix?.center : undefined}
-            region={selectedRegion}
-            theme={search}
-            category={category}
-            tag={tag}
-          />
-        ) : (
-          <>
-            <SampleNote>
-              {category === '今週末'
-                ? '今週末に期間が重なる架空のイベントです。'
-                : selectedStation
-                  ? 'お出かけ情報はすべてサンプルです。駅周辺への配置も操作確認用です。'
-                  : '以下は操作確認用のサンプルです。探したい駅の検索結果ではありません。'}
-            </SampleNote>
-            <p className="discovery-result-count" role="status">
-              {selectedRegion === null
-                ? '探したい駅を選んでください'
-                : `${regionLabel}の候補：${filtered.length}件`}
+              <button className="text-button" onClick={() => setHobbiesOpen(true)}>
+                趣味を変更する
+              </button>
+            </section>
+            <p className="small muted">
+              選んだ趣味と出発地から、片道2〜5時間のドライブ先を10件を目安に探します。
             </p>
-            {filtered.length > 0 && (
-              <SectionHeading
-                title={isEvent ? '選んだ日付のイベントサンプル' : 'あなたへのおすすめ'}
-                subtitle={
-                  state.profile.interests.length && category === 'おすすめ'
-                    ? `${state.profile.interests.slice(0, 2).join('・')}が好きなあなたへ`
-                    : 'いつもの休日に、小さな冒険を。'
-                }
-              />
+            <details className="small muted">
+              <summary>現在地の使い方</summary>
+              <p>
+                起動時に一度取得し、約100m単位の位置と趣味をOpenAI・Anthropicに、経路計算のためGoogle
+                Mapsに送ります。移動は追跡せず、位置は保存・共有しません。取得から10分間だけメモリ内で利用します。一時的なタブ・アプリの切り替えでは検索を続け、再読み込みや終了で位置を破棄します。
+              </p>
+            </details>
+            {gps.error && !locationOpen && !regionOpen && !web.active && (
+              <p className="field-error" role="alert">
+                {gps.error}
+              </p>
             )}
-            <div className="event-list">
-              {filtered.map((o) => (
-                <div key={o.id}>
-                  <EventCard outing={o} onMore={() => setReason(o)} />
-                  {!isEvent && conditionsActive && (
-                    <button className="condition-summary" onClick={() => setReason(o)}>
-                      <Tag
-                        tone={overallMatch(matchResults(o.id)) === 'mismatch' ? 'peach' : 'neutral'}
-                      >
-                        {matchLabels[overallMatch(matchResults(o.id))]}
-                      </Tag>{' '}
-                      条件の理由を見る <ArrowRight size={13} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            {filtered.length === 0 &&
-              (selectedRegion === null || regionalOutings.length === 0 ? (
-                <div className="discovery-empty">
-                  <EmptyState
-                    icon={MapPin}
-                    title={
-                      selectedRegion === null
-                        ? '探したい駅を選んでください'
-                        : gps.enabled
-                          ? '現在地周辺をWebで探せます'
-                          : 'この駅周辺のサンプルはまだありません'
-                    }
-                    description={
-                      isEvent
-                        ? '日付と地域を選び「Webでイベントを探す」を押してください。自動では検索しません。'
-                        : selectedRegion === null
-                          ? '最寄駅や、お出かけ先の駅を入力して候補から選べます。保存した候補はそのまま残っています。'
-                          : `${regionLabel}の候補は「Webで候補を探す」で検索できます。保存した候補は「行きたい」から確認できます。`
-                    }
-                    action="探す地域を選び直す"
-                    onAction={() => setRegionOpen(true)}
+            <PrimaryButton
+              icon={MapPin}
+              disabled={web.loading || gps.loading}
+              onClick={() => {
+                if (region) {
+                  requestSearch('default')
+                  return
+                }
+                setLocationIntent('default')
+                setLocationOpen(true)
+              }}
+            >
+              {gps.loading
+                ? '現在地を取得中…'
+                : web.loading
+                  ? 'おすすめを探しています…'
+                  : region
+                    ? 'この出発地からドライブ先を探す'
+                    : '現在地からドライブ先を探す'}
+            </PrimaryButton>
+            <p className="small muted web-search-hint">
+              起動時に現在地と趣味から一度検索します。新しい実検索にはAPI料金がかかります。
+            </p>
+          </section>
+          {publicSearchOrigin && (
+            <p className="small muted drive-search-access">
+              AI検索はログイン・参加コードが必要です。
+              <button className="text-button" onClick={() => navigate('/search/access')}>
+                AI検索の参加・ログイン
+              </button>
+            </p>
+          )}
+          {isEvent ? (
+            <section className="drive-event-search">
+              <h2>趣味から見つかるイベント</h2>
+              <p className="small muted">①で選んだ出発地と趣味を使って探します。</p>
+              <EventDatePicker
+                value={state.discover.eventSelection ?? defaultEventSelection}
+                now={now}
+                onChange={(eventSelection) => patch({ eventSelection })}
+              />
+              <PrimaryButton
+                icon={Search}
+                disabled={web.loading}
+                onClick={() => requestSearch('events')}
+              >
+                趣味のイベントを探す
+              </PrimaryButton>
+              <p className="small muted">
+                出発地・趣味・日付で10件を目安に探します。自由入力や気分の条件は使いません。
+              </p>
+            </section>
+          ) : (
+            <section
+              className="drive-search-card drive-request-card"
+              aria-labelledby="drive-request-heading"
+            >
+              <h2 className="drive-search-heading" id="drive-request-heading">
+                <span aria-hidden="true">2</span>
+                気分・希望から探す
+              </h2>
+              <p className="small muted drive-shared-origin">
+                {region
+                  ? `出発地「${originLabel}」を起点に探します。`
+                  : '①で現在地または駅を選ぶと、同じ出発地から探せます。'}
+              </p>
+              <div className="drive-method-switch" role="group" aria-label="気分・希望の入力方法">
+                <button
+                  type="button"
+                  aria-pressed={searchMethod === 'free'}
+                  aria-controls={`${searchMethodId}-free`}
+                  onClick={() => setSearchMethod('free')}
+                >
+                  <PencilLine size={18} aria-hidden="true" />
+                  自由に書く
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={searchMethod === 'conditions'}
+                  aria-controls={`${searchMethodId}-conditions`}
+                  onClick={() => setSearchMethod('conditions')}
+                >
+                  <SlidersHorizontal size={18} aria-hidden="true" />
+                  気分から選ぶ
+                </button>
+              </div>
+              <div id={`${searchMethodId}-free`} hidden={searchMethod !== 'free'}>
+                <form
+                  className="drive-free-search"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    requestSearch('free')
+                  }}
+                >
+                  <label className="field-label">
+                    気になる場所や、したいこと
+                    <textarea
+                      aria-label="お出かけを検索"
+                      value={state.discover.search}
+                      maxLength={80}
+                      placeholder="海を眺めながら走って、おいしい海鮮を食べたい"
+                      onChange={(e) => patch({ search: e.target.value })}
+                    />
+                  </label>
+                  <p className="small muted">
+                    思いついたことを自由に。片道2〜5時間を目安に探します（80文字まで）。
+                  </p>
+                  <PrimaryButton type="submit" icon={Search} disabled={web.loading}>
+                    この希望で探す
+                  </PrimaryButton>
+                </form>
+              </div>
+              <div id={`${searchMethodId}-conditions`} hidden={searchMethod !== 'conditions'}>
+                <form
+                  className="drive-mood-search"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    requestSearch('conditions')
+                  }}
+                >
+                  <DriveConditions
+                    value={state.driveChoices}
+                    onChange={(driveChoices) => update((s) => ({ ...s, driveChoices }))}
                   />
+                  <PrimaryButton type="submit" icon={Search} disabled={web.loading}>
+                    選んだ条件で探す
+                  </PrimaryButton>
+                  <p className="small muted">
+                    自由入力とは別の検索です。ここで選んだ条件を出発地と組み合わせて探します。
+                  </p>
+                </form>
+              </div>
+              <div className="chips wrap drive-results-switch" aria-label="表示する検索結果">
+                {(
+                  [
+                    ['default', '趣味のおすすめ'],
+                    ['free', '自由入力の結果'],
+                    ['conditions', '条件の結果'],
+                  ] as const
+                ).map(([driveMode, label]) => (
+                  <Chip
+                    key={driveMode}
+                    selected={mode === driveMode}
+                    onClick={() => {
+                      patch({ driveMode })
+                      if (driveMode !== 'default') setSearchMethod(driveMode)
+                      setSamples(false)
+                    }}
+                  >
+                    {label}
+                  </Chip>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+        {source === 'sample' && !web.active && (
+          <>
+            <button className="text-button centered" onClick={() => setSamples(!samples)}>
+              {samples ? '操作用サンプルを閉じる' : '操作用サンプルを見る'}
+            </button>
+            {samples && (
+              <>
+                <SampleNote>
+                  操作確認用の既存サンプルです。現在地からの検索結果ではありません。
+                </SampleNote>
+                <div className="event-list">
+                  {sampleOutings.map((o) => (
+                    <EventCard key={o.id} outing={o} />
+                  ))}
                 </div>
-              ) : (
-                <EmptyState
-                  title="ぴったりの候補が見つかりません"
-                  description={
-                    isEvent
-                      ? `${dates ? eventDatesLabel(dates) : '選んだ日付'}のサンプルはありません。「Webでイベントを探す」で調べられます。`
-                      : conditionsActive
-                        ? '未確認や合わない理由も確認できます。条件の見直しや、別の候補・移動方法を検討してみましょう。'
-                        : '選んだ地域で、検索語・興味・期間・非表示の条件に合う候補がありません。条件や探す地域を変えてみましょう。'
-                  }
-                  action={conditionsActive ? 'すべての確認状態を見る' : '条件をリセット'}
-                  onAction={() =>
-                    update((s) => ({
-                      ...s,
-                      discover: { ...s.discover, category: 'おすすめ', search: '', tag: '' },
-                      conditionFilter: 'all',
-                    }))
-                  }
-                />
-              ))}
+              </>
+            )}
           </>
         )}
         <button className="sns-banner" onClick={() => setSns(true)}>
@@ -544,114 +558,86 @@ export function Discover() {
           </span>
           <Plus size={18} />
         </button>
-        <button className="car-banner" onClick={openCars}>
-          <CarFront size={31} strokeWidth={1.4} />
+        <button className="car-banner" onClick={() => navigate('/cars')}>
+          <CarFront size={31} />
           <span>
-            <strong>出発地の近くで、車を探す</strong>
+            <strong>ドライブの車を探す</strong>
             <small>レンタカー・カーシェアの場所を確認</small>
           </span>
           <ArrowRight size={18} />
         </button>
-        <div className="page-signoff">
-          <Sparkles size={16} />
-          <p>
-            いつか、じゃなくて
-            <br />
-            <strong>今度の休日に。</strong>
-          </p>
-        </div>
       </div>
-      {conditionsOpen && (
-        <ConditionsSheet
-          value={state.searchConditions}
-          onClose={() => setConditionsOpen(false)}
-          onSave={(v) => update((s) => ({ ...s, searchConditions: v, conditionFilter: 'all' }))}
-        />
-      )}
       {sns && <SnsSheet onClose={() => setSns(false)} />}
+      {hobbiesOpen && (
+        <BottomSheet title="趣味を変更する" onClose={() => setHobbiesOpen(false)}>
+          <HobbyChoices
+            value={state.profile.interests}
+            onChange={(values) =>
+              update((s) => ({ ...s, profile: { ...s.profile, interests: values } }))
+            }
+          />
+          <PrimaryButton onClick={() => setHobbiesOpen(false)}>この趣味にする</PrimaryButton>
+        </BottomSheet>
+      )}
       {regionOpen && (
         <DiscoveryRegionSheet
-          value={region}
+          value={state.discover.region}
           originId={state.profile.stationId}
           stationId={state.discover.stationId}
-          onSave={(region, stationId) => setFilterState({ region, stationId })}
+          onSave={(region, stationId) => patch({ region, stationId })}
           onClose={() => setRegionOpen(false)}
         />
       )}
-      {filter && (
-        <BottomSheet title="お出かけの絞り込み" onClose={() => setFilter(false)}>
-          <h3>どんな休日にしたい？</h3>
-          <p className="small muted">
-            選んだジャンルはWeb検索にも使います。文章を入力すると、追加の希望として一緒に送ります。
-          </p>
-          <div className="chips wrap filter-chips">
-            {['', ...discoveryTags].map((t) => (
-              <Chip key={t} selected={tag === t} onClick={() => setFilterState({ tag: t })}>
-                {t || 'すべて'}
-              </Chip>
-            ))}
-          </div>
-          <PrimaryButton onClick={() => setFilter(false)}>この条件で表示</PrimaryButton>
-          <PrimaryButton
-            variant="ghost"
-            onClick={() => setFilterState({ tag: '', search: '', category: 'おすすめ' })}
-          >
-            条件をリセット
-          </PrimaryButton>
-        </BottomSheet>
-      )}
-      {reason && (
-        <BottomSheet title="このお出かけについて" onClose={() => setReason(null)}>
-          <h3>{reason.title}</h3>
-          {conditionsActive && <ConditionReasons results={matchResults(reason.id)} />}
+      {locationOpen && (
+        <BottomSheet
+          title="現在地からドライブ先を探す"
+          onClose={() => {
+            gps.cancel()
+            setLocationOpen(false)
+            setAcquired(false)
+          }}
+        >
           <p className="body-copy">
-            {reason.tags.some((t) => state.profile.interests.includes(t))
-              ? `登録した「${reason.tags.filter((t) => state.profile.interests.includes(t)).join('・')}」に合うお出かけサンプルです。`
-              : '休日のアイデアとして、編集部が選んだサンプルです。'}
+            現在地を一度取得し、その地点からドライブ先を探します。許可したあとに検索を1回実行し、候補をホームに表示します。
           </p>
-          <InfoRows
-            rows={[
-              ['発見元', `${reason.source}（サンプル）`],
-              ['探す地域', regionLabel],
-              ['掲載情報', '実際の開催・営業は未確認'],
-            ]}
-          />
+          {(locationIntent === 'default' || locationIntent === 'events') && (
+            <p className="body-copy">
+              {state.profile.interests.length
+                ? `検索に使う趣味：${state.profile.interests.join('・')}`
+                : '趣味は未選択のため、ジャンルを限定せずに探します。'}
+            </p>
+          )}
+          <p className="small muted">
+            約100m単位に丸めた位置と検索条件をOpenAI・Anthropicへ、経路計算が有効な場合はGoogle
+            Mapsへ送ります。位置は端末・検索履歴・共有リストに保存せず、移動を追跡しません。取得から10分間だけメモリ内で利用します。一時的なタブ・アプリの切り替えでは検索を続け、再読み込みや終了で位置を破棄します。
+          </p>
+          <p className="small muted">新しい実検索にはAPI料金がかかります。</p>
+          {gps.error && (
+            <p className="field-error" role="alert">
+              {gps.error}
+            </p>
+          )}
+          <PrimaryButton
+            icon={MapPin}
+            disabled={gps.loading || web.loading}
+            onClick={async () => {
+              if (await gps.locate()) {
+                setLocationOpen(false)
+                setAcquired(true)
+              }
+            }}
+          >
+            {gps.loading ? '現在地を取得中…' : '現在地を取得して検索'}
+          </PrimaryButton>
           <PrimaryButton
             variant="secondary"
             onClick={() => {
-              update((s) => ({ ...s, hiddenEvents: [...s.hiddenEvents, reason.id] }))
-              setReason(null)
+              gps.cancel()
+              setLocationOpen(false)
+              setRegionOpen(true)
             }}
           >
-            興味がない・おすすめから外す
-          </PrimaryButton>
-        </BottomSheet>
-      )}
-      {areaOpen && (
-        <BottomSheet title="出発エリアを変更" onClose={() => setAreaOpen(false)}>
-          <StationPicker label="出発する最寄駅" value={areaDraft} onChange={setAreaDraft} />
-          {!railStation(state.profile.stationId) && !!state.profile.area && (
-            <p className="small muted">
-              以前の設定：{state.profile.area}。候補から駅を選ぶと更新されます。
-            </p>
-          )}
-          <p className="body-copy">
-            位置情報の許可は不要です。
-            {region !== 'origin' && '別に指定している探したい駅は変わりません。'}
-          </p>
-          <PrimaryButton
-            disabled={!railStation(areaDraft)}
-            onClick={() => {
-              const station = railStation(areaDraft)
-              if (!station) return
-              update((s) => ({
-                ...s,
-                profile: { ...s.profile, stationId: station.id, area: stationRegion(station) },
-              }))
-              setAreaOpen(false)
-            }}
-          >
-            出発エリアを保存
+            現在地を使わず、駅から探す
           </PrimaryButton>
         </BottomSheet>
       )}

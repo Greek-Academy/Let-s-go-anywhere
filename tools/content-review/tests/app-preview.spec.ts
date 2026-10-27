@@ -159,7 +159,10 @@ test('identity errors and invalid JSON retain the editor; all tabs and reset sta
       preview.getByRole('navigation').getByRole('button', { name, exact: true }),
     ).toHaveAttribute('aria-current', 'page')
   }
-  await preview.getByRole('button', { name: 'マイページを開く', exact: true }).click()
+  await preview
+    .getByRole('navigation')
+    .getByRole('button', { name: 'マイページ', exact: true })
+    .click()
   await preview.getByRole('button', { name: '設定', exact: true }).click()
   await expect(preview.getByRole('heading', { name: '確認画面での保存' })).toBeVisible()
   await preview.getByRole('button', { name: 'モックの保存データを削除' }).click()

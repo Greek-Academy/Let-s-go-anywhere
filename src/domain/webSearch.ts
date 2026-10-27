@@ -1,5 +1,7 @@
 import { decodeEventDates, decodeEventSchedule, sameEventDates } from './eventSearch'
 import type { EventDates, EventSchedule } from './eventSearch'
+import { decodeDriveQuery, decodeDriveTravel, sameDriveQuery } from './driveSearch'
+import type { DriveQuery, DriveTravel } from './driveSearch'
 import { LOCATION_REGION, sameCenter, validDiscoveryCenter } from './discoveryLocation'
 import type { DiscoveryCenter } from './discoveryLocation'
 import { railStation, stationRegion } from './railStations'
@@ -9,6 +11,8 @@ import { outboundHttpsUrl, researchSourceUrl } from './externalLinks'
 import { samePlace } from './placeIdentity'
 
 export interface WebSpot {
+  /** Transient routing result. Stripped before persistence and sharing. */
+  travel?: DriveTravel
   event?: EventSchedule
   id: string
   name: string
@@ -26,6 +30,7 @@ export interface WebSpot {
 export interface WebSearchResult {
   spots: WebSpot[]
   query: {
+    drive?: DriveQuery
     purpose?: 'events'
     eventDates?: EventDates
     region: string
@@ -133,6 +138,12 @@ export async function parseWebSearchResult(
 ): Promise<WebSearchResult> {
   const data = record(value)
   const query = record(data.query)
+  const drive = query.drive === undefined ? undefined : decodeDriveQuery(query.drive)
+  if (
+    !sameDriveQuery(drive, expected.drive) ||
+    (drive && (drive.mode === 'events') !== (query.purpose === 'events'))
+  )
+    throw new Error('ドライブの検索条件と結果が一致しません。')
   const dates = query.purpose === 'events' ? decodeEventDates(query.eventDates) : undefined
   if (
     (query.purpose !== undefined && query.purpose !== 'events') ||
@@ -213,11 +224,20 @@ export async function parseWebSearchResult(
       verification: 'unconfirmed',
       mode,
       ...metadata,
+      ...(drive
+        ? {
+            travel:
+              s.travel === undefined
+                ? { status: 'unconfirmed' as const }
+                : decodeDriveTravel(s.travel, mode),
+          }
+        : {}),
     })
   }
   return {
     spots,
     query: {
+      ...(drive ? { drive } : {}),
       ...(dates ? { purpose: 'events' as const, eventDates: dates } : {}),
       region: shortText(query.region, 120),
       theme: shortText(query.theme, 80),

@@ -15,6 +15,7 @@ test('retired URLs lead to learning without a referral form or a back loop', asy
     '行きたい',
     '車を探す',
     '学ぶ',
+    'マイページ',
   ])
   for (const path of [
     '/schools',

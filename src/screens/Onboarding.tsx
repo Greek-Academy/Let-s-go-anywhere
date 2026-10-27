@@ -1,10 +1,8 @@
-import { StationPicker } from '../components/StationPicker'
-import { railStation, stationRegion } from '../domain/railStations'
-import { ArrowLeft, ArrowRight, Check, MapPin, Sparkles } from 'lucide-react'
+import { HobbyChoices } from '../components/DriveSearchControls'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../state/AppState'
-import { companions, interests } from '../data/options'
-import { Brand, Choice, IconButton, PrimaryButton } from '../components/ui'
+import { Brand, IconButton, PrimaryButton } from '../components/ui'
 
 export function Welcome() {
   const navigate = useNavigate()
@@ -35,11 +33,6 @@ export function Welcome() {
         </p>
       </div>
       <div className="welcome-bottom">
-        <div className="welcome-dots">
-          <span className="active" />
-          <span />
-          <span />
-        </div>
         <PrimaryButton icon={ArrowRight} onClick={() => navigate('/onboarding/1')}>
           はじめる
         </PrimaryButton>
@@ -52,158 +45,48 @@ export function Welcome() {
   )
 }
 export function Onboarding() {
-  const { step: raw } = useParams()
-  const step = Number(raw)
+  const { step } = useParams()
   const navigate = useNavigate()
   const { state, update } = useApp()
-  if (![1, 2, 3].includes(step)) return <Navigate to="/onboarding/1" replace />
-  const profile = state.profile
-  const next = () => {
-    if (step < 3) navigate(`/onboarding/${step + 1}`)
-    else {
-      update((s) => ({
-        ...s,
-        onboarded: true,
-        map: { ...s.map, area: s.profile.area || '東京・渋谷駅周辺' },
-      }))
-      navigate('/discover', { replace: true })
-    }
+  if (step !== '1') return <Navigate to={state.onboarded ? '/discover' : '/onboarding/1'} replace />
+  const finish = () => {
+    update((s) => ({ ...s, onboarded: true }))
+    navigate('/discover', { replace: true })
   }
-  const setProfile = (data: Partial<typeof profile>) =>
-    update((s) => ({ ...s, profile: { ...s.profile, ...data } }))
   return (
-    <div className="onboarding-page">
+    <div className="onboarding-page hobbies-onboarding">
       <div className="onboarding-header">
-        <IconButton
-          icon={ArrowLeft}
-          label="戻る"
-          onClick={() => navigate(step === 1 ? '/welcome' : `/onboarding/${step - 1}`)}
-        />
-        <div className="step-progress">
-          {[1, 2, 3].map((i) => (
-            <span className={i <= step ? 'active' : ''} key={i} />
-          ))}
-        </div>
-        <span className="step-count">{step} / 3</span>
+        <IconButton icon={ArrowLeft} label="戻る" onClick={() => navigate('/welcome')} />
+        <span className="onboarding-label">趣味の設定</span>
       </div>
       <div className="onboarding-content">
-        <span className="eyebrow teal">LET'S FIND YOUR WEEKEND</span>
+        <span className="eyebrow teal">DRIVE TO SOMETHING YOU LOVE</span>
         <h1>
-          {step === 1 ? (
-            <>
-              どこから、
-              <br />
-              お出かけしますか？
-            </>
-          ) : step === 2 ? (
-            <>
-              誰と、どんな時間を
-              <br />
-              過ごしたいですか？
-            </>
-          ) : (
-            <>
-              心が動くものを、
-              <br />
-              選んでください。
-            </>
-          )}
+          好きなことを、
+          <br />
+          ドライブのきっかけに。
         </h1>
         <p className="body-copy">
-          {step === 1
-            ? '最寄駅を選ぶと、その周辺の休日のヒントを探せます。'
-            : step === 2
-              ? 'あなたらしいお出かけを見つけましょう。'
-              : 'いくつ選んでも大丈夫。あとから変更できます。'}
+          選んだ趣味と現在地から、ドライブ先やイベントを探します。複数選べます。あとから変更もできます。
         </p>
-        {step === 1 && (
-          <>
-            <StationPicker
-              label="出発する最寄駅"
-              value={profile.stationId}
-              onChange={(stationId) => {
-                const station = railStation(stationId)
-                setProfile({ stationId, ...(station ? { area: stationRegion(station) } : {}) })
-              }}
-            />
-            {!profile.stationId && !!profile.area && (
-              <p className="small muted">
-                以前の設定：{profile.area}。候補から駅を選び直してください。
-              </p>
-            )}
-            <div className="area-illustration" aria-hidden="true">
-              <div className="area-grid" />
-              <div className="area-park park-one" />
-              <div className="area-park park-two" />
-              <div className="area-river" />
-              <div className="area-street one" />
-              <div className="area-street two" />
-              <span className="area-pin">
-                <MapPin size={39} fill="currentColor" />
-              </span>
-              <span className="area-tag">ここから、楽しみが広がる。</span>
-            </div>
-            <p className="muted small">位置情報の許可は必要ありません。</p>
-          </>
-        )}
-        {step === 2 && (
-          <div className="companion-choices">
-            {companions.map((c) => (
-              <Choice
-                key={c.name}
-                selected={profile.companion === c.name}
-                title={c.name}
-                description={c.text}
-                icon={c.emoji}
-                onClick={() => setProfile({ companion: c.name })}
-              />
-            ))}
-          </div>
-        )}
-        {step === 3 && (
-          <>
-            <div className="interest-grid">
-              {interests.map((interest) => {
-                const selected = profile.interests.includes(interest.name)
-                return (
-                  <button
-                    key={interest.name}
-                    className={`interest-tile ${selected ? 'selected' : ''}`}
-                    aria-pressed={selected}
-                    onClick={() =>
-                      setProfile({
-                        interests: selected
-                          ? profile.interests.filter((v) => v !== interest.name)
-                          : [...profile.interests, interest.name],
-                      })
-                    }
-                  >
-                    <img src={interest.image} alt="" />
-                    <span className="interest-check">{selected && <Check size={13} />}</span>
-                    <strong>{interest.name}</strong>
-                    <small>{interest.caption}</small>
-                  </button>
-                )
-              })}
-            </div>
-            <p className="interest-selection">
-              <Sparkles size={15} />
-              {profile.interests.length
-                ? `${profile.interests.length}つの「好き」を選択中`
-                : '気になるものをタップ'}
-            </p>
-          </>
-        )}
+        <HobbyChoices
+          value={state.profile.interests}
+          onChange={(values) =>
+            update((s) => ({ ...s, profile: { ...s.profile, interests: values } }))
+          }
+        />
+        <p className="small muted" aria-live="polite">
+          {state.profile.interests.length}個の趣味を選択中
+        </p>
       </div>
       <div className="onboarding-footer">
-        <PrimaryButton
-          onClick={next}
-          disabled={step === 1 && !railStation(profile.stationId)}
-          icon={ArrowRight}
-        >
-          {step === 3 ? 'おすすめを見る' : '次へ'}
+        <p className="small muted">
+          ホームを開くと現在地を取得しておすすめを探します。約100m単位の位置と趣味をAI検索に、位置を経路計算に使用します。許可しない場合は駅からも探せます。
+        </p>
+        <PrimaryButton onClick={finish} icon={ArrowRight}>
+          ドライブ先を見つける
         </PrimaryButton>
-        <button className="text-button skip-button" onClick={next}>
+        <button className="text-button skip-button" onClick={finish}>
           スキップ
         </button>
       </div>
