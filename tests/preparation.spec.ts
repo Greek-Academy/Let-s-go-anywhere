@@ -96,12 +96,12 @@ test('drive choices persist separately from old outing conditions without a budg
 }) => {
   await enter(page)
   const original = await state(page)
-  await page.getByRole('button', { name: /気分からドライブを探す/ }).click()
+  await page.getByRole('button', { name: '気分から選ぶ', exact: true }).click()
   await expect(page.getByLabel('1人あたりの予算（円）')).toHaveCount(0)
   await page.getByRole('button', { name: '夜景を見たい', exact: true }).click()
   await page.getByRole('button', { name: '高速道路を走りたい', exact: true }).click()
   await page.reload()
-  await page.getByRole('button', { name: /気分からドライブを探す/ }).click()
+  await page.getByRole('button', { name: '気分から選ぶ', exact: true }).click()
   await expect(page.getByRole('button', { name: '夜景を見たい', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',

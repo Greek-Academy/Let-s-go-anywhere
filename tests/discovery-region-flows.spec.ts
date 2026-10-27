@@ -8,7 +8,7 @@ async function select(page: Page, label: string, query: string, station: string)
   await page.getByRole('option').filter({ hasText: station }).first().click()
 }
 async function destination(page: Page, query = 'しぶや', station = '渋谷駅（東京都）') {
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }).click()
   await page.getByRole('button', { name: /^駅を出発地にする/ }).click()
   await select(page, '探したい駅', query, station)
   await page.getByRole('button', { name: 'この駅を出発地にする', exact: true }).click()
@@ -45,15 +45,17 @@ test('temporary departure is independent of saved station, preserves saves and c
   await page.goto('/#/discover')
   await destination(page)
   await expect(page.locator('.drive-origin-card')).toContainText('渋谷駅')
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }).click()
   await select(page, '探したい駅', 'かまくら', '鎌倉駅（神奈川県）')
   await page.getByRole('button', { name: '閉じる', exact: true }).click()
-  await expect(page.getByRole('button', { name: '探す地域を変更', exact: true })).toBeFocused()
+  await expect(
+    page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }),
+  ).toBeFocused()
   await page.reload()
   expect((await readState(page)).discover.stationId).toBe('1130205')
   expect((await readState(page)).profile.stationId).toBe('100216')
   expect((await readState(page)).savedEvents).toEqual(['cafe'])
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }).click()
   await page.getByRole('button', { name: /保存した駅から出発/ }).click()
   await page.getByRole('button', { name: 'この駅を出発地にする', exact: true }).click()
   await expect(page.locator('.drive-origin-card')).toContainText('京都駅')
@@ -63,7 +65,7 @@ test('same-name stations have prefectures and lines; changing text invalidates t
   page,
 }) => {
   await destination(page)
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }).click()
   await page.getByRole('button', { name: /^駅を出発地にする/ }).click()
   const input = page.getByRole('combobox', { name: '探したい駅' })
   await input.fill('府中')
@@ -99,7 +101,7 @@ test('keyboard, narrow phone, attribution and no external autocomplete traffic',
   page.on('request', (r) => {
     if (!r.url().startsWith(new URL(page.url()).origin)) external.push(r.url())
   })
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }).click()
   await page.getByRole('button', { name: /^駅を出発地にする/ }).click()
   const input = page.getByRole('combobox', { name: '探したい駅' })
   await input.fill('シンジュク')
@@ -144,7 +146,7 @@ test('a reduced phone viewport keeps the first station suggestion visible while 
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 420 })
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }).click()
   await page.getByRole('button', { name: /^駅を出発地にする/ }).click()
   await page.getByRole('combobox', { name: '探したい駅' }).fill('しんじゅく')
   await expect(page.getByRole('option').filter({ hasText: /^新宿駅（東京都）/ })).toBeInViewport({

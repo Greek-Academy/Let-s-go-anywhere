@@ -30,7 +30,7 @@ export function DiscoveryRegionSheet({
   )
   const [chosen, setChosen] = useState<string | null>(railStation(stationId)?.id ?? null)
   return (
-    <BottomSheet title="探す地域を変更" onClose={onClose}>
+    <BottomSheet title="出発地を選ぶ・変更する" onClose={onClose}>
       <p className="body-copy">
         現在地をドライブの出発地にできます。位置情報を使わない場合は、駅を出発地に指定できます。
       </p>

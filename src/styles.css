@@ -5017,57 +5017,176 @@ small {
   box-shadow: 0 -8px 20px #ffffffed;
   padding-bottom: 10px;
 }
-.drive-origin-card {
-  background: #f0f7f3;
-  border: 1px solid #dbece3;
+.drive-search-card {
+  border: 1px solid var(--line);
   border-radius: 19px;
   padding: 17px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  min-width: 0;
 }
-.drive-origin-card > div {
+.drive-search-heading {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
   color: var(--teal);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 16px;
 }
-.drive-origin-card small,
-.drive-origin-card strong {
-  display: block;
+.drive-search-heading > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: #fff;
+  font-size: 12px;
 }
-.drive-origin-card small {
-  font-size: 10px;
-  margin-bottom: 3px;
+.drive-origin-card {
+  background: #f0f7f3;
+}
+.drive-origin-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  color: var(--teal);
+}
+.drive-origin-row > svg {
+  margin-top: 3px;
+}
+.drive-origin-label > span {
+  font-size: 11px;
   color: var(--muted);
 }
-.drive-origin-card strong {
-  font-size: 14px;
+.drive-origin-label strong,
+.drive-origin-label small {
+  display: block;
 }
-.drive-origin-card .text-button {
-  width: 100%;
-  margin-top: 7px;
+.drive-origin-label strong {
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  margin: 2px 0;
 }
-.drive-free-search {
-  margin: 16px 0 22px;
+.drive-origin-label small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.drive-origin-change {
+  min-width: 48px;
+  min-height: 44px;
+  border: 1px solid var(--teal);
+  border-radius: 12px;
+  padding: 7px 12px;
+  background: #fff;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 700;
+}
+.drive-home-hobbies {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  margin: 17px 0;
+  padding-top: 14px;
+}
+.drive-home-hobbies > svg {
+  color: var(--teal);
+}
+.drive-home-hobbies p {
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.drive-home-hobbies .text-button {
+  font-size: 11px;
+  padding-inline: 0;
+  min-height: 44px;
+  white-space: nowrap;
+}
+.drive-origin-card > .small {
+  margin-block: 12px;
+}
+.drive-origin-card details {
+  margin-bottom: 16px;
+}
+.drive-origin-card .web-search-hint {
+  margin: 10px 0 0;
+}
+.drive-origin-card .button > span {
+  display: block;
+  text-wrap: balance;
+}
+.drive-request-card {
+  background: #fff;
+}
+.drive-request-card .drive-search-heading {
+  margin-bottom: 5px;
+}
+.drive-shared-origin {
+  margin: 0 0 15px;
+  overflow-wrap: anywhere;
+}
+.drive-method-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 13px;
+  background: #edf3f0;
+}
+.drive-method-switch button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  min-width: 0;
+  padding: 8px 5px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+}
+.drive-method-switch button svg {
+  flex-shrink: 0;
+}
+.drive-method-switch button[aria-pressed='true'] {
+  background: #fff;
+  color: var(--teal);
+  box-shadow: 0 2px 5px #173d3020;
+}
+.drive-free-search,
+.drive-mood-search {
+  margin: 16px 0 0;
 }
 .drive-free-search textarea {
-  min-height: 96px;
+  min-height: 118px;
   resize: vertical;
 }
-.drive-mood-section {
-  border: 1px solid #e1ebe4;
-  border-radius: 17px;
-  background: #f8faf6;
-  margin: 14px 0 22px;
-  overflow: hidden;
+@media (max-width: 360px) {
+  .drive-home-hobbies {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .drive-home-hobbies .text-button {
+    grid-column: 2;
+    justify-self: start;
+  }
 }
-.drive-mood-section .condition-edit-button {
-  border: 0;
-  margin: 0;
-  border-radius: 0;
-  background: transparent;
+.large-text .drive-home-hobbies {
+  grid-template-columns: auto minmax(0, 1fr);
 }
-.drive-mood-section form {
-  padding: 0 16px 16px;
+.large-text .drive-home-hobbies .text-button {
+  grid-column: 2;
+  justify-self: start;
 }
 .drive-conditions fieldset {
   border: 0;

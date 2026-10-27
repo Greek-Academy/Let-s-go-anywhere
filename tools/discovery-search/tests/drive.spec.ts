@@ -89,11 +89,16 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   await page.getByRole('button', { name: '戻る', exact: true }).click()
   const free = page.getByRole('textbox', { name: 'お出かけを検索' })
   await free.fill('海鮮を食べたい')
+  await page.getByRole('button', { name: '気分から選ぶ', exact: true }).click()
+  await expect(free).toBeHidden()
+  await page.getByRole('button', { name: '自由に書く', exact: true }).click()
+  await expect(free).toHaveValue('海鮮を食べたい')
+  expect(bodies).toHaveLength(1)
   await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(bodies[1].drive).toEqual(driveQuery('free'))
-  await page.getByRole('button', { name: /気分からドライブを探す/ }).click()
+  await page.getByRole('button', { name: '気分から選ぶ', exact: true }).click()
   await page.getByRole('button', { name: '夜景を見たい', exact: true }).click()
   await page.getByRole('button', { name: '県を越えたい', exact: true }).click()
   await page.getByRole('button', { name: '1〜2時間', exact: true }).click()
@@ -118,7 +123,7 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   expect(bodies[3].drive).toEqual(driveQuery('events', undefined, ['音楽', '自然']))
   expect(bodies[3].theme).toBe('イベント')
   await page.getByRole('button', { name: 'おすすめ', exact: true }).click()
-  await page.getByRole('button', { name: 'ドライブデート', exact: true }).click()
+  await page.getByRole('button', { name: '趣味のおすすめ', exact: true }).click()
   await expect(page.locator('.web-spot-card').first()).toContainText(first)
   expect(bodies).toHaveLength(4)
   const raw = await page.evaluate(() => localStorage.getItem('driveplus.mock.v1')!)
@@ -216,8 +221,12 @@ test('location denial ends startup without AI calls, permits station search, and
   page,
 }) => {
   let calls = 0
+  const bodies: Record<string, any>[] = []
   page.on('request', (r) => {
-    if (r.url().endsWith('/api/spot-search/compare')) calls++
+    if (r.url().endsWith('/api/spot-search/compare')) {
+      calls++
+      bodies.push(r.postDataJSON())
+    }
   })
   await enter(page, '/#/onboarding/1')
   await page.evaluate(() =>
@@ -233,17 +242,39 @@ test('location denial ends startup without AI calls, permits station search, and
   await page.getByRole('button', { name: 'ドライブ先を見つける', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('許可されていません')
   expect(calls).toBe(0)
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }).click()
   await page.getByRole('button', { name: /^駅を出発地にする/ }).click()
   await page.getByRole('combobox', { name: '探したい駅' }).fill('しんじゅく')
   await page.getByRole('option').filter({ hasText: '新宿駅（東京都）' }).first().click()
   await page.getByRole('button', { name: 'この駅を出発地にする', exact: true }).click()
+  await expect(page.locator('.drive-origin-card')).toContainText('新宿駅（東京都）')
+  await expect(page.locator('.drive-shared-origin')).toContainText('新宿駅（東京都）')
+  expect(calls).toBe(0)
   await page.getByRole('button', { name: 'この出発地からドライブ先を探す', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(bodies[0].drive).toEqual(driveQuery('default', undefined, ['音楽', '自然']))
+  await page.getByRole('textbox', { name: 'お出かけを検索' }).fill('海を眺めながら走りたい')
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
+  await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
+  await page.getByRole('button', { name: '気分から選ぶ', exact: true }).click()
+  await page.getByRole('button', { name: '夜景を見たい', exact: true }).click()
+  expect(calls).toBe(2)
+  await page.getByRole('button', { name: '選んだ条件で探す', exact: true }).click()
+  await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
+  expect(bodies[1].drive).toEqual(driveQuery('free'))
+  expect(bodies[2].drive).toEqual(
+    driveQuery('conditions', { ...emptyDriveChoices(), activities: ['夜景を見たい'] }),
+  )
+  for (const body of bodies) {
+    expect(body.stationId).toBe(bodies[0].stationId)
+    expect(body.region).toBe(bodies[0].region)
+    expect(body.location).toBeUndefined()
+  }
+  expect(bodies[0].stationId).toBeTruthy()
   await page.getByRole('navigation').getByRole('button', { name: '学ぶ', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '見つける', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
-  expect(calls).toBe(1)
+  expect(calls).toBe(3)
 })
 
 const waitingMessage = '前の検索が終わるのを待っています。このままお待ちください。'

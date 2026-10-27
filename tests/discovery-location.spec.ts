@@ -48,7 +48,7 @@ async function enter(
   await page.goto('/#/discover')
 }
 async function chooseLocation(page: Page) {
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }).click()
   await page.getByRole('button', { name: /現在地から出発/ }).click()
 }
 const acquire = (page: Page) =>
@@ -96,7 +96,7 @@ test('explicit acquisition keeps departure station, does not search/save/share G
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '見つける', exact: true }).click()
   await expect(page.locator('.drive-origin-card strong')).toHaveText('取得した現在地')
-  await page.getByRole('button', { name: '探す地域を変更', exact: true }).click()
+  await page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }).click()
   await page.getByRole('button', { name: /保存した駅から出発/ }).click()
   await page.getByRole('button', { name: 'この駅を出発地にする' }).click()
   await expect(page.locator('.drive-origin-card strong')).toHaveText('京都駅（京都府）')
