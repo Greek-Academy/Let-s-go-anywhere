@@ -9,8 +9,12 @@ import { decodeTags, decodeRecommendations, decodeReports } from './recommendati
 import type { Recommendation, ProviderReport } from './recommendations'
 import { outboundHttpsUrl, researchSourceUrl } from './externalLinks'
 import { samePlace } from './placeIdentity'
+import { decodeHobbyMatches, searchHobbies } from './hobbyBalance'
 
 export interface WebSpot {
+  /** Supported AI hobby classifications and the single display slot assigned after filtering. */
+  matchedHobbies?: string[]
+  hobby?: string
   /** Transient routing result. Stripped before persistence and sharing. */
   travel?: DriveTravel
   event?: EventSchedule
@@ -97,6 +101,8 @@ export function decodeSavedWebSpots(value: unknown): WebSpot[] {
       'recommendations',
       'tags',
       'likedFor',
+      'matchedHobbies',
+      'hobby',
     ]
     if (Object.keys(s).some((key) => !fields.includes(key)))
       throw new Error('不明な保存項目があります。')
@@ -199,6 +205,7 @@ export async function parseWebSearchResult(
     const metadata = comparisonMetadata(s)
     if (Boolean(metadata?.event) !== Boolean(dates))
       throw new Error('イベントの開催情報がありません。')
+    if (metadata?.matchedHobbies) decodeHobbyMatches(metadata.matchedHobbies, searchHobbies(drive))
     if (dates) decodeEventSchedule(s.event, dates)
     if ((data.kind === 'comparison') !== Boolean(metadata))
       throw new Error('検索方法と候補が一致しません。')
@@ -260,9 +267,17 @@ export async function parseWebSearchResult(
 
 function comparisonMetadata(
   s: Record<string, unknown>,
-): Pick<WebSpot, 'recommendations' | 'tags' | 'likedFor' | 'event'> | undefined {
+):
+  | Pick<WebSpot, 'recommendations' | 'tags' | 'likedFor' | 'event' | 'matchedHobbies' | 'hobby'>
+  | undefined {
   if (s.recommendations === undefined) {
-    if (s.tags !== undefined || s.likedFor !== undefined || s.event !== undefined)
+    if (
+      s.tags !== undefined ||
+      s.likedFor !== undefined ||
+      s.event !== undefined ||
+      s.matchedHobbies !== undefined ||
+      s.hobby !== undefined
+    )
       throw new Error('提案元がありません。')
     return undefined
   }
@@ -277,7 +292,16 @@ function comparisonMetadata(
     throw new Error('提案元と出典が一致しません。')
   const likedFor = s.likedFor === undefined ? undefined : decodeTags(s.likedFor)
   if (likedFor?.some((t) => !tags.includes(t))) throw new Error('好みの理由が不正です。')
+  const matchedHobbies =
+    s.matchedHobbies === undefined ? undefined : decodeHobbyMatches(s.matchedHobbies)
+  if (
+    matchedHobbies
+      ? typeof s.hobby !== 'string' || !matchedHobbies.includes(s.hobby)
+      : s.hobby !== undefined
+  )
+    throw new Error('表示する趣味と候補が一致しません。')
   return {
+    ...(matchedHobbies ? { matchedHobbies, hobby: s.hobby as string } : {}),
     ...(s.event === undefined ? {} : { event: decodeEventSchedule(s.event) }),
     recommendations,
     tags,

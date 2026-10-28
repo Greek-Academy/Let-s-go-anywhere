@@ -31,7 +31,11 @@ const query = (mode = 'default', changes = {}) => {
       : {}),
   }
 }
-const spots = Array.from({ length: 20 }, (_, i) => ({ name: '架空の候補' + i, area: '検証エリア' }))
+const spots = Array.from({ length: 20 }, (_, i) => ({
+  name: '架空の候補' + i,
+  area: '検証エリア',
+  matchedHobbies: ['音楽'],
+}))
 const row = (i, seconds = 9000) => ({
   originIndex: 0,
   destinationIndex: i,

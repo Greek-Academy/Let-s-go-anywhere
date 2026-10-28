@@ -1,4 +1,5 @@
 import { decodeDriveQuery, driveTheme, durationRange } from '../../src/domain/driveSearch.ts'
+import { decodeHobbyMatches, hobbyTargets, searchHobbies } from '../../src/domain/hobbyBalance.ts'
 import {
   decodeEventDates,
   decodeEventSchedule,
@@ -183,7 +184,17 @@ Use organizer/venue official pages or official tourism listings with event detai
 export function buildComparisonRequest(provider, query) {
   const valid = validateComparisonQuery(query)
   const isEvent = valid.purpose === 'events'
-  const outputSchema = isEvent ? eventSchema : schema
+  const hobbies = searchHobbies(valid.drive)
+  const outputSchema = structuredClone(isEvent ? eventSchema : schema)
+  if (hobbies.length) {
+    outputSchema.properties.spots.items.properties.matchedHobbies = {
+      type: 'array',
+      minItems: 1,
+      maxItems: hobbies.length,
+      items: { type: 'string', enum: hobbies },
+    }
+    outputSchema.properties.spots.items.required.push('matchedHobbies')
+  }
   const driveInstructions = `Find real destinations for a drive date departing from the supplied approximate current location or station. A drive journey, not a nearby walking search: search across surrounding cities/prefectures toward the requested one-way driving-time range. Do not use a 2 km radius.
 The supplied drive choices are the user's wishes. For mode default, use the supplied hobbies to suggest date destinations with relevant scenery or activities. Cover the selected interests across the list; a place may match one or several, and need not match all. Explain the supported hobby connection in matchReason. Do not use hidden free-text or condition preferences. For mode free, follow theme only, without adding profile hobbies. For mode conditions, follow ONLY the structured activity, road, timing, pace and duration choices; no hidden free-text or hobby preference. For events, use only the supplied hobbies, location and requested dates. Empty hobbies means no genre restriction. Preferences are not confirmed facility/route facts.
 Return at most 10 distinct candidates per provider. Prefer source-backed likely candidates within the requested duration range; actual travel time is computed separately using a routing API. Do not invent or output travel time, coordinates, road suitability, safety, guaranteed highway use or crossing a prefectural border. Do not claim the requested duration is confirmed. Never substitute straight-line distance for driving time. Return fewer if evidence is insufficient.
@@ -198,6 +209,9 @@ ${isEvent ? eventInstructions.replace('Search only the supplied region and inclu
             eventInstructions,
           )
         : baseInstructions) +
+    (hobbies.length
+      ? ` Balance distinct candidates across hobbyTargets; do not spend all candidates on one hobby. Each candidate must include matchedHobbies listing ONLY supplied hobbies supported by its cited source and explanation in matchReason. A place may support several hobbies, but counts as one candidate, not several. Do not label an ordinary shop as music/art/hot springs without source evidence. If one hobby has insufficient evidence, use other selected hobbies for spare slots; never invent a match to meet a target. Keep the existing search-call limit.`
+      : '') +
     ` The final answer must be one JSON object, without introductory prose, matching: ${JSON.stringify(outputSchema)}`
   const station = railStation(valid.stationId)
   const input = JSON.stringify({
@@ -223,7 +237,12 @@ ${isEvent ? eventInstructions.replace('Search only the supplied region and inclu
           },
         }),
     ...(valid.drive
-      ? { drive: valid.drive, oneWayMinutes: durationRange(valid.drive.duration), targetTotal: 10 }
+      ? {
+          drive: valid.drive,
+          oneWayMinutes: durationRange(valid.drive.duration),
+          targetTotal: 10,
+          ...(hobbies.length ? { hobbyTargets: hobbyTargets(hobbies) } : {}),
+        }
       : { radiusMeters: STATION_RADIUS_METERS }),
   })
   if (provider === 'openai')
@@ -401,10 +420,13 @@ export function parseComparisonResponse(provider, response, query) {
       s.tags.some((t) => !tags.includes(t))
     )
       continue
-    let event
+    let event, matchedHobbies
     try {
       if (query?.purpose === 'events') event = decodeEventSchedule(s.event, query.eventDates)
       else if (s.event !== undefined) continue
+      const hobbies = searchHobbies(query?.drive)
+      if (hobbies.length) matchedHobbies = decodeHobbyMatches(s.matchedHobbies, hobbies)
+      else if (s.matchedHobbies !== undefined) continue
     } catch {
       continue
     }
@@ -414,6 +436,7 @@ export function parseComparisonResponse(provider, response, query) {
     }
     spots.push({
       ...(event ? { event } : {}),
+      ...(matchedHobbies ? { matchedHobbies } : {}),
       ...fields,
       sourceUrl: url,
       tags: [...new Set(s.tags)],

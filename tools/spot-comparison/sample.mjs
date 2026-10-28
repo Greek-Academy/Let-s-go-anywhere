@@ -1,6 +1,10 @@
+import { searchHobbies } from '../../src/domain/hobbyBalance.ts'
+
 // Synthetic provider envelopes exercise the same parsing and deduplication path; no network.
 export function comparisonSample(provider, query) {
+  const hobbies = searchHobbies(query.drive)
   const spots = Array.from({ length: 10 }, (_, i) => {
+    const hobby = hobbies[i % hobbies.length]
     const index = provider === 'anthropic' && i >= 2 ? i + 10 : i
     const tagSets = [
       ['カフェ', 'コーヒー', '落ち着いた雰囲気'],
@@ -19,6 +23,7 @@ export function comparisonSample(provider, query) {
       'アートのあるお店',
     ]
     return {
+      ...(hobby ? { matchedHobbies: [hobby] } : {}),
       ...(query.purpose === 'events'
         ? {
             event: {
@@ -37,7 +42,7 @@ export function comparisonSample(provider, query) {
         query.purpose === 'events'
           ? '日付からイベントを探す操作を確かめる架空の候補です。実在の催しではありません。'
           : 'お店選びの操作を確かめる架空の候補です。実在するお店の情報ではありません。',
-      matchReason: `${provider === 'openai' ? 'OpenAI' : 'Claude'}の提案例です。${kinds[index % 6]}を楽しむ休日を想定しています。`,
+      matchReason: `${provider === 'openai' ? 'OpenAI' : 'Claude'}の提案例です。${kinds[index % 6]}を楽しむ休日を想定しています。${hobby ? `趣味「${hobby}」との対応も架空のテスト設定です。` : ''}`,
       sourceUrl: `https://example.com/shops/${index + 1}`,
       tags: tagSets[index % 6],
     }
