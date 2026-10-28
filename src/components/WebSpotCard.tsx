@@ -39,6 +39,13 @@ export function WebSpotStatus({ spot }: { spot: WebSpot }) {
     </Tag>
   )
 }
+export function WebSpotHobby({ spot }: { spot: WebSpot }) {
+  return spot.hobby ? (
+    <span className="web-spot-hobby" aria-label={`この候補に反映した趣味：${spot.hobby}`}>
+      {spot.hobby}
+    </span>
+  ) : null
+}
 export function WebSpotSource({ spot }: { spot: WebSpot }) {
   const [url, setUrl] = useState<string | null>(null)
   const sources = spot.recommendations ?? [{ provider: null, sourceUrl: spot.sourceUrl }]
@@ -102,6 +109,7 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
       </button>
       <div className="event-card-body">
         <button className="card-title-button" onClick={() => navigate(`/web-spots/${spot.id}`)}>
+          <WebSpotHobby spot={spot} />
           <h3>{spot.name}</h3>
           <DriveTravelInfo travel={spot.travel} compact />
         </button>

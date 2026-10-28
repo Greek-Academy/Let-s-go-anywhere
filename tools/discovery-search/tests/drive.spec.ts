@@ -98,6 +98,7 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(bodies[1].drive).toEqual(driveQuery('free'))
+  await expect(page.locator('.web-spot-card .web-spot-hobby')).toHaveCount(0)
   await page.getByRole('button', { name: '気分から選ぶ', exact: true }).click()
   await page.getByRole('button', { name: '夜景を見たい', exact: true }).click()
   await page.getByRole('button', { name: '県を越えたい', exact: true }).click()
@@ -137,6 +138,7 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   await page.reload()
   await page.locator('.saved-web-spot').getByRole('button').first().click()
   await expect(page.locator('.event-detail .drive-travel-info')).toContainText('未確認')
+  await expect(page.locator('.event-detail .web-spot-hobby')).toHaveText('音楽')
 })
 test('onboarding hobbies feed the home search; editing hobbies does not change results or start a paid search', async ({
   page,
@@ -147,12 +149,32 @@ test('onboarding hobbies feed the home search; editing hobbies does not change r
   })
   await enter(page, '/#/onboarding/1')
   await page.getByRole('button', { name: '音楽', exact: true }).click()
+  await page.getByRole('button', { name: 'グルメ', exact: true }).click()
   await page.getByRole('button', { name: '温泉', exact: true }).click()
   await page.getByRole('button', { name: 'ドライブ先を見つける', exact: true }).click()
-  await expect(page.getByRole('region', { name: 'おすすめに使う趣味' })).toContainText('自然・温泉')
+  await expect(page.getByRole('region', { name: 'おすすめに使う趣味' })).toContainText(
+    '自然・グルメ・温泉',
+  )
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(bodies).toHaveLength(1)
-  expect(bodies[0].drive.hobbies).toEqual(['自然', '温泉'])
+  expect(bodies[0].drive.hobbies).toEqual(['自然', 'グルメ', '温泉'])
+  const labels = page.locator('.web-spot-card .web-spot-hobby')
+  await expect(labels).toHaveText([
+    '自然',
+    'グルメ',
+    '温泉',
+    '自然',
+    'グルメ',
+    '温泉',
+    '自然',
+    'グルメ',
+    '温泉',
+    '自然',
+  ])
+  await test.info().attach('3つの趣味を反映したパネル', {
+    body: await page.screenshot(),
+    contentType: 'image/png',
+  })
   // Home results are encountered before the alternative free-text form.
   expect(
     await page
@@ -174,7 +196,19 @@ test('onboarding hobbies feed the home search; editing hobbies does not change r
   await page.getByRole('button', { name: 'この出発地からドライブ先を探す', exact: true }).click()
   await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
   expect(bodies).toHaveLength(2)
-  expect(bodies[1].drive.hobbies).toEqual(['自然'])
+  expect(bodies[1].drive.hobbies).toEqual(['自然', 'グルメ'])
+  await expect(labels).toHaveText([
+    '自然',
+    'グルメ',
+    '自然',
+    'グルメ',
+    '自然',
+    'グルメ',
+    '自然',
+    'グルメ',
+    '自然',
+    'グルメ',
+  ])
 })
 test('unlimited status with historical attempts allows an automatic search and another manual search', async ({
   page,

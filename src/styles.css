@@ -5259,6 +5259,18 @@ small {
 }
 
 /* Compact discovery cards keep supporting facts in the detail screen. */
+.web-spot-hobby {
+  display: inline-block;
+  width: fit-content;
+  padding: 4px 10px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  color: var(--teal-dark);
+  background: var(--mint);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
 .web-spot-card .card-title-button {
   width: 100%;
   text-align: left;

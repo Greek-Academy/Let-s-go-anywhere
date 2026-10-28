@@ -1,4 +1,5 @@
 import { durationRange } from '../../src/domain/driveSearch.ts'
+import { balanceHobbyCandidates, searchHobbies } from '../../src/domain/hobbyBalance.ts'
 import { railStation } from '../../src/domain/railStations.ts'
 
 const ENDPOINT = 'https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix'
@@ -112,5 +113,5 @@ export async function addDrivingTimes(
     }
     return [{ ...spot, travel: time }]
   })
-  return { spots: withTimes.slice(0, 10), excluded }
+  return { spots: balanceHobbyCandidates(withTimes, searchHobbies(query.drive)), excluded }
 }

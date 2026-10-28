@@ -21,7 +21,13 @@ import {
   SectionHeading,
   useBack,
 } from '../components/ui'
-import { WebSpotImage, WebSpotSource, WebSpotStatus, searchDate } from '../components/WebSpotCard'
+import {
+  WebSpotHobby,
+  WebSpotImage,
+  WebSpotSource,
+  WebSpotStatus,
+  searchDate,
+} from '../components/WebSpotCard'
 
 export function WebSpotDetail() {
   const { id } = useParams()
@@ -76,6 +82,7 @@ export function WebSpotDetail() {
       <div className="detail-body page-pad">
         <WebSpotStatus spot={spot} />
         <RecommendationBadges spot={spot} />
+        <WebSpotHobby spot={spot} />
         <h1>{spot.name}</h1>
         <p className="detail-subtitle">{spot.area}</p>
         <p className="body-copy">{spot.summary}</p>
