@@ -33,7 +33,7 @@ export interface SearchDraft {
 }
 type SearchMethod = 'comparison' | 'legacy'
 interface SearchStatus {
-  searchProvider?: 'comparison' | 'gemini'
+  searchProvider?: 'comparison' | 'gemini' | 'brave'
   kind?: 'comparison'
   demo: boolean
   configured: boolean
@@ -343,11 +343,13 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
           throw new Error(
             publicSearchOrigin
               ? '検索サービスの接続準備中です。案内した担当者にお知らせください。'
-              : config.searchProvider === 'gemini'
-                ? 'Geminiの接続準備中です。APIキーを保存したら検索サーバーを再起動してください。'
-                : method === 'comparison'
-                  ? '比較検索にはOpenAI・Anthropic両方のAPIキーが必要です。Macの .env.research.local を設定して検索サーバーを再起動してください。'
-                  : 'APIキーが未設定です。Macの .env.research.local を設定して検索サーバーを再起動してください。',
+              : config.searchProvider === 'brave'
+                ? 'Brave SearchとGeminiの接続準備中です。APIキーを保存したら検索サーバーを再起動してください。'
+                : config.searchProvider === 'gemini'
+                  ? 'Geminiの接続準備中です。APIキーを保存したら検索サーバーを再起動してください。'
+                  : method === 'comparison'
+                    ? '比較検索にはOpenAI・Anthropic両方のAPIキーが必要です。Macの .env.research.local を設定して検索サーバーを再起動してください。'
+                    : 'APIキーが未設定です。Macの .env.research.local を設定して検索サーバーを再起動してください。',
           )
         if (publicSearchOrigin && config.enabled === false)
           throw new Error(
@@ -398,6 +400,8 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
           continue
         }
         const next = await parseWebSearchResult(response, query)
+        if ((config.searchProvider === 'brave') !== (next.searchBackend === 'brave'))
+          throw new Error('検索元と接続先が一致しません。画面を更新してお試しください。')
         if ((method === 'comparison') !== (next.kind === 'comparison'))
           throw new Error('検索方法と結果が一致しません。')
         if ((config.demo ? 'sample' : 'live') !== next.mode)

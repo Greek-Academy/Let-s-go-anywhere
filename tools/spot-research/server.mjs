@@ -35,6 +35,7 @@ export function createPilot({
   anthropicApiKey = '',
   routesApiKey = '',
   geminiApiKey = '',
+  braveApiKey = '',
   searchProvider = 'comparison',
   comparisonLimit,
   directory = resolve(root, '.local-research'),
@@ -49,6 +50,7 @@ export function createPilot({
     anthropicApiKey,
     routesApiKey,
     geminiApiKey,
+    braveApiKey,
     searchProvider,
     maxAttempts: comparisonLimit,
     directory: resolve(directory, 'comparison-v1'),
@@ -124,7 +126,7 @@ export function createPilot({
         throw new PilotError('input', '入力を読み取れませんでした。')
       }
       if (path === '/api/compare') return send(200, await comparison.search(input))
-      if (searchProvider === 'gemini')
+      if (searchProvider !== 'comparison')
         throw new PilotError('input', 'この接続先ではGemini検索を利用してください。', 400)
       const query = validateQuery(input)
       if (!demo && !apiKey)
@@ -216,19 +218,30 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const directory = directoryIndex >= 0 ? resolve(process.argv[directoryIndex + 1]) : undefined
   const providerIndex = process.argv.indexOf('--search-provider')
   const searchProvider = providerIndex >= 0 ? process.argv[providerIndex + 1] : 'comparison'
-  if (!['comparison', 'gemini'].includes(searchProvider))
-    throw new Error('Search provider must be comparison or gemini')
+  if (!['comparison', 'gemini', 'brave'].includes(searchProvider))
+    throw new Error('Search provider must be comparison, gemini or brave')
   let geminiApiKey = ''
+  let braveApiKey = ''
   let apiKey = ''
   let anthropicApiKey = ''
   let routesApiKey = ''
-  if (!demo && searchProvider === 'gemini') {
+  if (!demo && searchProvider !== 'comparison') {
     try {
       geminiApiKey =
         parseEnv(readFileSync(resolve(root, '.env.gemini.local'), 'utf8')).GEMINI_API_KEY?.trim() ??
         ''
     } catch (error) {
       if (error.code !== 'ENOENT') throw new Error('Cannot read Gemini key file')
+    }
+  }
+  if (!demo && searchProvider === 'brave') {
+    try {
+      braveApiKey =
+        parseEnv(
+          readFileSync(resolve(root, '.env.brave.local'), 'utf8'),
+        ).BRAVE_SEARCH_API_KEY?.trim() ?? ''
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw new Error('Cannot read Brave key file')
     }
   }
   if (!demo && searchProvider === 'comparison') {
@@ -256,6 +269,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     anthropicApiKey,
     routesApiKey,
     geminiApiKey,
+    braveApiKey,
     searchProvider,
     comparisonLimit,
     directory,

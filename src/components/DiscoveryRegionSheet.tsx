@@ -65,7 +65,7 @@ export function DiscoveryRegionSheet({
           <div className="notice discovery-location-notice">
             <p>
               許可したときだけ一度取得します。位置は約100m単位に丸め、ホームの検索ボタンを押したときに接続先のAI（OpenAI・Anthropic、またはGoogleのGemini）へ、経路計算が有効な場合はGoogle
-              Mapsへ送ります。
+              Mapsへ送ります。Brave検索を利用する場合は、近くの駅・地域名と検索条件をBraveへ送ります。
             </p>
             <p className="small muted">
               座標は端末や検索結果の保管先に保存せず、共有しません。取得から10分間だけメモリ内で利用します。一時的なタブ・アプリの切り替えでは検索を続け、再読み込みや終了で位置を破棄します。送信先での扱いは各社のデータポリシーに従います。

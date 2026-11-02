@@ -97,15 +97,20 @@ test('built Worker runs with real local D1 and permits searches beyond five acro
       ),
     )
     const successes = results.flatMap((r, i) => (r.status === 200 ? [i] : []))
-    assert.equal(
-      successes.length,
-      8,
-      JSON.stringify(
-        await Promise.all(
-          results.map(async (r) => ({ status: r.status, body: await r.clone().text() })),
-        ),
-      ),
-    )
+    // Read diagnostics only on failure; Miniflare may have already transferred
+    // a response body, and an eager clone can mask otherwise successful checks.
+    const diagnostics =
+      successes.length === 8
+        ? undefined
+        : JSON.stringify(
+            await Promise.all(
+              results.map(async (r) => ({
+                status: r.status,
+                body: await r.text().catch(() => '[body unavailable]'),
+              })),
+            ),
+          )
+    assert.equal(successes.length, 8, diagnostics)
     assert.equal(results.filter((r) => r.status === 429).length, 0)
     assert.equal(paid, 16)
     const owner = `user${successes[0]}`

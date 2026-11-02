@@ -33,6 +33,7 @@ export interface WebSpot {
   likedFor?: string[]
 }
 export interface WebSearchResult {
+  searchBackend?: 'brave'
   searchAttribution?: { html: string }
   spots: WebSpot[]
   query: {
@@ -246,7 +247,17 @@ export async function parseWebSearchResult(
     })
   }
   const searchAttribution = data.searchAttribution
+  const brave = data.searchBackend === 'brave'
   if (
+    data.searchBackend !== undefined &&
+    (!brave ||
+      reports?.length !== 1 ||
+      reports[0]?.provider !== 'gemini' ||
+      searchAttribution !== undefined)
+  )
+    throw new Error('検索元の情報を確認できません。')
+  if (
+    !brave &&
     reports?.[0]?.provider === 'gemini' &&
     reports[0].state === 'completed' &&
     searchAttribution === undefined
@@ -267,6 +278,7 @@ export async function parseWebSearchResult(
       throw new Error('Google検索の出典情報を確認できません。')
   }
   return {
+    ...(brave ? { searchBackend: 'brave' as const } : {}),
     ...(searchAttribution
       ? { searchAttribution: { html: (searchAttribution as { html: string }).html } }
       : {}),

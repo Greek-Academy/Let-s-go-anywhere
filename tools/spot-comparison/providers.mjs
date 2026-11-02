@@ -3,11 +3,13 @@ import {
   MODELS,
   buildComparisonRequest,
   buildGeminiExtractionRequest,
+  buildGeminiEvidenceRequest,
   comparisonUsage,
   parseComparisonResponse,
   combineCandidates,
   searchProviders,
 } from './core.mjs'
+import { searchBrave, braveEvidence } from './brave.mjs'
 import { comparisonSample } from './sample.mjs'
 import { addDrivingTimes } from './routes.mjs'
 import { providerCandidateLimits } from '../../src/domain/searchLimits.ts'
@@ -19,6 +21,7 @@ export async function runComparison({
   anthropicApiKey,
   routesApiKey,
   geminiApiKey,
+  braveApiKey,
   searchProvider = 'comparison',
   fetcher = fetch,
   timeoutMs = 110_000,
@@ -28,10 +31,30 @@ export async function runComparison({
     searchProviders(searchProvider).map(async (provider) => {
       const start = Date.now()
       let usage = null
+      let braveCalls = 0
       try {
-        let response, research
-        if (demo) response = comparisonSample(provider, query)
-        else {
+        let response, research, evidence
+        if (demo) {
+          response = comparisonSample(provider, query)
+          if (searchProvider === 'brave') {
+            const spots = JSON.parse(response.candidates[0].content.parts[0].text).spots
+            evidence = braveEvidence([
+              {
+                grounding: {
+                  generic: spots.map((s) => ({
+                    url: s.sourceUrl,
+                    title: s.name,
+                    snippets: [s.summary],
+                  })),
+                },
+              },
+            ])
+            delete response.candidates[0].groundingMetadata
+            response.candidates[0].content.parts[0].text = JSON.stringify({
+              spots: spots.map(({ sourceUrl, ...s }, i) => ({ ...s, sourceId: `s${i}` })),
+            })
+          }
+        } else {
           const openai = provider === 'openai'
           // One deadline covers both Gemini stages, not a new timeout per call.
           const signal = AbortSignal.timeout(query.drive ? Math.min(timeoutMs, 100_000) : timeoutMs)
@@ -75,9 +98,19 @@ export async function runComparison({
               )
             return upstream.json()
           }
-          response = await request(buildComparisonRequest(provider, query))
+          if (searchProvider === 'brave') {
+            evidence = await searchBrave(query, {
+              apiKey: braveApiKey,
+              fetcher,
+              signal,
+              onAttempt: () => {
+                braveCalls++
+              },
+            })
+            response = await request(buildGeminiEvidenceRequest(query, evidence))
+          } else response = await request(buildComparisonRequest(provider, query))
           usage = comparisonUsage(provider, response)
-          if (provider === 'gemini') {
+          if (provider === 'gemini' && searchProvider !== 'brave') {
             research = response
             // Fails before the second call unless the first response has actual
             // Google Search evidence. Formatting never enables search tools.
@@ -94,7 +127,7 @@ export async function runComparison({
                 : null
           }
         }
-        const parsed = parseComparisonResponse(provider, response, query, research)
+        const parsed = parseComparisonResponse(provider, response, query, research, evidence)
         return {
           ...parsed,
           report: {
@@ -105,6 +138,7 @@ export async function runComparison({
             omitted: parsed.omitted,
             elapsedMs: Date.now() - start,
             usage,
+            ...(searchProvider === 'brave' ? { braveSearchCalls: braveCalls } : {}),
             error: null,
           },
         }
@@ -120,6 +154,7 @@ export async function runComparison({
             omitted: 0,
             elapsedMs: Date.now() - start,
             usage,
+            ...(searchProvider === 'brave' ? { braveSearchCalls: braveCalls } : {}),
             error:
               error instanceof PilotError
                 ? error.message
@@ -132,7 +167,7 @@ export async function runComparison({
   const reports = results.map((r) => r.report)
   const combined = combineCandidates(results)
   const driving = await addDrivingTimes(combined.spots, query, {
-    candidateLimit: searchProvider === 'gemini' ? providerCandidateLimits.gemini : 20,
+    candidateLimit: searchProvider !== 'comparison' ? providerCandidateLimits.gemini : 20,
     apiKey: routesApiKey,
     demo,
     fetcher,
@@ -140,6 +175,7 @@ export async function runComparison({
 
   return {
     ...combined,
+    ...(searchProvider === 'brave' ? { searchBackend: 'brave' } : {}),
     spots: driving.spots,
     omitted: results.reduce((sum, r) => sum + r.omitted, 0) + driving.excluded,
     reports,

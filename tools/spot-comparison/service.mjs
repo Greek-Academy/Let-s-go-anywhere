@@ -21,6 +21,7 @@ export function createComparison({
   anthropicApiKey,
   routesApiKey,
   geminiApiKey,
+  braveApiKey,
   searchProvider = 'comparison',
   directory,
   fetcher,
@@ -35,12 +36,16 @@ export function createComparison({
   const resultFile = join(directory, 'result.json')
   const configured = () =>
     demo ||
-    (searchProvider === 'gemini' ? Boolean(geminiApiKey) : Boolean(apiKey && anthropicApiKey))
+    (searchProvider === 'brave'
+      ? Boolean(geminiApiKey && braveApiKey)
+      : searchProvider === 'gemini'
+        ? Boolean(geminiApiKey)
+        : Boolean(apiKey && anthropicApiKey))
   return {
     lastResult() {
       // Grounded Gemini answers and search suggestions remain in the current view only.
       // In particular, do not persist suggestions that might contain location queries.
-      if (searchProvider === 'gemini') return null
+      if (searchProvider !== 'comparison') return null
       if (demo) return sampleResult
       try {
         const result = JSON.parse(readFileSync(resultFile, 'utf8'))
@@ -76,16 +81,19 @@ export function createComparison({
           ),
       })),
       // Google Search controls its own query count; the prompt target is not a hard cap.
-      maxSearchesPerProvider: searchProvider === 'gemini' ? null : SEARCH_LIMIT,
+      maxSearchesPerProvider:
+        searchProvider === 'brave' ? 4 : searchProvider === 'gemini' ? null : SEARCH_LIMIT,
     }),
     async search(input) {
       const query = validateComparisonQuery(input)
       if (!configured())
         throw new PilotError(
           'key',
-          searchProvider === 'gemini'
-            ? 'GeminiのAPIキーを .env.gemini.local に設定し、検索サーバーを再起動してください。まだAPIへ送信していません。'
-            : 'OpenAI・Anthropic両方のAPIキーを .env.research.local に設定し、検索サーバーを再起動してください。まだAPIへ送信していません。',
+          searchProvider === 'brave'
+            ? 'Brave SearchとGeminiのAPIキーを設定し、検索サーバーを再起動してください。まだAPIへ送信していません。'
+            : searchProvider === 'gemini'
+              ? 'GeminiのAPIキーを .env.gemini.local に設定し、検索サーバーを再起動してください。まだAPIへ送信していません。'
+              : 'OpenAI・Anthropic両方のAPIキーを .env.research.local に設定し、検索サーバーを再起動してください。まだAPIへ送信していません。',
           503,
         )
       if (busy) throw new PilotError('busy', '比較検索中です。結果を待ってください。', 409)
@@ -100,6 +108,7 @@ export function createComparison({
           anthropicApiKey,
           routesApiKey,
           geminiApiKey,
+          braveApiKey,
           searchProvider,
           fetcher,
           timeoutMs,
@@ -112,7 +121,7 @@ export function createComparison({
             { providers: reports },
             Date.now() - started,
           )
-        if (searchProvider === 'gemini') return result
+        if (searchProvider !== 'comparison') return result
         if (demo) sampleResult = withoutSearchCoordinates(result)
         else {
           mkdirSync(directory, { recursive: true, mode: 0o700 })

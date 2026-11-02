@@ -30,6 +30,7 @@
     "ios:open": "cap open ios",
     "ios:run": "npm run ios:sync && cap run ios --no-sync",
     "research": "node tools/spot-research/server.mjs",
+    "research:brave": "node tools/spot-research/server.mjs --search-provider brave",
     "research:gemini": "node tools/spot-research/server.mjs --search-provider gemini",
     "research:demo": "node tools/spot-research/server.mjs --demo",
     "test:research": "node --test tools/spot-research/tests/*.test.mjs",
