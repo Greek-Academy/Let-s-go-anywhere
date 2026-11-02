@@ -19,9 +19,17 @@ import { createPilot } from '../server.mjs'
 import { driveQuery, driveTheme } from '../../../src/domain/driveSearch.ts'
 const drive = driveQuery('default', undefined, ['自然', 'グルメ', '温泉'])
 const query = validateComparisonQuery({ stationId: '1130208', theme: driveTheme(drive), drive })
-function stagedResponses(q = query) {
+function stagedResponses(q = query, count = 10) {
   const research = comparisonSample('gemini', q)
-  const spots = JSON.parse(research.candidates[0].content.parts[0].text).spots
+  const samples = JSON.parse(research.candidates[0].content.parts[0].text).spots
+  const spots = Array.from({ length: count }, (_, i) => ({
+    ...samples[i % samples.length],
+    name: `検証用スポット${i + 1}`,
+    sourceUrl: `https://example.com/shops/${i + 1}`,
+  }))
+  research.candidates[0].groundingMetadata.groundingChunks = spots.map((s) => ({
+    web: { uri: s.sourceUrl, title: s.name },
+  }))
   research.candidates[0].content.parts[0].text = spots
     .map((s) => `${s.name} ${s.area} ${s.summary} ${s.matchReason}`)
     .join('\n')
@@ -70,10 +78,26 @@ test('Gemini researches first with the same origin and conditions, then formats 
     }),
   ]) {
     const request = buildComparisonRequest('gemini', q)
-    assert.deepEqual(
-      JSON.parse(request.contents[0].parts[1].text),
-      JSON.parse(buildComparisonRequest('openai', q).input),
+    const { targetTotal, displayTarget, hobbyTargets, ...input } = JSON.parse(
+      request.contents[0].parts[1].text,
     )
+    const {
+      targetTotal: oldTarget,
+      hobbyTargets: oldTargets,
+      ...previous
+    } = JSON.parse(buildComparisonRequest('openai', q).input)
+    assert.deepEqual(input, previous)
+    assert.equal(targetTotal, 30)
+    assert.equal(displayTarget, 10)
+    assert.equal(oldTarget, 10)
+    if (oldTargets)
+      assert.equal(
+        hobbyTargets.reduce((n, target) => n + target.count, 0),
+        30,
+      )
+    assert.match(request.systemInstruction.parts[0].text, /at most 30 distinct/)
+    assert.match(request.systemInstruction.parts[0].text, /at most 6 web searches/)
+    assert.match(buildComparisonRequest('openai', q).instructions, /at most 10 distinct/)
     assert.deepEqual(request.tools, [{ googleSearch: {} }])
     assert.equal(request.generationConfig.thinkingConfig.thinkingLevel, 'low')
     assert.equal(request.generationConfig.responseFormat, undefined)
@@ -81,7 +105,8 @@ test('Gemini researches first with the same origin and conditions, then formats 
     const extraction = buildGeminiExtractionRequest(q, stagedResponses(q).research)
     assert.equal(extraction.tools, undefined)
     const schema = extraction.generationConfig.responseFormat.text.schema
-    assert.equal(schema.properties.spots.maxItems, 10)
+    assert.equal(schema.properties.spots.maxItems, undefined)
+    assert.equal(JSON.parse(extraction.contents[0].parts[0].text).conditions.targetTotal, 30)
     assert.deepEqual(
       schema.properties.spots.items.properties.sourceId.enum,
       Array.from({ length: 10 }, (_, i) => `s${i}`),
@@ -220,6 +245,51 @@ test('formatting uses cited source IDs, never invented URLs or uncited chunks', 
   assert.equal(result.spots.length, 7)
   assert.equal(result.omitted, 3)
   assert.ok(result.spots.every((s) => s.sourceUrl.startsWith('https://example.com/shops/')))
+})
+
+test('thirty candidates are routed before selecting ten, including candidates after the twentieth', async () => {
+  const { research, extraction } = stagedResponses(query, 30)
+  let calls = 0
+  const result = await runComparison({
+    query,
+    searchProvider: 'gemini',
+    geminiApiKey: 'test',
+    routesApiKey: 'test',
+    fetcher: async (url, options) => {
+      calls++
+      if (url.includes('generativelanguage'))
+        return Response.json(calls === 1 ? research : extraction)
+      assert.equal(JSON.parse(options.body).destinations.length, 30)
+      return Response.json(
+        Array.from({ length: 30 }, (_, i) => ({
+          originIndex: 0,
+          destinationIndex: i,
+          status: {},
+          condition: 'ROUTE_EXISTS',
+          duration: i < 20 ? '3600s' : '10800s',
+          distanceMeters: 100000,
+        })),
+      )
+    },
+  })
+  assert.equal(calls, 3)
+  assert.equal(result.reports[0].count, 30)
+  assert.equal(result.spots.length, 10)
+  assert.equal(result.omitted, 20)
+  assert.ok(result.spots.every((s) => Number(s.name.replace('検証用スポット', '')) > 20))
+  assert.ok(
+    result.spots.every(
+      (s) => s.travel.status === 'calculated' && s.travel.durationSeconds === 10800,
+    ),
+  )
+  assert.deepEqual(
+    drive.hobbies.map((h) => result.spots.filter((s) => s.hobby === h).length),
+    [4, 3, 3],
+  )
+  const tooMany = stagedResponses(query, 31)
+  assert.throws(() =>
+    parseComparisonResponse('gemini', tooMany.extraction, query, tooMany.research),
+  )
 })
 
 test('no search or missing citations stops before formatting; a formatting failure is never retried', async () => {

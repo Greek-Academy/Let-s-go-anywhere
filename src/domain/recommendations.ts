@@ -2,6 +2,7 @@ import tags from '../data/recommendationTags.json' with { type: 'json' }
 import { outboundHttpsUrl } from './externalLinks'
 import type { WebSpot } from './webSearch'
 import { groupPlaces } from './placeIdentity'
+import { providerCandidateLimits } from './searchLimits'
 
 export const recommendationTags: readonly string[] = tags
 export type RecommendationProvider = 'openai' | 'anthropic' | 'gemini'
@@ -86,9 +87,13 @@ export function decodeReports(value: unknown): ProviderReport[] {
       r.model.length > 80 ||
       !r.model ||
       ![r.count, r.omitted].every(
-        (n) => Number.isInteger(n) && Number(n) >= 0 && Number(n) <= 10,
+        (n) =>
+          Number.isInteger(n) &&
+          Number(n) >= 0 &&
+          Number(n) <= (r.provider === 'gemini' ? providerCandidateLimits.gemini : 10),
       ) ||
-      Number(r.count) + Number(r.omitted) > 10 ||
+      Number(r.count) + Number(r.omitted) >
+        (r.provider === 'gemini' ? providerCandidateLimits.gemini : 10) ||
       !Number.isSafeInteger(r.elapsedMs) ||
       Number(r.elapsedMs) < 0 ||
       (r.error !== null && (typeof r.error !== 'string' || r.error.length > 500)) ||

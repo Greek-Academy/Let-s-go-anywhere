@@ -177,6 +177,35 @@ test('検索が成功して候補ゼロの場合は条件変更を案内する',
   await expect(page.getByText('検索を完了できませんでした')).toHaveCount(0)
 })
 
+test('30候補から経路確認後に選んだ10パネルを表示する', async ({ page }) => {
+  const result = await runComparison({ query, demo: true, searchProvider: 'gemini' })
+  result.reports[0].count = 30
+  result.omitted = 20
+  let requests = 0
+  await page.route('**/api/spot-search/compare', (r) => {
+    requests++
+    return r.fulfill({ json: result })
+  })
+  await enter(page)
+  await page.getByRole('button', { name: 'この出発地からドライブ先を探す', exact: true }).click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(await page.locator('.web-spot-card').allTextContents()).toEqual(
+    expect.arrayContaining([expect.stringContaining('車で片道')]),
+  )
+  expect(requests).toBe(1)
+  const fewer = structuredClone(result)
+  fewer.spots = fewer.spots.slice(0, 1)
+  fewer.omitted = 29
+  expect((await parseWebSearchResult(fewer, query)).spots).toHaveLength(1)
+  const duplicates = { ...fewer, omitted: 0, duplicates: 29 }
+  expect((await parseWebSearchResult(duplicates, query)).duplicates).toBe(29)
+  result.reports[0].count = 31
+  await expect(parseWebSearchResult(result, query)).rejects.toThrow()
+  const legacy = await runComparison({ query, demo: true })
+  legacy.reports[0].count = 11
+  await expect(parseWebSearchResult(legacy, query)).rejects.toThrow()
+})
+
 test('Geminiの実行記録と出典表示を検証し既存2社の結果も引き続き読める', async () => {
   const result = await runComparison({ query, demo: true, searchProvider: 'gemini' })
   result.reports[0].usage = {

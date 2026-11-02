@@ -10,6 +10,7 @@ import {
 } from './core.mjs'
 import { comparisonSample } from './sample.mjs'
 import { addDrivingTimes } from './routes.mjs'
+import { providerCandidateLimits } from '../../src/domain/searchLimits.ts'
 
 export async function runComparison({
   query,
@@ -131,6 +132,7 @@ export async function runComparison({
   const reports = results.map((r) => r.report)
   const combined = combineCandidates(results)
   const driving = await addDrivingTimes(combined.spots, query, {
+    candidateLimit: searchProvider === 'gemini' ? providerCandidateLimits.gemini : 20,
     apiKey: routesApiKey,
     demo,
     fetcher,

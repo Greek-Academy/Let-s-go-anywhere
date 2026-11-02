@@ -10,6 +10,7 @@ import type { Recommendation, ProviderReport } from './recommendations'
 import { outboundHttpsUrl, researchSourceUrl } from './externalLinks'
 import { samePlace } from './placeIdentity'
 import { decodeHobbyMatches, searchHobbies } from './hobbyBalance'
+import { providerCandidateLimits } from './searchLimits'
 
 export interface WebSpot {
   /** Supported AI hobby classifications and the single display slot assigned after filtering. */
@@ -144,6 +145,8 @@ export async function parseWebSearchResult(
   expected: WebSearchResult['query'],
 ): Promise<WebSearchResult> {
   const data = record(value)
+  const reports = data.kind === 'comparison' ? decodeReports(data.reports) : undefined
+  const poolLimit = reports?.[0]?.provider === 'gemini' ? providerCandidateLimits.gemini : 20
   const query = record(data.query)
   const drive = query.drive === undefined ? undefined : decodeDriveQuery(query.drive)
   if (
@@ -193,7 +196,7 @@ export async function parseWebSearchResult(
   if (
     !Number.isInteger(data.omitted) ||
     Number(data.omitted) < 0 ||
-    Number(data.omitted) > (data.kind === 'comparison' ? 20 : 3)
+    Number(data.omitted) > (data.kind === 'comparison' ? poolLimit : 3)
   )
     throw new Error('検索結果の件数を確認できません。')
   const mode = data.mode as WebSpot['mode']
@@ -242,7 +245,6 @@ export async function parseWebSearchResult(
         : {}),
     })
   }
-  const reports = data.kind === 'comparison' ? decodeReports(data.reports) : undefined
   const searchAttribution = data.searchAttribution
   if (
     reports?.[0]?.provider === 'gemini' &&
@@ -285,7 +287,7 @@ export async function parseWebSearchResult(
       ? {
           kind: 'comparison' as const,
           reports: reports!,
-          duplicates: duplicateCount(data.duplicates),
+          duplicates: duplicateCount(data.duplicates, poolLimit),
         }
       : {}),
   }
@@ -343,8 +345,8 @@ function comparisonIdentity(mode: string, s: Record<string, unknown>) {
   const event = s.event === undefined ? undefined : decodeEventSchedule(s.event)
   return `${mode}:comparison:${norm(s.name)}|${norm(s.area)}${event ? `|event:${event.startDate}:${event.endDate}:${norm(event.venue)}` : ''}`
 }
-function duplicateCount(v: unknown): number {
-  if (!Number.isInteger(v) || Number(v) < 0 || Number(v) > 20)
+function duplicateCount(v: unknown, max: number): number {
+  if (!Number.isInteger(v) || Number(v) < 0 || Number(v) > max)
     throw new Error('重複件数が不正です。')
   return Number(v)
 }

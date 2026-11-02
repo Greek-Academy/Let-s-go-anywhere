@@ -7,10 +7,12 @@ const ENDPOINT = 'https://routes.googleapis.com/distanceMatrix/v2:computeRouteMa
 export async function addDrivingTimes(
   spots,
   query,
-  { apiKey = '', demo = false, fetcher = fetch, now = Date.now } = {},
+  { apiKey = '', demo = false, fetcher = fetch, now = Date.now, candidateLimit = 20 } = {},
 ) {
   if (!query.drive) return { spots, excluded: 0 }
-  const candidates = spots.slice(0, 20)
+  if (!Number.isSafeInteger(candidateLimit) || candidateLimit < 1 || candidateLimit > 50)
+    throw new Error('Invalid routing candidate limit')
+  const candidates = spots.slice(0, candidateLimit)
   const [min, max] = durationRange(query.drive.duration)
   const checkedAt = new Date(now()).toISOString()
   const expiresAt = new Date(Date.parse(checkedAt) + 600000).toISOString()
@@ -18,7 +20,7 @@ export async function addDrivingTimes(
   if (demo)
     travel = candidates.map((_, i) => ({
       status: 'sample',
-      durationSeconds: (min + ((max - min) * (i + 1)) / 21) * 60,
+      durationSeconds: (min + ((max - min) * (i + 1)) / (candidateLimit + 1)) * 60,
       distanceMeters: (i + 1) * 10000,
       checkedAt,
       expiresAt,
