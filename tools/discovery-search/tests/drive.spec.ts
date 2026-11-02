@@ -44,6 +44,10 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   await expect(page.getByRole('button', { name: '前回の比較結果を開く（無料）' })).toHaveCount(0)
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(bodies).toHaveLength(1)
+  expect(bodies[0].drive.duration).toBe('1〜5時間')
+  await expect(
+    page.getByText('選んだ趣味と出発地から、片道1〜5時間のドライブ先を10件を目安に探します。'),
+  ).toBeVisible()
   const layout = await page.evaluate(() => {
     const tabs = document.querySelector('.discovery-chips')!.getBoundingClientRect()
     const firstCard = document.querySelector('.web-spot-card')!.getBoundingClientRect()
@@ -98,8 +102,13 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(bodies[1].drive).toEqual(driveQuery('free'))
+  expect(bodies[1].drive.duration).toBe('1〜5時間')
   await expect(page.locator('.web-spot-card .web-spot-hobby')).toHaveCount(0)
   await page.getByRole('button', { name: '気分から選ぶ', exact: true }).click()
+  await expect(page.getByRole('button', { name: '1〜5時間', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
   await page.getByRole('button', { name: '夜景を見たい', exact: true }).click()
   await page.getByRole('button', { name: '県を越えたい', exact: true }).click()
   await page.getByRole('button', { name: '1〜2時間', exact: true }).click()
@@ -296,6 +305,7 @@ test('location denial ends startup without AI calls, permits station search, and
   await page.getByRole('button', { name: '選んだ条件で探す', exact: true }).click()
   await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
   expect(bodies[1].drive).toEqual(driveQuery('free'))
+  expect(bodies[1].drive.duration).toBe('1〜5時間')
   expect(bodies[2].drive).toEqual(
     driveQuery('conditions', { ...emptyDriveChoices(), activities: ['夜景を見たい'] }),
   )

@@ -140,7 +140,13 @@ const consultation: Rule = (v) => {
   return parsed
 }
 const schema: Record<keyof AppState, Rule> = {
-  driveChoices: decodeDriveChoices,
+  driveChoices: (value) => {
+    const choices = object(value)
+    // Migrate the former default without discarding other saved preferences.
+    return decodeDriveChoices(
+      choices.duration === '2〜5時間' ? { ...choices, duration: '1〜5時間' } : choices,
+    )
+  },
   realMap: shape({
     mode: oneOf(['map', 'list']),
     type: oneOf(['すべて', 'レンタカー', 'カーシェア']),

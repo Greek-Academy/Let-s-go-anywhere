@@ -67,6 +67,7 @@ test('both providers receive the chosen hobbies for the home, while free and con
     const openai = buildComparisonRequest('openai', q)
     const anthropic = buildComparisonRequest('anthropic', q)
     const input = JSON.parse(openai.input)
+    assert.deepEqual(input.oneWayMinutes, [60, 300])
     assert.deepEqual(input.drive.hobbies, hobbies)
     assert.deepEqual(JSON.parse(anthropic.messages[0].content), input)
     assert.deepEqual(input.approximateCurrentLocation, { latitude: 35.691, longitude: 139.7 })
@@ -133,24 +134,26 @@ test('AI duration prose is removed before display/storage while Google times rem
   assert.equal(spot.recommendations[0].reason, description)
 })
 test('time boundaries are inclusive; missing routes stay unconfirmed and out-of-range routes are excluded', async () => {
-  const result = await addDrivingTimes(spots.slice(0, 6), query(), {
+  const result = await addDrivingTimes(spots.slice(0, 8), query(), {
     apiKey: 'fixture',
     fetcher: async () =>
       ok([
-        row(0, 7199),
-        row(1, 7200),
+        row(0, 3599),
+        row(1, 3600),
         row(2, 18000),
         row(3, 18001),
         { ...row(4), status: { code: 5 } },
+        row(6, 5400),
+        row(7, 7200),
       ]),
   })
   assert.equal(result.excluded, 2)
   assert.deepEqual(
     result.spots.map((s) => s.name),
-    [1, 2, 4, 5].map((i) => '架空の候補' + i),
+    [1, 2, 4, 5, 6, 7].map((i) => '架空の候補' + i),
   )
   assert.deepEqual(
-    result.spots.slice(2).map((s) => s.travel),
+    result.spots.slice(2, 4).map((s) => s.travel),
     [{ status: 'unconfirmed' }, { status: 'unconfirmed' }],
   )
 })

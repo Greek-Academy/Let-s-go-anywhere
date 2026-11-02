@@ -20,7 +20,7 @@ export const driveActivities = [
   '道の駅に寄りたい',
   '景色のいい道を走りたい',
 ] as const
-export const driveDurations = ['2〜5時間', '1時間以内', '1〜2時間', '2〜3時間', '3〜5時間'] as const
+export const driveDurations = ['1〜5時間', '1時間以内', '1〜2時間', '2〜3時間', '3〜5時間'] as const
 export const driveRoads = [
   'こだわらない',
   '高速道路を走りたい',
@@ -47,7 +47,7 @@ export interface DriveQuery extends DriveChoices {
   hobbies: string[]
 }
 export const emptyDriveChoices = (): DriveChoices => ({
-  duration: '2〜5時間',
+  duration: '1〜5時間',
   activities: [],
   road: 'こだわらない',
   timing: 'こだわらない',
@@ -115,7 +115,7 @@ export const sameDriveQuery = (a?: DriveQuery, b?: DriveQuery) =>
 export function durationRange(duration: DriveChoices['duration']): [number, number] {
   return (
     {
-      '2〜5時間': [120, 300],
+      '1〜5時間': [60, 300],
       '1時間以内': [0, 60],
       '1〜2時間': [60, 120],
       '2〜3時間': [120, 180],

@@ -130,7 +130,7 @@ test('allocation happens after duration exclusions, so lower-ranked eligible hob
           destinationIndex: i,
           status: {},
           condition: 'ROUTE_EXISTS',
-          duration: i < 3 ? '3600s' : '9000s',
+          duration: i < 3 ? '1800s' : '9000s',
           distanceMeters: 100000,
         })),
       )

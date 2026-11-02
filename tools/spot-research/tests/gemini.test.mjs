@@ -87,6 +87,7 @@ test('Gemini researches first with the same origin and conditions, then formats 
       ...previous
     } = JSON.parse(buildComparisonRequest('openai', q).input)
     assert.deepEqual(input, previous)
+    assert.deepEqual(input.oneWayMinutes, [60, 300])
     assert.equal(targetTotal, 30)
     assert.equal(displayTarget, 10)
     assert.equal(oldTarget, 10)
@@ -208,7 +209,7 @@ test('Gemini sends one research and one formatting request then Routes; preserve
           destinationIndex: i,
           status: {},
           condition: 'ROUTE_EXISTS',
-          duration: i === 0 ? '3600s' : '10800s',
+          duration: i === 0 ? '1800s' : '10800s',
           distanceMeters: 100000,
         })),
       )
@@ -266,7 +267,7 @@ test('thirty candidates are routed before selecting ten, including candidates af
           destinationIndex: i,
           status: {},
           condition: 'ROUTE_EXISTS',
-          duration: i < 20 ? '3600s' : '10800s',
+          duration: i < 20 ? '1800s' : '10800s',
           distanceMeters: 100000,
         })),
       )

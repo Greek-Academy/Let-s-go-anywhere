@@ -22,6 +22,23 @@ test('new drive preferences migrate old data without losing saved outings, stati
   expect(decoded.state.savedEvents).toEqual(['fuji'])
   expect(decoded.state.profile).toEqual(old.profile)
 })
+test('the former 2–5 hour default migrates to 1–5 hours without losing preferences or saved places', () => {
+  const state = createInitialState()
+  state.profile.interests = ['自然', '温泉']
+  state.savedEvents = ['fuji']
+  state.savedStations = ['1130208']
+  state.driveChoices.activities = ['海を見たい']
+  state.driveChoices.road = '県を越えたい'
+  const legacy = { ...state, driveChoices: { ...state.driveChoices, duration: '2〜5時間' } }
+  const decoded = decodeStoredState(JSON.stringify(legacy))
+  expect(decoded.problem).toBeNull()
+  expect(decoded.state).toEqual(state)
+  expect(decoded.state.driveChoices.duration).toBe('1〜5時間')
+  const custom = { ...state, driveChoices: { ...state.driveChoices, duration: '1〜2時間' } }
+  expect(decodeStoredState(JSON.stringify(custom)).state.driveChoices).toEqual(custom.driveChoices)
+  const invalid = { ...legacy, driveChoices: { ...legacy.driveChoices, extra: true } }
+  expect(decodeStoredState(JSON.stringify(invalid)).problem).toBe('invalid')
+})
 test('unknown drive conditions protect the original storage instead of resetting it', () => {
   const state = createInitialState()
   expect(() => decodeDriveChoices({ ...emptyDriveChoices(), activities: ['unapproved'] })).toThrow()

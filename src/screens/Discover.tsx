@@ -359,7 +359,7 @@ export function Discover() {
               </button>
             </section>
             <p className="small muted">
-              選んだ趣味と出発地から、片道2〜5時間のドライブ先を10件を目安に探します。
+              選んだ趣味と出発地から、片道1〜5時間のドライブ先を10件を目安に探します。
             </p>
             <details className="small muted">
               <summary>現在地の使い方</summary>
@@ -478,7 +478,7 @@ export function Discover() {
                     />
                   </label>
                   <p className="small muted">
-                    思いついたことを自由に。片道2〜5時間を目安に探します（80文字まで）。
+                    思いついたことを自由に。片道1〜5時間を目安に探します（80文字まで）。
                   </p>
                   <PrimaryButton type="submit" icon={Search} disabled={web.loading}>
                     この希望で探す
