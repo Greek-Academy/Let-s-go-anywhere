@@ -5,6 +5,7 @@ import { EmptyState } from './ui'
 import { GoogleSearchAttribution } from './GoogleSearchAttribution'
 
 export function ComparisonResults({ result }: { result: WebSearchResult }) {
+  const searchFailed = result.reports?.some((report) => report.state === 'failed')
   return (
     <div className="comparison-results">
       {result.spots.length ? (
@@ -15,8 +16,12 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
         </div>
       ) : (
         <EmptyState
-          title="この条件の候補はありません"
-          description="希望の言葉や出発地を変えて探せます。"
+          title={searchFailed ? '検索を完了できませんでした' : 'この条件の候補はありません'}
+          description={
+            searchFailed
+              ? '少し時間をおいて、下の検索ボタンからもう一度お試しください。'
+              : '希望の言葉や出発地を変えて探せます。'
+          }
         />
       )}
       {result.searchAttribution && <GoogleSearchAttribution html={result.searchAttribution.html} />}

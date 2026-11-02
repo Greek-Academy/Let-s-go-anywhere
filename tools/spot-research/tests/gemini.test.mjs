@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
   buildComparisonRequest,
+  buildGeminiExtractionRequest,
+  geminiResearchEvidence,
   parseComparisonResponse,
   comparisonUsage,
   validateComparisonQuery,
@@ -17,22 +19,74 @@ import { createPilot } from '../server.mjs'
 import { driveQuery, driveTheme } from '../../../src/domain/driveSearch.ts'
 const drive = driveQuery('default', undefined, ['自然', 'グルメ', '温泉'])
 const query = validateComparisonQuery({ stationId: '1130208', theme: driveTheme(drive), drive })
+function stagedResponses(q = query) {
+  const research = comparisonSample('gemini', q)
+  const spots = JSON.parse(research.candidates[0].content.parts[0].text).spots
+  research.candidates[0].content.parts[0].text = spots
+    .map((s) => `${s.name} ${s.area} ${s.summary} ${s.matchReason}`)
+    .join('\n')
+  research.candidates[0].groundingMetadata.groundingSupports = spots.map((s, i) => ({
+    segment: { text: s.summary },
+    groundingChunkIndices: [i],
+  }))
+  research.usageMetadata = {
+    promptTokenCount: 500,
+    candidatesTokenCount: 1000,
+    thoughtsTokenCount: 20,
+  }
+  const extraction = {
+    candidates: [
+      {
+        finishReason: 'STOP',
+        content: {
+          parts: [
+            {
+              text: JSON.stringify({
+                spots: spots.map(({ sourceUrl, ...s }, i) => ({ ...s, sourceId: `s${i}` })),
+              }),
+            },
+          ],
+        },
+      },
+    ],
+    usageMetadata: { promptTokenCount: 1500, candidatesTokenCount: 2000, thoughtsTokenCount: 5 },
+  }
+  return { research, extraction }
+}
 function directory(t) {
   const dir = mkdtempSync(join(tmpdir(), 'driveplus-gemini-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
   return dir
 }
 
-test('Gemini receives the same origin, hobby targets and conditions, with Google Search and structured output', () => {
-  for (const q of [query, { ...query, drive: driveQuery('free'), theme: '海を見たい' }]) {
+test('Gemini researches first with the same origin and conditions, then formats cited evidence without tools', () => {
+  for (const q of [
+    query,
+    { ...query, drive: driveQuery('free'), theme: '海を見たい' },
+    validateComparisonQuery({
+      location: { lat: 35.681, lng: 139.767 },
+      drive,
+      theme: driveTheme(drive),
+    }),
+  ]) {
     const request = buildComparisonRequest('gemini', q)
     assert.deepEqual(
-      JSON.parse(request.contents[0].parts[0].text),
+      JSON.parse(request.contents[0].parts[1].text),
       JSON.parse(buildComparisonRequest('openai', q).input),
     )
     assert.deepEqual(request.tools, [{ googleSearch: {} }])
-    assert.equal(request.generationConfig.thinkingConfig.thinkingLevel, 'minimal')
-    assert.equal(request.generationConfig.responseFormat.text.schema.properties.spots.maxItems, 10)
+    assert.equal(request.generationConfig.thinkingConfig.thinkingLevel, 'low')
+    assert.equal(request.generationConfig.responseFormat, undefined)
+    assert.match(request.systemInstruction.parts[0].text, /Do not produce JSON/)
+    const extraction = buildGeminiExtractionRequest(q, stagedResponses(q).research)
+    assert.equal(extraction.tools, undefined)
+    const schema = extraction.generationConfig.responseFormat.text.schema
+    assert.equal(schema.properties.spots.maxItems, 10)
+    assert.deepEqual(
+      schema.properties.spots.items.properties.sourceId.enum,
+      Array.from({ length: 10 }, (_, i) => `s${i}`),
+    )
+    assert.equal(schema.properties.spots.items.properties.sourceUrl, undefined)
   }
   const events = {
     ...query,
@@ -44,7 +98,7 @@ test('Gemini receives the same origin, hobby targets and conditions, with Google
   // A current date is needed by the shared input validator.
   const date = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' })
   events.eventDates = { start: date, end: date }
-  const request = buildComparisonRequest('gemini', events)
+  const request = buildGeminiExtractionRequest(events, stagedResponses(events).research)
   assert.ok(
     request.generationConfig.responseFormat.text.schema.properties.spots.items.required.includes(
       'event',
@@ -94,8 +148,10 @@ test('Gemini requires a complete answer, actual search, attribution, and valid J
   }
 })
 
-test('Gemini sends exactly one model request then one Routes request; preserves hobby balancing and route filtering', async () => {
+test('Gemini sends one research and one formatting request then Routes; preserves hobbies and aggregates usage', async () => {
   const calls = []
+  const { research, extraction } = stagedResponses()
+  let researchSignal
   const result = await runComparison({
     query,
     searchProvider: 'gemini',
@@ -107,7 +163,17 @@ test('Gemini sends exactly one model request then one Routes request; preserves 
         assert.equal(options.headers['x-goog-api-key'], 'gemini-only-test')
         assert.equal(options.headers.Authorization, undefined)
         assert.ok(url.includes(MODELS.gemini))
-        return Response.json(comparisonSample('gemini', query))
+        const request = JSON.parse(options.body)
+        if (calls.length === 1) {
+          researchSignal = options.signal
+          assert.ok(request.tools)
+          assert.equal(request.generationConfig.responseFormat, undefined)
+          return Response.json(research)
+        }
+        assert.equal(options.signal, researchSignal)
+        assert.equal(request.tools, undefined)
+        assert.ok(request.generationConfig.responseFormat)
+        return Response.json(extraction)
       }
       assert.ok(url.startsWith('https://routes.googleapis.com/'))
       const destinations = JSON.parse(options.body).destinations
@@ -123,13 +189,101 @@ test('Gemini sends exactly one model request then one Routes request; preserves 
       )
     },
   })
-  assert.equal(calls.length, 2)
+  assert.equal(calls.length, 3)
   assert.equal(result.reports.length, 1)
   assert.equal(result.reports[0].state, 'completed')
   assert.equal(result.spots.length, 9)
   assert.equal(result.omitted, 1)
   assert.deepEqual(new Set(result.spots.map((s) => s.hobby)), new Set(drive.hobbies))
   assert.ok(result.spots.every((s) => s.travel.status === 'calculated'))
+  assert.deepEqual(result.reports[0].usage, {
+    inputTokens: 2000,
+    outputTokens: 3025,
+    searchCalls: 1,
+    estimatedUsd: null,
+    pricingDate: null,
+  })
+})
+
+test('formatting uses cited source IDs, never invented URLs or uncited chunks', () => {
+  const { research, extraction } = stagedResponses()
+  research.candidates[0].groundingMetadata.groundingChunks.push({
+    web: { uri: 'https://example.com/uncited' },
+  })
+  const data = JSON.parse(extraction.candidates[0].content.parts[0].text)
+  data.spots[0].sourceId = 's10'
+  data.spots[1].sourceId = 'made-up'
+  delete data.spots[2].sourceId
+  data.spots[2].sourceUrl = 'https://example.com/shops/3'
+  extraction.candidates[0].content.parts[0].text = JSON.stringify(data)
+  const result = parseComparisonResponse('gemini', extraction, query, research)
+  assert.equal(result.spots.length, 7)
+  assert.equal(result.omitted, 3)
+  assert.ok(result.spots.every((s) => s.sourceUrl.startsWith('https://example.com/shops/')))
+})
+
+test('no search or missing citations stops before formatting; a formatting failure is never retried', async () => {
+  for (const change of [
+    (r) => {
+      r.candidates[0].groundingMetadata.webSearchQueries = []
+    },
+    (r) => {
+      delete r.candidates[0].groundingMetadata.searchEntryPoint
+    },
+    (r) => {
+      r.candidates[0].groundingMetadata.groundingSupports = []
+    },
+    (r) => {
+      r.candidates[0].groundingMetadata.groundingSupports.forEach((s) => {
+        s.segment.text = 'absent claim'
+      })
+    },
+    (r) => {
+      r.candidates[0].finishReason = 'MAX_TOKENS'
+    },
+  ]) {
+    const { research } = stagedResponses()
+    change(research)
+    assert.throws(() => geminiResearchEvidence(research))
+    let calls = 0
+    const result = await runComparison({
+      query,
+      searchProvider: 'gemini',
+      geminiApiKey: 'test',
+      routesApiKey: 'test',
+      fetcher: async () => {
+        calls++
+        return Response.json(research)
+      },
+    })
+    assert.equal(calls, 1)
+    assert.equal(result.reports[0].state, 'failed')
+    assert.equal(result.spots.length, 0)
+  }
+  for (const failure of ['http', 'truncated', 'json']) {
+    let calls = 0
+    const { research, extraction } = stagedResponses()
+    if (failure === 'truncated') extraction.candidates[0].finishReason = 'MAX_TOKENS'
+    if (failure === 'json') extraction.candidates[0].content.parts[0].text = 'broken'
+    const result = await runComparison({
+      query,
+      searchProvider: 'gemini',
+      geminiApiKey: 'test',
+      routesApiKey: 'test',
+      fetcher: async () => {
+        calls++
+        return calls === 1
+          ? Response.json(research)
+          : failure === 'http'
+            ? Response.json({}, { status: 429 })
+            : Response.json(extraction)
+      },
+    })
+    assert.equal(calls, 2)
+    assert.equal(result.reports[0].state, 'failed')
+    assert.equal(result.spots.length, 0)
+    assert.equal(result.reports[0].usage.searchCalls, 1)
+  }
 })
 
 test('Gemini failures do not retry, fall back to another provider or call Routes; errors never echo keys', async () => {
@@ -188,11 +342,13 @@ test('Gemini requires only its own key; never stores results or suggestions or r
   const dir = directory(t)
   const old = JSON.stringify({ privateOldResult: true })
   writeFileSync(join(dir, 'result.json'), old)
+  const { research, extraction } = stagedResponses()
   const service = createComparison({
     directory: dir,
     searchProvider: 'gemini',
     geminiApiKey: 'test-key',
-    fetcher: async () => Response.json(comparisonSample('gemini', query)),
+    fetcher: async (_, options) =>
+      Response.json(JSON.parse(options.body).tools ? research : extraction),
   })
   assert.equal(service.status().configured, true)
   assert.deepEqual(

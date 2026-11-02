@@ -128,7 +128,53 @@ test('キー不足とクレジットエラーを表示し他社へ切り替え�
   await page.route('**/api/spot-search/comparison-status', (r) => r.fulfill({ json: status }))
   await page.getByRole('button', { name: 'この出発地からドライブ先を探す', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Geminiのクレジット残高')
+  await expect(page.getByRole('heading', { name: '検索を完了できませんでした' })).toBeVisible()
+  await expect(page.getByText('この条件の候補はありません')).toHaveCount(0)
   expect(requests).toBe(1)
+})
+
+test('検索未実行を候補ゼロと区別し、手動再検索で復帰できる', async ({ page }) => {
+  let requests = 0
+  const completed = await runComparison({ query, demo: true, searchProvider: 'gemini' })
+  const failed = {
+    ...completed,
+    spots: [],
+    searchAttribution: undefined,
+    reports: [
+      {
+        ...completed.reports[0],
+        state: 'failed',
+        count: 0,
+        error: 'Web検索の実行を確認できませんでした。',
+      },
+    ],
+  }
+  await page.route('**/api/spot-search/compare', (r) => {
+    requests++
+    return r.fulfill({ json: requests === 1 ? failed : completed })
+  })
+  await enter(page)
+  const search = page.getByRole('button', { name: 'この出発地からドライブ先を探す', exact: true })
+  await search.click()
+  await expect(page.getByRole('heading', { name: '検索を完了できませんでした' })).toBeVisible()
+  await expect(page.getByText('この条件の候補はありません')).toHaveCount(0)
+  await expect(page.getByRole('alert')).toContainText('Web検索の実行を確認できませんでした')
+  expect(requests).toBe(1)
+  await search.click()
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  await expect(page.getByText('検索を完了できませんでした')).toHaveCount(0)
+  expect(requests).toBe(2)
+})
+
+test('検索が成功して候補ゼロの場合は条件変更を案内する', async ({ page }) => {
+  const result = await runComparison({ query, demo: true, searchProvider: 'gemini' })
+  result.spots = []
+  result.reports[0].count = 0
+  await page.route('**/api/spot-search/compare', (r) => r.fulfill({ json: result }))
+  await enter(page)
+  await page.getByRole('button', { name: 'この出発地からドライブ先を探す', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'この条件の候補はありません' })).toBeVisible()
+  await expect(page.getByText('検索を完了できませんでした')).toHaveCount(0)
 })
 
 test('Geminiの実行記録と出典表示を検証し既存2社の結果も引き続き読める', async () => {
