@@ -42,11 +42,28 @@ export function comparisonSample(provider, query) {
         query.purpose === 'events'
           ? '日付からイベントを探す操作を確かめる架空の候補です。実在の催しではありません。'
           : 'お店選びの操作を確かめる架空の候補です。実在するお店の情報ではありません。',
-      matchReason: `${provider === 'openai' ? 'OpenAI' : 'Claude'}の提案例です。${kinds[index % 6]}を楽しむ休日を想定しています。${hobby ? `趣味「${hobby}」との対応も架空のテスト設定です。` : ''}`,
+      matchReason: `${provider === 'gemini' ? 'Gemini' : provider === 'openai' ? 'OpenAI' : 'Claude'}の提案例です。${kinds[index % 6]}を楽しむ休日を想定しています。${hobby ? `趣味「${hobby}」との対応も架空のテスト設定です。` : ''}`,
       sourceUrl: `https://example.com/shops/${index + 1}`,
       tags: tagSets[index % 6],
     }
   })
+  if (provider === 'gemini')
+    return {
+      candidates: [
+        {
+          finishReason: 'STOP',
+          content: { parts: [{ text: JSON.stringify({ spots }) }] },
+          groundingMetadata: {
+            webSearchQueries: ['架空のドライブ先'],
+            groundingChunks: spots.map((s) => ({ web: { uri: s.sourceUrl, title: s.name } })),
+            searchEntryPoint: {
+              renderedContent:
+                '<div style="padding:12px;font-family:sans-serif">Google検索の関連候補（架空サンプル）</div>',
+            },
+          },
+        },
+      ],
+    }
   if (provider === 'openai')
     return {
       status: 'completed',

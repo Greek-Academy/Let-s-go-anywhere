@@ -32,6 +32,7 @@ export interface WebSpot {
   likedFor?: string[]
 }
 export interface WebSearchResult {
+  searchAttribution?: { html: string }
   spots: WebSpot[]
   query: {
     drive?: DriveQuery
@@ -241,7 +242,32 @@ export async function parseWebSearchResult(
         : {}),
     })
   }
+  const reports = data.kind === 'comparison' ? decodeReports(data.reports) : undefined
+  const searchAttribution = data.searchAttribution
+  if (
+    reports?.[0]?.provider === 'gemini' &&
+    reports[0].state === 'completed' &&
+    searchAttribution === undefined
+  )
+    throw new Error('Google検索の出典情報を確認できません。')
+  if (searchAttribution !== undefined) {
+    const attribution = record(searchAttribution)
+    if (
+      Object.keys(attribution).length !== 1 ||
+      typeof attribution.html !== 'string' ||
+      !attribution.html.trim() ||
+      attribution.html.length > 100_000 ||
+      data.kind !== 'comparison' ||
+      !Array.isArray(data.reports) ||
+      data.reports.length !== 1 ||
+      data.reports[0]?.provider !== 'gemini'
+    )
+      throw new Error('Google検索の出典情報を確認できません。')
+  }
   return {
+    ...(searchAttribution
+      ? { searchAttribution: { html: (searchAttribution as { html: string }).html } }
+      : {}),
     spots,
     query: {
       ...(drive ? { drive } : {}),
@@ -258,7 +284,7 @@ export async function parseWebSearchResult(
     ...(data.kind === 'comparison'
       ? {
           kind: 'comparison' as const,
-          reports: decodeReports(data.reports),
+          reports: reports!,
           duplicates: duplicateCount(data.duplicates),
         }
       : {}),

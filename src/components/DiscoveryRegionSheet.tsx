@@ -64,7 +64,7 @@ export function DiscoveryRegionSheet({
         {mode === 'location' && (
           <div className="notice discovery-location-notice">
             <p>
-              許可したときだけ一度取得します。位置は約100m単位に丸め、ホームの検索ボタンを押したときにOpenAI・Anthropicへ、経路計算が有効な場合はGoogle
+              許可したときだけ一度取得します。位置は約100m単位に丸め、ホームの検索ボタンを押したときに接続先のAI（OpenAI・Anthropic、またはGoogleのGemini）へ、経路計算が有効な場合はGoogle
               Mapsへ送ります。
             </p>
             <p className="small muted">

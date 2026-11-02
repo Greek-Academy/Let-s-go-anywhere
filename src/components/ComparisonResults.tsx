@@ -2,6 +2,7 @@ import type { WebSearchResult } from '../domain/webSearch'
 import { providerNames } from '../domain/recommendations'
 import { WebSpotCard } from './WebSpotCard'
 import { EmptyState } from './ui'
+import { GoogleSearchAttribution } from './GoogleSearchAttribution'
 
 export function ComparisonResults({ result }: { result: WebSearchResult }) {
   return (
@@ -18,6 +19,7 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
           description="希望の言葉や出発地を変えて探せます。"
         />
       )}
+      {result.searchAttribution && <GoogleSearchAttribution html={result.searchAttribution.html} />}
       {!!result.duplicates && (
         <p className="small muted">重なった提案{result.duplicates}件をまとめました。</p>
       )}

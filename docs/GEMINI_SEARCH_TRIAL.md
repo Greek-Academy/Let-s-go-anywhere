@@ -1,0 +1,66 @@
+# Gemini単独検索のローカル試用
+
+Issue [#129](https://github.com/Greek-Academy/Let-s-go-anywhere/issues/129)。趣味別カードのPR #128を土台とした変更です。
+
+## できること
+
+Macの開発画面を、OpenAI・Claudeの同時検索から **Gemini 3.5 Flash-Liteの単独検索** に切り替えて試せます。既存の出発地・趣味・自由入力・気分条件・イベント日付を渡し、Google検索の出典を照合した候補を既存のカードに表示します。Routes APIによる所要時間・時間条件の除外・趣味の配分は共通処理を使います。
+
+ホームの操作やカードの配置は維持します。詳細の提案理由と出典は「Gemini」になります。検索結果の下と、その検索から開いた詳細にGoogleの関連検索を表示します。これはGoogle検索で返された表示要素で、アプリのDOM・CSSから隔離した、スクリプト実行を許可しないiframeで表示します。Geminiの出典リンクは直接別タブで開きます。
+
+## 起動
+
+Node.js 24.20.0 / npm 11.19.0。依存のインストール後、この変更を含むチェックアウトで以下を実行します。
+
+1. `.env.gemini.local` を作り、`GEMINI_API_KEY=` の右側に専用キーを保存します。ファイルはGit管理外です。キーは [Google AI Studio](https://aistudio.google.com/apikey) で作成します。写真・Routes用キーを変更する必要はありません。
+2. 検索サーバーを起動します。
+
+   ```sh
+   npm run research:gemini -- --port 4212 --data-dir .local-research/gemini
+   ```
+
+3. 別ターミナルでアプリを起動します。
+
+   ```sh
+   DRIVEPLUS_SEARCH_BACKEND_PORT=4212 npm run dev -- --host 127.0.0.1 --port 5211 --strictPort
+   ```
+
+4. `http://127.0.0.1:5211/#/discover` を開きます。起動時の現在地検索、または出発駅を選んで「この出発地からドライブ先を探す」で試せます。カードを開くとGeminiの理由と出典を確認できます。
+
+既に同じポートが起動している場合は、該当ターミナルのCtrl+Cで停止してから起動します。キーを更新したときも検索サーバーの再起動が必要です。
+
+無料の架空サンプルを使う場合は `npm run research:gemini -- --demo --port 4212` に置き換えます。キーも外部APIも使いません。従来の2社検索は引き続き `npm run research` で起動します。引数なしでGeminiへ切り替わることはありません。
+
+## 費用・送信・保存
+
+- Gemini単独モードで他社モデルへ送信しません。失敗時の再試行・継続・回答修復・別モデルへの自動切り替えはありません。
+- 1検索につきGeminiへの生成リクエストは1回です。Google検索の実行回数はモデルが決めるため、プロンプトの「2回まで」はAPIで保証する上限ではありません。結果が少なくても追加検索しません。
+- アプリの累計回数制限はありません。既存の同時実行抑制は維持します。明示的に検証回数を制限するときは `--comparison-limit 1` などを指定できます。
+- Geminiへは選んだ出発駅、または約100m単位の現在地と検索条件を送ります。Google検索を使います。Routesキーがあれば、その位置と候補の住所をGoogle Mapsへ送り所要時間を取得します。自由入力以外のメモ・学習履歴は送りません。
+- キーは検索サーバーだけが読み、フロントエンドの配信物・API応答・Gitに含めません。
+- Geminiの検索結果と検索候補HTMLは画面のメモリ内だけで扱い、サーバーの結果ファイルには自動保存しません。旧2社検索のキャッシュもGeminiモードでは復元しません。利用台帳には成否・モデル・時間・トークン数などを残し、位置や検索候補HTMLは残しません。
+- ユーザーが明示的に「行きたい」に保存した個別候補は既存方式で端末に保存します。位置・経路時間・検索候補HTMLは保存しません。自動検索結果の再読み込みには新たな検索が必要です。
+- Googleの料金表では、このモデルのGoogle検索機能は有料枠向けです。前払いアカウントは最低5ドルのチャージ、後払いアカウントは設定に応じた請求です。実際の支払い状態はAI Studioで確認します。キーが有効であることだけで、無料利用だとは判断できません。
+- Geminiの料金推計は未実装です。利用量が取得できても参考金額は `null` とし、無料の0ドルとして記録しません。正確な請求はAI Studioで確認します。
+
+## 検証結果（2026-11-02）
+
+実APIは、東京駅・自然／グルメ／温泉・片道2〜5時間でGemini生成1回とRoutes1回を実施しました。
+
+- Gemini HTTP 200、Google検索2件、生成10候補のうち出典照合できた9候補。所要時間は検索部分9,861ms。
+- 出典を検索メタデータに照合できなかった1候補を除外しました。URLを推測して補完しません。
+- 同じ応答を使ってRoutesを1回取得（HTTP 200、処理約258ms）。時間条件に合った3候補を表示し、すべて所要時間を取得できました。内訳はグルメ2・温泉1で、自然の候補は時間条件により残りませんでした。
+- 前回のOpenAI・Claudeは同じ出発駅・趣味条件で全体約28.6秒でした。今回は検索部分約9.9秒とRoutes約0.3秒を別々に測定しており、ブラウザ操作を含む厳密な同時比較ではありません。各1回のため速度・品質の優劣を断定しません。
+- 取得済み応答を追加API送信せずブラウザへ流し、3カード・趣味ラベル・所要時間・Google関連検索を確認しました。生の応答・スクリーンショットは一時検証のみで使用し、Git・CI成果物には収録していません。
+- 無通信の自動テストは、Gemini要求・イベント・出典／趣味の検証、Google表示情報欠落、打ち切り、キー不足、400/401/402/403/429/500、他社への誤送信／自動再試行の不在、Routes連携、台帳と結果非保存を検査します。
+- ChromiumのPC／スマートフォン幅・WebKitのスマートフォン幅で、カード→詳細→直接出典リンク→保存→再読み込み、出典HTMLの隔離、エラー時の表示、旧2社結果との互換を検査します。
+
+今回の変更はMacのローカル試用です。公開Cloudflare WorkerへのGemini接続・公開Webへの反映・iPhone実機への反映は含めません。
+
+## 公式資料
+
+- [Gemini 3.5 Flash-Lite](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite)
+- [Google Search grounding](https://ai.google.dev/gemini-api/docs/generate-content/google-search)
+- [Structured output](https://ai.google.dev/gemini-api/docs/generate-content/structured-output)
+- [料金表](https://ai.google.dev/gemini-api/docs/pricing#gemini-3.5-flash-lite)・[請求設定](https://ai.google.dev/gemini-api/docs/billing)
+- [Gemini API追加規約](https://ai.google.dev/gemini-api/terms)

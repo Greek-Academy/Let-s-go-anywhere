@@ -34,6 +34,8 @@ export function createPilot({
   apiKey = '',
   anthropicApiKey = '',
   routesApiKey = '',
+  geminiApiKey = '',
+  searchProvider = 'comparison',
   comparisonLimit,
   directory = resolve(root, '.local-research'),
   fetcher = fetch,
@@ -46,6 +48,8 @@ export function createPilot({
     apiKey,
     anthropicApiKey,
     routesApiKey,
+    geminiApiKey,
+    searchProvider,
     maxAttempts: comparisonLimit,
     directory: resolve(directory, 'comparison-v1'),
     fetcher,
@@ -120,6 +124,8 @@ export function createPilot({
         throw new PilotError('input', '入力を読み取れませんでした。')
       }
       if (path === '/api/compare') return send(200, await comparison.search(input))
+      if (searchProvider === 'gemini')
+        throw new PilotError('input', 'この接続先ではGemini検索を利用してください。', 400)
       const query = validateQuery(input)
       if (!demo && !apiKey)
         throw new PilotError(
@@ -208,10 +214,24 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   if (directoryIndex >= 0 && !process.argv[directoryIndex + 1])
     throw new Error('Missing research data directory')
   const directory = directoryIndex >= 0 ? resolve(process.argv[directoryIndex + 1]) : undefined
+  const providerIndex = process.argv.indexOf('--search-provider')
+  const searchProvider = providerIndex >= 0 ? process.argv[providerIndex + 1] : 'comparison'
+  if (!['comparison', 'gemini'].includes(searchProvider))
+    throw new Error('Search provider must be comparison or gemini')
+  let geminiApiKey = ''
   let apiKey = ''
   let anthropicApiKey = ''
   let routesApiKey = ''
-  if (!demo) {
+  if (!demo && searchProvider === 'gemini') {
+    try {
+      geminiApiKey =
+        parseEnv(readFileSync(resolve(root, '.env.gemini.local'), 'utf8')).GEMINI_API_KEY?.trim() ??
+        ''
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw new Error('Cannot read Gemini key file')
+    }
+  }
+  if (!demo && searchProvider === 'comparison') {
     try {
       const env = parseEnv(readFileSync(resolve(root, '.env.research.local'), 'utf8'))
       apiKey = env.OPENAI_API_KEY?.trim() ?? ''
@@ -230,14 +250,21 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
       if (error.code !== 'ENOENT') throw new Error('Cannot read routes key file')
     }
   }
-  createPilot({ demo, apiKey, anthropicApiKey, routesApiKey, comparisonLimit, directory }).listen(
-    port,
-    '127.0.0.1',
-    () => {
-      console.log(
-        `Drive+ ${demo ? '架空サンプル（通信なし）' : '実検索の検証'}: http://127.0.0.1:${port}`,
-      )
-      console.log('検索は画面のボタン操作時のみ。APIキーは画面・ログに表示しません。')
-    },
-  )
+  createPilot({
+    demo,
+    apiKey,
+    anthropicApiKey,
+    routesApiKey,
+    geminiApiKey,
+    searchProvider,
+    comparisonLimit,
+    directory,
+  }).listen(port, '127.0.0.1', () => {
+    console.log(
+      `Drive+ ${demo ? '架空サンプル（通信なし）' : '実検索の検証'}: http://127.0.0.1:${port}`,
+    )
+    console.log(
+      'アプリの起動時の自動検索または検索操作でAPIを利用します。APIキーは画面・ログに表示しません。',
+    )
+  })
 }

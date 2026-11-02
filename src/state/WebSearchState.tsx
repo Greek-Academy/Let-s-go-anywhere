@@ -33,6 +33,7 @@ export interface SearchDraft {
 }
 type SearchMethod = 'comparison' | 'legacy'
 interface SearchStatus {
+  searchProvider?: 'comparison' | 'gemini'
   kind?: 'comparison'
   demo: boolean
   configured: boolean
@@ -342,9 +343,11 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
           throw new Error(
             publicSearchOrigin
               ? '検索サービスの接続準備中です。案内した担当者にお知らせください。'
-              : method === 'comparison'
-                ? '比較検索にはOpenAI・Anthropic両方のAPIキーが必要です。Macの .env.research.local を設定して検索サーバーを再起動してください。'
-                : 'APIキーが未設定です。Macの .env.research.local を設定して検索サーバーを再起動してください。',
+              : config.searchProvider === 'gemini'
+                ? 'Geminiの接続準備中です。APIキーを保存したら検索サーバーを再起動してください。'
+                : method === 'comparison'
+                  ? '比較検索にはOpenAI・Anthropic両方のAPIキーが必要です。Macの .env.research.local を設定して検索サーバーを再起動してください。'
+                  : 'APIキーが未設定です。Macの .env.research.local を設定して検索サーバーを再起動してください。',
           )
         if (publicSearchOrigin && config.enabled === false)
           throw new Error(

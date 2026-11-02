@@ -1,11 +1,11 @@
 import { PilotError } from '../spot-research/core.mjs'
 import {
-  PROVIDERS,
   MODELS,
   buildComparisonRequest,
   comparisonUsage,
   parseComparisonResponse,
   combineCandidates,
+  searchProviders,
 } from './core.mjs'
 import { comparisonSample } from './sample.mjs'
 import { addDrivingTimes } from './routes.mjs'
@@ -16,12 +16,14 @@ export async function runComparison({
   apiKey,
   anthropicApiKey,
   routesApiKey,
+  geminiApiKey,
+  searchProvider = 'comparison',
   fetcher = fetch,
   timeoutMs = 110_000,
 }) {
   const started = Date.now()
   const results = await Promise.all(
-    PROVIDERS.map(async (provider) => {
+    searchProviders(searchProvider).map(async (provider) => {
       const start = Date.now()
       let usage = null
       try {
@@ -30,18 +32,22 @@ export async function runComparison({
         else {
           const openai = provider === 'openai'
           const upstream = await fetcher(
-            openai
-              ? 'https://api.openai.com/v1/responses'
-              : 'https://api.anthropic.com/v1/messages',
+            provider === 'gemini'
+              ? `https://generativelanguage.googleapis.com/v1beta/models/${MODELS.gemini}:generateContent`
+              : openai
+                ? 'https://api.openai.com/v1/responses'
+                : 'https://api.anthropic.com/v1/messages',
             {
               method: 'POST',
               redirect: 'manual',
               signal: AbortSignal.timeout(query.drive ? Math.min(timeoutMs, 100_000) : timeoutMs),
               headers: {
                 'Content-Type': 'application/json',
-                ...(openai
-                  ? { Authorization: `Bearer ${apiKey}` }
-                  : { 'x-api-key': anthropicApiKey, 'anthropic-version': '2023-06-01' }),
+                ...(provider === 'gemini'
+                  ? { 'x-goog-api-key': geminiApiKey }
+                  : openai
+                    ? { Authorization: `Bearer ${apiKey}` }
+                    : { 'x-api-key': anthropicApiKey, 'anthropic-version': '2023-06-01' }),
               },
               body: JSON.stringify(buildComparisonRequest(provider, query)),
             },
@@ -49,11 +55,17 @@ export async function runComparison({
           if (!upstream.ok)
             throw new PilotError(
               'provider',
-              upstream.status === 401
-                ? 'APIキーを確認してください。'
-                : upstream.status === 429
-                  ? 'APIの残高・利用制限を確認してください。'
-                  : 'APIの応答を取得できませんでした。Web検索の利用設定も確認してください。',
+              provider === 'gemini' && upstream.status === 402
+                ? 'Geminiのクレジット残高をGoogle AI Studioで確認してください。'
+                : upstream.status === 401
+                  ? 'APIキーを確認してください。'
+                  : provider === 'gemini' && upstream.status === 403
+                    ? 'GeminiのAPIキー・利用権限・お支払い設定をGoogle AI Studioで確認してください。'
+                    : provider === 'gemini' && upstream.status === 400
+                      ? 'Geminiの検索設定を確認してください。'
+                      : upstream.status === 429
+                        ? 'APIの残高・利用制限を確認してください。'
+                        : 'APIの応答を取得できませんでした。Web検索の利用設定も確認してください。',
               502,
             )
           response = await upstream.json()
@@ -107,6 +119,9 @@ export async function runComparison({
     spots: driving.spots,
     omitted: results.reduce((sum, r) => sum + r.omitted, 0) + driving.excluded,
     reports,
+    ...(results.find((r) => r.searchAttribution)?.searchAttribution
+      ? { searchAttribution: results.find((r) => r.searchAttribution).searchAttribution }
+      : {}),
     query,
     mode: demo ? 'sample' : 'live',
     kind: 'comparison',

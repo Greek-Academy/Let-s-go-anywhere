@@ -1,3 +1,4 @@
+import { GoogleSearchAttribution } from '../components/GoogleSearchAttribution'
 import { WebEventSchedule } from '../components/WebEventSchedule'
 import { DriveTravelInfo } from '../components/DriveTravelInfo'
 import { RecommendationBadges, RecommendationFeatures } from '../components/RecommendationFeedback'
@@ -106,6 +107,9 @@ export function WebSpotDetail() {
             : 'AIが検索情報を整理した候補です。施設への確認は行っていません。訪問前に出典で最新情報を確認してください。'}
         </p>
         <WebSpotSource spot={spot} />
+        {found && result?.searchAttribution && (
+          <GoogleSearchAttribution html={result.searchAttribution.html} />
+        )}
         <InfoRows
           rows={[
             ['検索日時', `${searchDate(spot.retrievedAt)}（情報の確認日ではありません）`],

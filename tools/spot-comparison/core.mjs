@@ -18,7 +18,16 @@ import { groupPlaces } from '../../src/domain/placeIdentity.ts'
 import { PilotError, measureUsage as openaiUsage } from '../spot-research/core.mjs'
 
 export const PROVIDERS = ['openai', 'anthropic']
-export const MODELS = { openai: 'gpt-5-mini', anthropic: 'claude-haiku-4-5-20251001' }
+export const MODELS = {
+  openai: 'gpt-5-mini',
+  anthropic: 'claude-haiku-4-5-20251001',
+  gemini: 'gemini-3.5-flash-lite',
+}
+export function searchProviders(mode = 'comparison') {
+  if (mode === 'gemini') return ['gemini']
+  if (mode === 'comparison') return PROVIDERS
+  throw new Error('Search provider must be comparison or gemini')
+}
 export const SEARCH_LIMIT = 2
 export const OUTPUT_LIMIT = 6000
 export const COMPARISON_LIMIT = null
@@ -182,6 +191,7 @@ Use organizer/venue official pages or official tourism listings with event detai
 `
 
 export function buildComparisonRequest(provider, query) {
+  if (!Object.hasOwn(MODELS, provider)) throw new Error('Unknown search provider')
   const valid = validateComparisonQuery(query)
   const isEvent = valid.purpose === 'events'
   const hobbies = searchHobbies(valid.drive)
@@ -245,6 +255,17 @@ ${isEvent ? eventInstructions.replace('Search only the supplied region and inclu
         }
       : { radiusMeters: STATION_RADIUS_METERS }),
   })
+  if (provider === 'gemini')
+    return {
+      systemInstruction: { parts: [{ text: instructions }] },
+      contents: [{ role: 'user', parts: [{ text: input }] }],
+      tools: [{ googleSearch: {} }],
+      generationConfig: {
+        maxOutputTokens: OUTPUT_LIMIT,
+        thinkingConfig: { thinkingLevel: 'minimal' },
+        responseFormat: { text: { mimeType: 'APPLICATION_JSON', schema: outputSchema } },
+      },
+    }
   if (provider === 'openai')
     return {
       model: MODELS.openai,
@@ -278,6 +299,18 @@ ${isEvent ? eventInstructions.replace('Search only the supplied region and inclu
 }
 
 export function comparisonUsage(provider, response) {
+  if (provider === 'gemini') {
+    const u = response?.usageMetadata
+    const counts = [u?.promptTokenCount, u?.candidatesTokenCount, u?.thoughtsTokenCount ?? 0]
+    if (!counts.every((n) => Number.isSafeInteger(n) && n >= 0)) return null
+    return {
+      inputTokens: counts[0],
+      outputTokens: counts[1] + counts[2],
+      searchCalls: response.candidates?.[0]?.groundingMetadata?.webSearchQueries?.length ?? 0,
+      estimatedUsd: null,
+      pricingDate: null,
+    }
+  }
   if (provider === 'openai') {
     const usage = openaiUsage(response)
     return usage ? { ...usage, pricingDate: PRICING_DATE } : null
@@ -346,7 +379,23 @@ export function parseComparisonResponse(provider, response, query) {
     const url = sourceUrl(value)
     if (url) sources.add(url)
   }
-  if (provider === 'openai') {
+  let searchAttribution
+  if (provider === 'gemini') {
+    const candidate = response?.candidates?.[0]
+    if (response?.candidates?.length !== 1 || candidate.finishReason !== 'STOP')
+      throw new PilotError('incomplete', 'Geminiの回答が完了しませんでした。', 502)
+    const grounding = candidate.groundingMetadata
+    searched = Array.isArray(grounding?.webSearchQueries) && grounding.webSearchQueries.length > 0
+    for (const chunk of grounding?.groundingChunks ?? []) add(chunk.web?.uri)
+    raw = (candidate.content?.parts ?? [])
+      .filter((part) => !part.thought && typeof part.text === 'string')
+      .map((part) => part.text)
+      .join('')
+    const html = grounding?.searchEntryPoint?.renderedContent
+    if (searched && (typeof html !== 'string' || !html.trim() || html.length > 100_000))
+      throw new PilotError('attribution', 'Google検索の出典情報を取得できませんでした。', 502)
+    if (searched) searchAttribution = { html }
+  } else if (provider === 'openai') {
     if (response?.status !== 'completed' || !Array.isArray(response.output))
       throw new PilotError('incomplete', '回答が完了しませんでした。', 502)
     for (const item of response.output) {
@@ -444,7 +493,11 @@ export function parseComparisonResponse(provider, response, query) {
       recommendations: [{ provider, sourceUrl: url, reason: fields.matchReason }],
     })
   }
-  return { spots, omitted: parsed.spots.length - spots.length }
+  return {
+    spots,
+    omitted: parsed.spots.length - spots.length,
+    ...(searchAttribution ? { searchAttribution } : {}),
+  }
 }
 
 export function combineCandidates(results) {

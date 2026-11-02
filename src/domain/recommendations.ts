@@ -4,8 +4,8 @@ import type { WebSpot } from './webSearch'
 import { groupPlaces } from './placeIdentity'
 
 export const recommendationTags: readonly string[] = tags
-export type RecommendationProvider = 'openai' | 'anthropic'
-export const providerNames = { openai: 'OpenAI', anthropic: 'Claude' } as const
+export type RecommendationProvider = 'openai' | 'anthropic' | 'gemini'
+export const providerNames = { openai: 'OpenAI', anthropic: 'Claude', gemini: 'Gemini' } as const
 export interface Recommendation {
   provider: RecommendationProvider
   sourceUrl: string
@@ -19,11 +19,11 @@ export interface ProviderReport {
   omitted: number
   elapsedMs: number
   usage: {
-    estimatedUsd: number
+    estimatedUsd: number | null
     searchCalls: number
     inputTokens: number
     outputTokens: number
-    pricingDate: string
+    pricingDate: string | null
   } | null
   error: string | null
 }
@@ -42,14 +42,14 @@ export function decodeTags(value: unknown): string[] {
   return value as string[]
 }
 export function decodeRecommendations(value: unknown): Recommendation[] {
-  if (!Array.isArray(value) || value.length < 1 || value.length > 2)
+  if (!Array.isArray(value) || value.length < 1 || value.length > 3)
     throw new Error('提案元を確認できません。')
   const providers = new Set()
   return value.map((entry) => {
     const r = obj(entry)
     if (
       Object.keys(r).some((k) => !['provider', 'sourceUrl', 'reason'].includes(k)) ||
-      !['openai', 'anthropic'].includes(String(r.provider)) ||
+      !Object.hasOwn(providerNames, String(r.provider)) ||
       providers.has(r.provider) ||
       typeof r.sourceUrl !== 'string' ||
       typeof r.reason !== 'string' ||
@@ -67,12 +67,19 @@ export function decodeRecommendations(value: unknown): Recommendation[] {
   })
 }
 export function decodeReports(value: unknown): ProviderReport[] {
-  if (!Array.isArray(value) || value.length !== 2) throw new Error('比較の実行記録が不正です。')
+  if (
+    !Array.isArray(value) ||
+    !(
+      (value.length === 1 && value[0]?.provider === 'gemini') ||
+      (value.length === 2 && value.every((r) => ['openai', 'anthropic'].includes(r?.provider)))
+    )
+  )
+    throw new Error('比較の実行記録が不正です。')
   const providers = new Set()
   return value.map((entry) => {
     const r = obj(entry)
     if (
-      !['openai', 'anthropic'].includes(String(r.provider)) ||
+      !Object.hasOwn(providerNames, String(r.provider)) ||
       providers.has(r.provider) ||
       !['completed', 'failed'].includes(String(r.state)) ||
       typeof r.model !== 'string' ||
@@ -93,22 +100,23 @@ export function decodeReports(value: unknown): ProviderReport[] {
     if (r.usage !== null) {
       const u = obj(r.usage)
       if (
-        typeof u.estimatedUsd !== 'number' ||
-        !Number.isFinite(u.estimatedUsd) ||
-        u.estimatedUsd < 0 ||
+        (!(r.provider === 'gemini' && u.estimatedUsd === null && u.pricingDate === null) &&
+          (typeof u.estimatedUsd !== 'number' ||
+            !Number.isFinite(u.estimatedUsd) ||
+            u.estimatedUsd < 0 ||
+            typeof u.pricingDate !== 'string' ||
+            !/^\d{4}-\d{2}-\d{2}$/.test(u.pricingDate))) ||
         ![u.searchCalls, u.inputTokens, u.outputTokens].every(
           (n) => Number.isSafeInteger(n) && Number(n) >= 0,
-        ) ||
-        typeof u.pricingDate !== 'string' ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(u.pricingDate)
+        )
       )
         throw new Error('参考料金を確認できません。')
       usage = {
-        estimatedUsd: u.estimatedUsd,
+        estimatedUsd: u.estimatedUsd as number | null,
         searchCalls: Number(u.searchCalls),
         inputTokens: Number(u.inputTokens),
         outputTokens: Number(u.outputTokens),
-        pricingDate: u.pricingDate,
+        pricingDate: u.pricingDate as string | null,
       }
     }
     return {

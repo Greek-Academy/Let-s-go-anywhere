@@ -364,7 +364,7 @@ export function Discover() {
             <details className="small muted">
               <summary>現在地の使い方</summary>
               <p>
-                起動時に一度取得し、約100m単位の位置と趣味をOpenAI・Anthropicに、経路計算のためGoogle
+                起動時に一度取得し、約100m単位の位置と趣味を接続先のAI（OpenAI・Anthropic、またはGoogleのGemini）に、経路計算のためGoogle
                 Mapsに送ります。移動は追跡せず、位置は保存・共有しません。取得から10分間だけメモリ内で利用します。一時的なタブ・アプリの切り替えでは検索を続け、再読み込みや終了で位置を破棄します。
               </p>
             </details>
@@ -608,7 +608,7 @@ export function Discover() {
             </p>
           )}
           <p className="small muted">
-            約100m単位に丸めた位置と検索条件をOpenAI・Anthropicへ、経路計算が有効な場合はGoogle
+            約100m単位に丸めた位置と検索条件を接続先のAI（OpenAI・Anthropic、またはGoogleのGemini）へ、経路計算が有効な場合はGoogle
             Mapsへ送ります。位置は端末・検索履歴・共有リストに保存せず、移動を追跡しません。取得から10分間だけメモリ内で利用します。一時的なタブ・アプリの切り替えでは検索を続け、再読み込みや終了で位置を破棄します。
           </p>
           <p className="small muted">新しい実検索にはAPI料金がかかります。</p>

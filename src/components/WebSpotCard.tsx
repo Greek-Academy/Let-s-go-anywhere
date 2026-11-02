@@ -51,18 +51,32 @@ export function WebSpotSource({ spot }: { spot: WebSpot }) {
   const sources = spot.recommendations ?? [{ provider: null, sourceUrl: spot.sourceUrl }]
   return (
     <>
-      {sources.map((source) => (
-        <button
-          key={source.provider ?? 'legacy'}
-          className="text-button web-source"
-          onClick={() => setUrl(source.sourceUrl)}
-          aria-label={`${spot.name}の${source.provider ? providerNames[source.provider] + 'の' : ''}出典を確認`}
-        >
-          <ExternalLink size={14} aria-hidden="true" />
-          {source.provider ? providerNames[source.provider] + 'の' : ''}出典：
-          {new URL(source.sourceUrl).hostname}
-        </button>
-      ))}
+      {sources.map((source) =>
+        source.provider === 'gemini' ? (
+          <a
+            key={source.provider}
+            className="text-button web-source"
+            href={source.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${spot.name}のGeminiの出典を確認`}
+          >
+            <ExternalLink size={14} aria-hidden="true" />
+            Geminiの出典：{new URL(source.sourceUrl).hostname}
+          </a>
+        ) : (
+          <button
+            key={source.provider ?? 'legacy'}
+            className="text-button web-source"
+            onClick={() => setUrl(source.sourceUrl)}
+            aria-label={`${spot.name}の${source.provider ? providerNames[source.provider] + 'の' : ''}出典を確認`}
+          >
+            <ExternalLink size={14} aria-hidden="true" />
+            {source.provider ? providerNames[source.provider] + 'の' : ''}出典：
+            {new URL(source.sourceUrl).hostname}
+          </button>
+        ),
+      )}
       {url && (
         <ExternalModal
           title={spot.name}
