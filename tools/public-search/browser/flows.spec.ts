@@ -195,10 +195,13 @@ test('more than five searches across modes and reload retain saved candidates', 
   const email = await account(request)
   await start(page, request, email)
   for (let i = 1; i <= 6; i++) {
-    await page.getByRole('button', { name: i % 2 ? 'おすすめ' : 'イベント', exact: true }).click()
     await page
-      .getByRole('button', { name: i % 2 ? 'この希望で探す' : '趣味のイベントを探す', exact: true })
+      .getByRole('button', {
+        name: i % 2 ? 'この希望で探す' : 'この出発地からドライブ先を探す',
+        exact: true,
+      })
       .click()
+    await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
     await expect(page.locator('.web-spot-card')).toHaveCount(10)
     expect(calls).toHaveLength(i)
     if (i === 1)
@@ -206,7 +209,7 @@ test('more than five searches across modes and reload retain saved candidates', 
         .getByRole('button', { name: 'サンプル01・小さな喫茶店を保存', exact: true })
         .click()
   }
-  await page.getByRole('button', { name: 'おすすめ', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'イベント', exact: true })).toHaveCount(0)
   await page.reload()
   await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
   await login(page, email)
