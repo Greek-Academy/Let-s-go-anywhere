@@ -4,12 +4,10 @@ import { groupPlaces } from '../domain/placeIdentity'
 import { useSharing } from '../sharing/SharingProvider'
 import { firebasePilot } from '../firebase/config'
 import { StorageDetails } from '../components/StorageStatus'
-import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
-  BookOpen,
   Check,
   ClipboardList,
   Heart,
@@ -23,17 +21,7 @@ import {
 } from 'lucide-react'
 import { companions, interests } from '../data/options'
 import { useApp } from '../state/AppState'
-import {
-  Chip,
-  EmptyState,
-  Header,
-  MenuRow,
-  Modal,
-  PrimaryButton,
-  SectionHeading,
-  Tag,
-} from '../components/ui'
-import { LessonCard } from '../components/Cards'
+import { Chip, Header, MenuRow, Modal, PrimaryButton, SectionHeading, Tag } from '../components/ui'
 
 export function Profile() {
   const { state } = useApp()
@@ -77,11 +65,6 @@ export function Profile() {
             </strong>
             <small>行きたい</small>
           </button>
-          <button onClick={() => navigate('/profile/learning')}>
-            <BookOpen size={20} />
-            <strong>{state.learned.length}</strong>
-            <small>学習した内容</small>
-          </button>
         </div>
         <div className="profile-interests">
           <div className="section-heading">
@@ -111,8 +94,7 @@ export function Profile() {
             value={`${state.savedEvents.length + state.links.length + groupPlaces(state.savedWebSpots).length}件`}
             onClick={() => navigate('/saved')}
           />
-          <MenuRow icon={BookOpen} title="学習履歴" onClick={() => navigate('/profile/learning')} />
-          <MenuRow icon={Pencil} title="学習メモ" onClick={() => navigate('/learn/notes')} />
+          <MenuRow icon={Pencil} title="自分用メモ" onClick={() => navigate('/profile/notes')} />
           <MenuRow
             icon={ClipboardList}
             title="お出かけ・練習の振り返り"
@@ -218,45 +200,6 @@ export function ProfileEdit() {
     </div>
   )
 }
-export function LearningHistory() {
-  const { learningContents } = useContent()
-  const { state } = useApp()
-  const navigate = useNavigate()
-  const learned = learningContents.filter((l) => state.learned.includes(l.id))
-  return (
-    <div className="screen">
-      <Header back title="学習履歴" />
-      <div className="page-pad">
-        <p className="eyebrow teal">YOUR SMALL STEPS</p>
-        <h1>
-          積み重ねた、
-          <br />
-          小さな準備。
-        </h1>
-        <p className="body-copy">学んだことは、何度でも振り返れます。</p>
-        <div className="lesson-list">
-          {learned.map((l) => (
-            <div key={l.id}>
-              <p className="history-date">
-                {new Date(state.learningDates[l.id]).toLocaleDateString('ja-JP')} に学習
-              </p>
-              <LessonCard lesson={l} />
-            </div>
-          ))}
-        </div>
-        {!learned.length && (
-          <EmptyState
-            icon={BookOpen}
-            title="ここに学習の記録が残ります"
-            description="学習の最後に「学習を記録」を押すと、ここから復習できます。"
-            action="学ぶを開く"
-            onAction={() => navigate('/learn')}
-          />
-        )}
-      </div>
-    </div>
-  )
-}
 export function AppSettings() {
   const sharing = useSharing()
   const { state, update, reset, toast, memoryOnly } = useApp()
@@ -312,7 +255,7 @@ export function AppSettings() {
             title="プロフィールを変更"
             onClick={() => navigate('/profile/edit')}
           />
-          <MenuRow icon={Pencil} title="学習メモ" onClick={() => navigate('/learn/notes')} />
+          <MenuRow icon={Pencil} title="自分用メモ" onClick={() => navigate('/profile/notes')} />
         </div>
         <PrimaryButton
           variant="secondary"
@@ -344,7 +287,7 @@ export function AppSettings() {
       {resetOpen && (
         <Modal title="保存データを削除しますか？" onClose={() => setResetOpen(false)}>
           <p className="body-copy">
-            初回設定、行きたい、車候補、学習メモ・履歴、振り返り、旧版の相談記録、共有リストの端末内デモを含むデータをこの保存領域から削除し、最初の画面に戻ります。読み込めなかった元のデータと、保存されていない変更も失われます。この操作は取り消せません。
+            初回設定、行きたい、車候補、自分用メモ、振り返り、旧版の学習履歴、旧版の相談記録、共有リストの端末内デモを含むデータをこの保存領域から削除し、最初の画面に戻ります。読み込めなかった元のデータと、保存されていない変更も失われます。この操作は取り消せません。
           </p>
           {firebasePilot && !memoryOnly && (
             <p className="small muted">
@@ -502,11 +445,11 @@ export function Reflection() {
             ))}
           </>
         )}
-        <button className="check-banner" onClick={() => navigate('/learn')}>
+        <button className="check-banner" onClick={() => navigate('/profile/notes')}>
           <Sparkles size={24} />
           <span>
-            <strong>気になったことを、復習しよう。</strong>
-            <small>学ぶを開く</small>
+            <strong>気づいたことを、メモに残そう。</strong>
+            <small>自分用メモを開く</small>
           </span>
           <ArrowRight size={17} />
         </button>

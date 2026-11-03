@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
-  BookOpen,
   CarFront,
   Check,
   ChevronRight,
@@ -117,9 +116,8 @@ export function Header({
 }
 export function activeTab(path: string, origin?: Tab): Tab {
   if (/^\/(profile|settings|reflection)(\/|$)/.test(path)) return 'profile'
-  if (origin && ['discover', 'saved', 'cars', 'learn', 'profile'].includes(origin)) return origin
+  if (origin && ['discover', 'saved', 'cars', 'profile'].includes(origin)) return origin
   if (/^\/(cars|stations)/.test(path)) return 'cars'
-  if (/^\/(learn|check|quiz|results)/.test(path)) return 'learn'
   if (/^\/saved/.test(path)) return 'saved'
   return 'discover'
 }
@@ -127,7 +125,6 @@ const tabs: { id: Tab; title: string; icon: LucideIcon }[] = [
   { id: 'discover', title: '見つける', icon: House },
   { id: 'saved', title: '行きたい', icon: Heart },
   { id: 'cars', title: '車を探す', icon: Map },
-  { id: 'learn', title: '学ぶ', icon: BookOpen },
   { id: 'profile', title: 'マイページ', icon: UserRound },
 ]
 export function BottomNavigation() {

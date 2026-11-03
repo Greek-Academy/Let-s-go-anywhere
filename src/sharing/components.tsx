@@ -155,7 +155,7 @@ export function ShareCandidateSheet({
     <BottomSheet title="共有する内容を確認" onClose={onClose}>
       <DemoNotice switcher={false} />
       <p className="body-copy">
-        選んだ候補と、ここで書く共有メモだけを追加します。個人メモ・学習記録・運転の不安は含めません。
+        選んだ候補と、ここで書く共有メモだけを追加します。自分用メモ・チェックの回答・運転の不安は含めません。
       </p>
       <CandidatePreview candidate={candidate} photo={false} />
       <p className="small muted">

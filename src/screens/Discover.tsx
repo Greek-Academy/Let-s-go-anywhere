@@ -718,7 +718,7 @@ export function EventDetail() {
             <p>
               知識や気になることを整理して、
               <br />
-              学習や練習前の準備につなげます。
+              出発前に確かめたいことを確認します。
             </p>
           </div>
         </div>
@@ -746,9 +746,6 @@ export function EventDetail() {
         >
           出発地で車を探す
         </PrimaryButton>
-        <button className="text-button centered" onClick={() => navigate('/learn')}>
-          チェックをせずに学ぶ <ArrowRight size={14} />
-        </button>
         <div className="divider" />
         <ArrivalTeaser outingId={outing.id} />
         <OutingConditions outingId={outing.id} />

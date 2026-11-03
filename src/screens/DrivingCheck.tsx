@@ -1,9 +1,8 @@
 import type { Question } from '../data/types'
 import { useContent } from '../content/ContentProvider'
 import { useState } from 'react'
-import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
-  ArrowLeft,
   ArrowRight,
   BookOpen,
   Check,
@@ -11,20 +10,17 @@ import {
   CircleHelp,
   ListChecks,
   MessageCircle,
-  RotateCcw,
   Sparkles,
+  RotateCcw,
 } from 'lucide-react'
 import { experiences, scenarios } from '../data/options'
 import { useApp } from '../state/AppState'
 import type { AppState } from '../state/AppState'
-import { LessonCard } from '../components/Cards'
 import { RoadScene } from '../components/RoadScene'
-import { LearningColumns } from './LearningColumns'
 import {
   BottomSheet,
   Chip,
   Choice,
-  EmptyState,
   Header,
   PrimaryButton,
   SampleNote,
@@ -302,18 +298,8 @@ export function Results() {
         >
           回答ごとの解説を見る
         </PrimaryButton>
-        <PrimaryButton
-          icon={BookOpen}
-          onClick={() => navigate('/learn', { state: { recommended: result.review } })}
-        >
-          おすすめの学習を見る
-        </PrimaryButton>
-        <PrimaryButton
-          variant="secondary"
-          icon={MessageCircle}
-          onClick={() => navigate('/learn/columns/return-to-driving')}
-        >
-          久しぶりの運転に備える
+        <PrimaryButton icon={ArrowRight} onClick={() => navigate('/discover')}>
+          ドライブ先を探す
         </PrimaryButton>
         <button
           className="text-button centered"
@@ -354,215 +340,6 @@ export function Results() {
           <PrimaryButton onClick={() => setExplanationsOpen(false)}>振り返りに戻る</PrimaryButton>
         </BottomSheet>
       )}
-    </div>
-  )
-}
-export function Learn() {
-  const { learningContents, quizQuestions } = useContent()
-  const [use, setUse] = useState('すべて')
-  const { state } = useApp()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const recommended: string[] =
-    location.state?.recommended ?? getResults(state.quiz, quizQuestions).review
-  const filtered = learningContents
-    .filter((l) => use === 'すべて' || l.uses.includes(use))
-    .sort(
-      (a, b) => Number(recommended.includes(b.category)) - Number(recommended.includes(a.category)),
-    )
-  return (
-    <div className="screen learn-screen">
-      <Header />
-      <div className="page-pad">
-        <p className="eyebrow teal">LEARN AT YOUR OWN PACE</p>
-        <h1>
-          楽しみの前に、
-          <br />
-          小さな準備を。
-        </h1>
-        <p className="body-copy">知ることから、次の一歩が始まります。</p>
-        {new URLSearchParams(location.search).get('retired') === 'schools' && (
-          <p className="notice" role="status">
-            講習会社の紹介・相談機能は終了しました。運転再開のヒントは、こちらのコラムで読めます。
-          </p>
-        )}
-        <LearningColumns />
-        <PrimaryButton variant="secondary" icon={BookOpen} onClick={() => navigate('/learn/notes')}>
-          学習メモを開く
-        </PrimaryButton>
-        <SectionHeading
-          title="知識を確かめる・復習する"
-          subtitle="いつもの教材とチェックは、こちらから。"
-        />
-        <div className="learning-summary">
-          <div className="learning-summary-icon">
-            <BookOpen size={31} strokeWidth={1.5} />
-          </div>
-          <div>
-            <small>あなたの学習記録</small>
-            <h3>
-              {state.learned.length}
-              <span> コンテンツを学習</span>
-            </h3>
-            <p>少しずつ、自分のペースで。</p>
-          </div>
-          <span className="learning-leaf">✳</span>
-        </div>
-        <div className="chips wrap learning-chips">
-          {['すべて', '運転前の予習', '練習後の復習', 'お出かけ前の確認'].map((t) => (
-            <Chip key={t} selected={use === t} onClick={() => setUse(t)}>
-              {t}
-            </Chip>
-          ))}
-        </div>
-        <SectionHeading
-          title={recommended.length ? 'チェックに合わせた学習' : '今日の、ひとつだけでも。'}
-          subtitle="1本3〜4分。読むことから始められます。"
-        />
-        <div className="lesson-list">
-          {filtered.map((l) => (
-            <LessonCard lesson={l} key={l.id} />
-          ))}
-        </div>
-        <button className="check-banner" onClick={() => navigate('/check')}>
-          <ListChecks size={26} />
-          <span>
-            <strong>何から始めるか、迷ったら。</strong>
-            <small>知識と不安をチェックしてみる</small>
-          </span>
-          <ArrowRight size={17} />
-        </button>
-        <SampleNote>学習内容は未監修のUIサンプルです。実際の教材ではありません。</SampleNote>
-      </div>
-    </div>
-  )
-}
-export function LearningDetail() {
-  const { learningContents } = useContent()
-  const { id } = useParams()
-  const lesson = learningContents.find((l) => l.id === id)
-  const [params, setParams] = useSearchParams()
-  const pageIndex = Math.max(
-    0,
-    Math.min(Number(params.get('page')) || 0, (lesson?.pages.length ?? 1) - 1),
-  )
-  const { state, update, toast } = useApp()
-  const navigate = useNavigate()
-  if (!lesson)
-    return (
-      <>
-        <Header back title="学習" />
-        <EmptyState
-          title="教材が見つかりません"
-          description="一覧から別の学習を選べます。"
-          action="学習一覧に戻る"
-          onAction={() => navigate('/learn')}
-        />
-      </>
-    )
-  const page = lesson.pages[pageIndex]
-  const completed = state.learned.includes(lesson.id)
-  const record = () => {
-    update((s) => ({
-      ...s,
-      learned: s.learned.includes(lesson.id) ? s.learned : [...s.learned, lesson.id],
-      learningDates: { ...s.learningDates, [lesson.id]: new Date().toISOString() },
-    }))
-    toast('学習したことを記録しました')
-  }
-  return (
-    <div className="screen">
-      <Header back title="学習と解説" />
-      <div className="page-pad">
-        <div className="tags">
-          <Tag>{lesson.category}</Tag>
-          <Tag tone="neutral">{lesson.time}分 · 読んで学ぶ</Tag>
-          {completed && (
-            <Tag>
-              <Check size={12} />
-              学習済み
-            </Tag>
-          )}
-        </div>
-        <h1 className="learning-detail-title">{lesson.title}</h1>
-        <p className="body-copy">{lesson.introduction}</p>
-        <RoadScene
-          scene={
-            lesson.category === '駐車'
-              ? 'parking'
-              : lesson.category === '高速道路'
-                ? 'highway'
-                : 'road'
-          }
-        />
-        <div className="lesson-page-count">
-          POINT 0{pageIndex + 1}
-          <span>
-            {pageIndex + 1} / {lesson.pages.length}
-          </span>
-        </div>
-        <h2>{page.title}</h2>
-        <p className="lesson-explanation">{page.text}</p>
-        <div className="lesson-tip">
-          <Sparkles size={19} />
-          <div>
-            <strong>気になったことは、学習メモに。</strong>
-            <p>分からないことが残っていても大丈夫。後で読み返すために、残しておきましょう。</p>
-          </div>
-        </div>
-        <PrimaryButton
-          variant="secondary"
-          icon={MessageCircle}
-          onClick={() => {
-            const text = `${lesson.category}：${page.title}について聞きたい`
-            update((s) => ({
-              ...s,
-              memo: {
-                ...s.memo,
-                questions: s.memo.questions.includes(text)
-                  ? s.memo.questions
-                  : [s.memo.questions, text].filter(Boolean).join('\n'),
-              },
-            }))
-            toast('学習メモに追加しました')
-          }}
-        >
-          この内容を学習メモに追加
-        </PrimaryButton>
-        <div className="lesson-navigation">
-          <PrimaryButton
-            variant="secondary"
-            icon={ArrowLeft}
-            disabled={pageIndex === 0}
-            onClick={() => setParams({ page: String(pageIndex - 1) }, { replace: true })}
-          >
-            前の問題
-          </PrimaryButton>
-          {pageIndex < lesson.pages.length - 1 ? (
-            <PrimaryButton
-              icon={ArrowRight}
-              onClick={() => setParams({ page: String(pageIndex + 1) }, { replace: true })}
-            >
-              次の問題
-            </PrimaryButton>
-          ) : (
-            <PrimaryButton icon={Check} onClick={record}>
-              {completed ? '学習済み' : '学習を記録'}
-            </PrimaryButton>
-          )}
-        </div>
-        {completed && (
-          <PrimaryButton variant="ghost" onClick={() => navigate('/learn')}>
-            学習一覧へ戻る
-          </PrimaryButton>
-        )}
-        <div className="editorial-note">
-          <strong>UI確認用・未監修の解説サンプル</strong>
-          <p>
-            監修者・根拠資料・更新日は本実装で登録します。実際の運転指導や実技評価には使いません。
-          </p>
-        </div>
-      </div>
     </div>
   )
 }

@@ -30,10 +30,9 @@ import { Saved } from './screens/Saved'
 import { RealCars, RealStationDetail, CarMapSources } from './screens/RealCars'
 import { Cars, StationDetail } from './screens/Cars'
 import { CarSearch } from './screens/CarSearch'
-import { CheckSetup, Learn, LearningDetail, Quiz, Results } from './screens/Learning'
-import { LearningNotes } from './screens/LearningNotes'
-import { LearningColumnDetail } from './screens/LearningColumns'
-import { AppSettings, LearningHistory, Profile, ProfileEdit, Reflection } from './screens/Profile'
+import { CheckSetup, Quiz, Results } from './screens/DrivingCheck'
+import { PersonalNotes } from './screens/PersonalNotes'
+import { AppSettings, Profile, ProfileEdit, Reflection } from './screens/Profile'
 
 const PlacePhotoPilot = __PLACE_PHOTO_PILOT__
   ? lazy(() => import('./screens/PlacePhotoPilot'))
@@ -155,21 +154,17 @@ function AppRoutes() {
         <Route path="/check" element={<CheckSetup />} />
         <Route path="/quiz/:index" element={<Quiz />} />
         <Route path="/results" element={<Results />} />
-        <Route path="/learn" element={<Learn />} />
-        <Route path="/learn/columns/:id" element={<LearningColumnDetail />} />
-        <Route path="/learn/:id" element={<LearningDetail />} />
-        {/* Replace retired URLs so Back never returns to a consultation form. */}
-        <Route path="/schools/*" element={<Navigate to="/learn?retired=schools" replace />} />
-        <Route path="/consult/*" element={<Navigate to="/learn?retired=schools" replace />} />
-        <Route path="/consultations/*" element={<Navigate to="/learn?retired=schools" replace />} />
-        <Route path="/learn/notes" element={<LearningNotes />} />
+        {/* Preserve access to personal notes; replace other retired URLs without back loops. */}
+        <Route path="/learn/notes" element={<Navigate to="/profile/notes" replace />} />
+        <Route path="/learn/*" element={<Navigate to="/discover" replace />} />
+        <Route path="/schools/*" element={<Navigate to="/discover" replace />} />
+        <Route path="/consult/*" element={<Navigate to="/discover" replace />} />
+        <Route path="/consultations/*" element={<Navigate to="/discover" replace />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/edit" element={<ProfileEdit />} />
-        <Route path="/profile/learning" element={<LearningHistory />} />
-        <Route
-          path="/profile/consultations"
-          element={<Navigate to="/learn?retired=schools" replace />}
-        />
+        <Route path="/profile/notes" element={<PersonalNotes />} />
+        <Route path="/profile/learning" element={<Navigate to="/profile" replace />} />
+        <Route path="/profile/consultations" element={<Navigate to="/profile" replace />} />
         <Route path="/settings" element={<AppSettings />} />
         <Route path="/reflection" element={<Reflection />} />
         <Route path="*" element={<NotFound />} />

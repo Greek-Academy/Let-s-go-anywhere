@@ -233,7 +233,7 @@ export function CreateSharedList() {
           最初は一人でも大丈夫。候補を選んで追加し、あとから招待できます。
         </p>
         <p className="small muted">
-          個人の保存や学習情報は自動で入りません。デモはこの端末に保存します。
+          個人の保存や自分用メモは自動で入りません。デモはこの端末に保存します。
         </p>
         <SharingStatus />
         <PrimaryButton
@@ -1001,7 +1001,7 @@ export function SharedInvitation() {
             ) : (
               <>
                 <p className="body-copy">
-                  参加すると、このリストの候補・共有メモ・反応が見られます。個人の保存全件や学習情報は共有しません。
+                  参加すると、このリストの候補・共有メモ・反応が見られます。個人の保存全件や自分用メモは共有しません。
                 </p>
                 <p className="small muted">
                   退出しても、追加した候補はリストに残ります。デモの表示名：{actors[actor]}

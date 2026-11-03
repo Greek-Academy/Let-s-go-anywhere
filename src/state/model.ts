@@ -33,6 +33,7 @@ export interface AppState {
   savedStations: string[]
   hiddenEvents: string[]
   links: SavedLink[]
+  /** Retired learning records remain in device storage; no active lesson UI. */
   learned: string[]
   learningDates: Record<string, string>
   quiz: {

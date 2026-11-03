@@ -197,7 +197,7 @@ export default function FirebasePreparation({
             <p className="body-copy">
               {purpose === 'search'
                 ? '共有機能と同じアカウントでログインできます。初めての方は新規登録してください。'
-                : '共有に使うアカウントを用意します。個人の保存や学習記録は自動で送信されません。'}
+                : '共有に使うアカウントを用意します。個人の保存や自分用メモは自動で送信されません。'}
             </p>
             <div className="sharing-actors" aria-label="アカウント操作">
               <Chip

@@ -6,7 +6,7 @@ test.afterEach(async ({ page }, info) => {
     await info.attach('操作後の画面', { body: await page.screenshot(), contentType: 'image/png' })
 })
 
-test('retired URLs lead to learning without a referral form or a back loop', async ({ page }) => {
+test('retired URLs lead to home without a referral form or a back loop', async ({ page }) => {
   await page.goto('/#/welcome')
   await page.getByRole('button', { name: 'まずは見てみる' }).click()
   const navigation = page.getByRole('navigation')
@@ -14,7 +14,6 @@ test('retired URLs lead to learning without a referral form or a back loop', asy
     '見つける',
     '行きたい',
     '車を探す',
-    '学ぶ',
     'マイページ',
   ])
   for (const path of [
@@ -23,24 +22,20 @@ test('retired URLs lead to learning without a referral form or a back loop', asy
     '/consult/shirokuma',
     '/consult/shirokuma/review',
     '/consultations/old-demo',
-    '/profile/consultations',
   ]) {
-    await page.goto('/#/discover')
+    await page.goto('/#/saved')
     // Push a real history entry as an old in-app link would do.
     await page.evaluate((path) => {
       location.hash = path
     }, path)
-    await expect(page).toHaveURL(/#\/learn\?retired=schools$/)
-    await expect(
-      page.getByRole('status').filter({ hasText: '講習会社の紹介・相談機能は終了' }),
-    ).toContainText('講習会社の紹介・相談機能は終了')
-    await expect(navigation.getByRole('button', { name: '学ぶ', exact: true })).toHaveAttribute(
+    await expect(page).toHaveURL(/#\/discover$/)
+    await expect(navigation.getByRole('button', { name: '見つける', exact: true })).toHaveAttribute(
       'aria-current',
       'page',
     )
     await expect(page.locator('.school-card, .consult-progress, .consent-checkbox')).toHaveCount(0)
     await page.goBack()
-    await expect(page).toHaveURL(/#\/discover$/)
+    await expect(page).toHaveURL(/#\/saved$/)
   }
   for (const path of ['/profile', '/settings', '/results', '/events/fuji']) {
     await page.goto('/#' + path)
@@ -50,36 +45,6 @@ test('retired URLs lead to learning without a referral form or a back loop', asy
       }),
     ).toHaveCount(0)
   }
-})
-
-test('return-to-driving panel filters, opens a complete column and restores its list', async ({
-  page,
-}) => {
-  await page.goto('/#/learn')
-  const genres = page.getByRole('group', { name: 'コラムのジャンル' })
-  await genres.getByRole('button', { name: '運転の再開', exact: true }).click()
-  await expect(page.locator('.column-card')).toHaveCount(1)
-  const card = page.getByRole('button', {
-    name: '久しぶりの運転は、ペーパードライバー講習で練習しようを読む',
-    exact: true,
-  })
-  await card.click()
-  await expect(page.locator('.column-body-section')).toHaveCount(3)
-  await expect(page.locator('.column-article')).toContainText('料金の総額と追加費用')
-  await expect(page.locator('.column-article')).toContainText('公共交通を使う')
-  await expect(page.locator('.column-article')).toContainText('試作・未監修')
-  await expect(
-    page.getByRole('link', { name: '東京指定自動車教習所協会｜各種講習のご案内' }),
-  ).toHaveAttribute('href', 'https://www.tadsa.or.jp/class/')
-  await expect(page.getByRole('button', { name: /予約|相談する|申し込む/ })).toHaveCount(0)
-  await page.getByRole('button', { name: 'コラム一覧へ戻る' }).click()
-  await expect(page).toHaveURL(/#\/learn\?genre=restart$/)
-  await expect(card).toBeFocused()
-  await page.reload()
-  await expect(genres.getByRole('button', { name: '運転の再開', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  )
 })
 
 test('v1 data and private notes survive removal of schools on a narrow screen', async ({
@@ -125,8 +90,8 @@ test('v1 data and private notes survive removal of schools on a narrow screen', 
   await page.setViewportSize({ width: 320, height: 568 })
   await page.goto('/#/profile')
   await expect(page.getByRole('alert')).toHaveCount(0)
-  await page.getByRole('button', { name: '学習メモ', exact: true }).click()
-  const note = page.getByRole('textbox', { name: '自分用の学習メモ' })
+  await page.getByRole('button', { name: '自分用メモ', exact: true }).click()
+  const note = page.getByRole('textbox', { name: '自分用メモ' })
   await expect(note).toHaveValue('以前の質問を残したい')
   await note.fill('以前の質問を残したい\n新しい気づき')
   await expect
@@ -134,9 +99,9 @@ test('v1 data and private notes survive removal of schools on a narrow screen', 
       page.evaluate(() => JSON.parse(localStorage.getItem('driveplus.mock.v1')!).memo.questions),
     )
     .toContain('新しい気づき')
-  await page.getByRole('button', { name: '学ぶに戻る' }).click()
+  await page.getByRole('button', { name: 'マイページに戻る' }).click()
   await page.reload()
-  await page.getByRole('button', { name: '学習メモを開く' }).click()
+  await page.getByRole('button', { name: '自分用メモ' }).click()
   await expect(note).toHaveValue('以前の質問を残したい\n新しい気づき')
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('driveplus.mock.v1')!))
   expect(stored).toEqual({

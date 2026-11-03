@@ -42,7 +42,7 @@ test('hobby onboarding supports back, completion, tabs and reload', async ({ pag
   await page.getByRole('button', { name: 'ホームへ', exact: true }).click()
   await expect(page).toHaveURL(/#\/discover$/)
   await expect(page.getByRole('button', { name: /ラーメンタイプ診断/ })).toHaveCount(0)
-  for (const name of ['行きたい', '車を探す', '学ぶ', 'マイページ', '見つける']) {
+  for (const name of ['行きたい', '車を探す', 'マイページ', '見つける']) {
     await page.getByRole('navigation').getByRole('button', { name, exact: true }).click()
     await expect(
       page.getByRole('navigation').getByRole('button', { name, exact: true }),
@@ -57,7 +57,7 @@ test('hobby onboarding supports back, completion, tabs and reload', async ({ pag
     interests: ['自然'],
   })
   expect(state.onboarded).toBe(true)
-  await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(5)
+  await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(4)
 })
 
 test('retired setup URLs return to the hobby setup and a single skip completes it', async ({
@@ -198,28 +198,6 @@ test('quiz separates knowledge, wrong answers, self-report and skipped items', a
   await page.getByRole('button', { name: '振り返りに戻る' }).click()
 })
 
-test('learning has next/previous, adds private learning notes and persists completion', async ({
-  page,
-}) => {
-  await enter(page, '/learn')
-  await page.getByRole('button', { name: '練習後の復習', exact: true }).click()
-  await expect(page.locator('.lesson-card')).toHaveCount(3)
-  await page.getByRole('button', { name: /駐車の前に、確認したいこと/ }).click()
-  await expect(page.getByRole('button', { name: '前の問題' })).toBeDisabled()
-  await page.getByRole('button', { name: '次の問題' }).click()
-  await expect(page.getByRole('heading', { name: '実車で確かめたいことを整理' })).toBeVisible()
-  await page.getByRole('button', { name: '前の問題' }).click()
-  await page.getByRole('button', { name: 'この内容を学習メモに追加' }).click()
-  await page.getByRole('button', { name: '次の問題' }).click()
-  await page.getByRole('button', { name: '学習を記録', exact: true }).click()
-  expect((await readState(page)).learned).toEqual(['parking'])
-  expect((await readState(page)).memo.questions).toContain('何が見えにくいかを考える')
-  await page.goto('/#/profile/learning')
-  await expect(page.locator('.lesson-card')).toHaveCount(1)
-  await page.reload()
-  await expect(page.locator('.lesson-card')).toContainText('学習済み')
-})
-
 test('map pins, station details, provider filters, lists and zero-result search', async ({
   page,
 }) => {
@@ -307,15 +285,11 @@ test('phone contains scroll; all routes render without errors, overflow or broke
     '/check',
     '/quiz/0',
     '/results',
-    '/learn',
-    '/learn/parking',
-    '/learn/notes',
-    '/learn/columns/return-to-driving',
+    '/profile/notes',
     '/cars',
     '/stations/toyota-shibuya',
     '/profile',
     '/profile/edit',
-    '/profile/learning',
     '/settings',
     '/reflection',
   ]) {

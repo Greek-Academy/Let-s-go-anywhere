@@ -1,5 +1,5 @@
 import { sampleLifecycle } from './outingLifecycle'
-import type { LearningContent, Outing, Question, Station } from './types'
+import type { Outing, Question, Station } from './types'
 
 // All locations, dates, offers and educational text are fixtures for UX review.
 // These records are never fetched from a live service or presented as verified listings.
@@ -275,82 +275,3 @@ export const quizQuestions: Question[] = [
     scene: 'highway',
   },
 ]
-export const learningContents: LearningContent[] = [
-  {
-    id: 'parking',
-    title: '駐車の前に、確認したいこと',
-    category: '駐車',
-    time: 3,
-    image: '/images/car.jpg',
-    uses: ['運転前の予習', '練習後の復習', 'お出かけ前の確認'],
-    introduction: '駐車が不安。その気持ちを、具体的な相談につなげましょう。',
-    pages: [
-      {
-        title: '何が見えにくいかを考える',
-        text: '車の周囲で見えにくい場所や、気になっていることを書き出してみましょう。実際の確認方法は講師に相談する内容として残せます。',
-      },
-      {
-        title: '実車で確かめたいことを整理',
-        text: '車幅の感覚、ミラーの見方、周囲の確認など、実際に教わりたいことをメモします。画面上の学習だけでは操作の習得は確認できません。',
-      },
-    ],
-  },
-  {
-    id: 'road',
-    title: '街の道で、気づくための視点',
-    category: '一般道',
-    time: 3,
-    image: '/images/forest.jpg',
-    uses: ['運転前の予習', 'お出かけ前の確認'],
-    introduction: '道路のイラストを見ながら、目を向ける場所を考えます。',
-    pages: [
-      {
-        title: '見えているもの、隠れているもの',
-        text: '横断歩道の周辺、建物の角、停車中の車の陰。気になる場所を見つけて、何が不安なのかを言葉にしてみましょう。',
-      },
-      {
-        title: '判断の手順を講師に相談',
-        text: '気づいた後にどう判断するか、どのような操作をするか。具体的な場面を講師に伝えて、実車で確かめる準備をしましょう。',
-      },
-    ],
-  },
-  {
-    id: 'highway',
-    title: '高速道路の不安を、学習メモに',
-    category: '高速道路',
-    time: 4,
-    image: '/images/coast.jpg',
-    uses: ['運転前の予習', '練習後の復習'],
-    introduction: '合流や車線変更など、相談したい場面を整理します。',
-    pages: [
-      {
-        title: '不安に感じる場面を選ぶ',
-        text: '合流、速度、車線変更、出口。どの場面に不安を感じるか、想像できないものは「未確認」として残しましょう。',
-      },
-      {
-        title: '予定と練習を一緒に相談する',
-        text: '実際の経路は外部の地図で確認し、講師に希望するお出かけを伝えます。必要に応じて、移動方法や予定の変更も選択肢に入れましょう。',
-      },
-    ],
-  },
-  {
-    id: 'night',
-    title: '夜のお出かけ前に、考えること',
-    category: '夜間',
-    time: 3,
-    image: '/images/fireworks.jpg',
-    uses: ['お出かけ前の確認', '練習後の復習'],
-    introduction: '日中との違いや、帰りの予定を整理します。',
-    pages: [
-      {
-        title: '経験と気がかりを分ける',
-        text: '夜に運転した経験と、見え方に対する不安を別々に記録します。分からないことを無理に解決したことにせず、学習メモに残しましょう。',
-      },
-      {
-        title: '無理のない予定を考える',
-        text: '帰りの時間、疲れ、ほかの移動方法も含めて予定を考えます。イベントの日程を理由に、運転再開を急ぐ必要はありません。',
-      },
-    ],
-  },
-]
-export const lessons = learningContents

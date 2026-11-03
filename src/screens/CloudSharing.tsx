@@ -297,7 +297,7 @@ function CreateCloudList({
         />
       </label>
       <p className="small muted">
-        作成は3枠、参加者は1リスト5人、候補は100件まで。個人の保存・学習・不安・現在地を自動で追加しません。
+        作成は3枠、参加者は1リスト5人、候補は100件まで。個人の保存・自分用メモ・不安・現在地を自動で追加しません。
       </p>
       <ErrorText text={cloud.error} />
       <PrimaryButton
@@ -859,7 +859,7 @@ function InviteSheet({
         7日間有効・1人分のリンクです。相手が参加を申請し、あなたが承認すると、このリストの候補が見えるようになります。
       </p>
       <p className="small muted">
-        リンクは信頼できる相手に送ってください。メールアドレス・個人の保存一覧・学習情報は共有しません。
+        リンクは信頼できる相手に送ってください。メールアドレス・個人の保存一覧・自分用メモは共有しません。
       </p>
       {issued && (
         <>
@@ -1003,7 +1003,7 @@ function CloudInvitation({ uid }: { uid: string }) {
           {invite.status === 'open' && expiresAt(invite) > Date.now() && (
             <>
               <p className="body-copy">
-                承認後、このリストの候補・共有メモ・表示名・反応が参加者に見えます。あなたの個人保存・学習・不安・現在地は自動で共有しません。
+                承認後、このリストの候補・共有メモ・表示名・反応が参加者に見えます。あなたの個人保存・自分用メモ・不安・現在地は自動で共有しません。
               </p>
               <label className="field-label">
                 このリストでの表示名
@@ -1125,7 +1125,7 @@ function AddCloudCandidate({
             />
           </label>
           <p className="small muted">
-            タイトルやURLに個人情報が含まれていないか確認してください。個人メモ・学習・不安・現在地は送信しません。元の個人保存は残ります。
+            タイトルやURLに個人情報が含まれていないか確認してください。自分用メモ・チェックの回答・不安・現在地は送信しません。元の個人保存は残ります。
           </p>
           <ErrorText text={cloud.error} />
           <PrimaryButton
