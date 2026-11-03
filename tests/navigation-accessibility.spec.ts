@@ -40,7 +40,9 @@ test('keyboard onboarding and all five tabs move focus to the new screen without
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   // WebKit uses Option+Tab to include buttons in keyboard navigation by default.
   await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab')
-  await expect(page.getByRole('button', { name: 'おすすめ', exact: true })).toBeFocused()
+  await expect(
+    page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }),
+  ).toBeFocused()
   for (const name of ['行きたい', '車を探す', '学ぶ', 'マイページ', '見つける']) {
     await keyboardActivate(
       page,
@@ -85,7 +87,7 @@ test('same-page filtering keeps focus, while profile navigation returns to the m
   page,
 }) => {
   await enter(page)
-  const filter = page.getByRole('button', { name: 'イベント', exact: true })
+  const filter = page.getByRole('button', { name: '気分から選ぶ', exact: true })
   await keyboardActivate(page, filter)
   await expect(filter).toBeFocused()
   await keyboardActivate(

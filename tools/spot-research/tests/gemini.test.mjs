@@ -114,25 +114,15 @@ test('Gemini researches first with the same origin and conditions, then formats 
     )
     assert.equal(schema.properties.spots.items.properties.sourceUrl, undefined)
   }
-  const events = {
-    ...query,
-    purpose: 'events',
-    theme: 'イベント',
-    eventDates: { start: '2099-01-01', end: '2099-01-01' },
-    drive: driveQuery('events', undefined, ['自然']),
-  }
-  // A current date is needed by the shared input validator.
-  const date = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' })
-  events.eventDates = { start: date, end: date }
-  const request = buildGeminiExtractionRequest(events, stagedResponses(events).research)
-  assert.ok(
-    request.generationConfig.responseFormat.text.schema.properties.spots.items.required.includes(
-      'event',
-    ),
-  )
-  assert.equal(
-    parseComparisonResponse('gemini', comparisonSample('gemini', events), events).spots.length,
-    10,
+  assert.throws(
+    () =>
+      buildComparisonRequest('gemini', {
+        ...query,
+        purpose: 'events',
+        theme: 'イベント',
+        drive: { ...drive, mode: 'events' },
+      }),
+    /イベント検索は終了/,
   )
 })
 

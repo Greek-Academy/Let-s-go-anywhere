@@ -52,22 +52,22 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
     page.getByText('選んだ趣味と出発地から、片道1〜5時間のドライブ先を10件を目安に探します。'),
   ).toBeVisible()
   const layout = await page.evaluate(() => {
-    const tabs = document.querySelector('.discovery-chips')!.getBoundingClientRect()
+    const feed = document.querySelector('.drive-home-feed')!.getBoundingClientRect()
     const firstCard = document.querySelector('.web-spot-card')!.getBoundingClientRect()
     const controls = document.querySelector('.drive-home-controls')!
     const cards = document.querySelectorAll('.web-spot-card')
     const last = cards[cards.length - 1]
     const bottom = document.querySelector('.bottom-nav')?.getBoundingClientRect().top ?? innerHeight
     return {
-      afterTabs: firstCard.top >= tabs.bottom,
-      gap: firstCard.top - tabs.bottom,
+      afterFeedStart: firstCard.top >= feed.top,
+      gap: firstCard.top - feed.top,
       visible: firstCard.top < bottom,
       controlsAfterCards: !!(
         last.compareDocumentPosition(controls) & Node.DOCUMENT_POSITION_FOLLOWING
       ),
     }
   })
-  expect(layout.afterTabs).toBe(true)
+  expect(layout.afterFeedStart).toBe(true)
   expect(layout.gap).toBeLessThan(32)
   expect(layout.visible).toBe(true)
   expect(layout.controlsAfterCards).toBe(true)
@@ -130,22 +130,16 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   )
   await page.getByRole('button', { name: '自由入力の結果', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
-  await page.getByRole('button', { name: 'イベント', exact: true }).click()
-  await page.getByRole('button', { name: '趣味のイベントを探す', exact: true }).click()
-  await expect(page.locator('.web-spot-card').first()).toContainText('イベントサンプル')
-  expect(bodies[3].drive).toEqual(driveQuery('events', undefined, ['音楽', '自然']))
-  expect(bodies[3].theme).toBe('イベント')
-  await page.getByRole('button', { name: 'おすすめ', exact: true }).click()
   await page.getByRole('button', { name: '趣味のおすすめ', exact: true }).click()
   await expect(page.locator('.web-spot-card').first()).toContainText(first)
-  expect(bodies).toHaveLength(4)
+  expect(bodies).toHaveLength(3)
   const raw = await page.evaluate(() => localStorage.getItem('driveplus.mock.v1')!)
   for (const secret of ['35.691', '139.7', 'durationSeconds', 'distanceMeters', 'travel'])
     expect(raw).not.toContain(secret)
   expect(JSON.parse(raw).savedWebSpots).toHaveLength(1)
   await page.reload()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
-  expect(bodies).toHaveLength(5)
+  expect(bodies).toHaveLength(4)
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await page.reload()
   await page.locator('.saved-web-spot').getByRole('button').first().click()

@@ -59,6 +59,7 @@ export interface AppState {
     driveMode?: 'default' | 'free' | 'conditions'
     usageSamples?: boolean
     category: string
+    /** Retired date selector, accepted only when migrating old device data. */
     eventSelection?: EventSelection
     search: string
     tag: string
@@ -107,7 +108,6 @@ export const createInitialState = (): AppState => ({
     tag: '',
     region: 'origin',
     stationId: null,
-    eventSelection: { mode: 'today', date: '' },
   },
   schoolFilters: { area: 'すべて', practice: 'すべて', budget: 'すべて', vehicle: 'すべて' },
   settings: { largeText: false, reducedMotion: false },

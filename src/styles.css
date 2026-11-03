@@ -1685,23 +1685,6 @@ small {
   background: #dcefe2 !important;
   color: #16846e !important;
 }
-.discovery-chips {
-  margin-top: 17px;
-  gap: 6px;
-  justify-content: space-between;
-}
-.discovery-chips .chip {
-  padding: 7px 13px;
-  font-size: 11px;
-  min-height: 32px;
-  flex: 1;
-  border: 0;
-}
-.discovery-chips .chip.selected {
-  color: #fff;
-  background: var(--teal);
-  box-shadow: 0 3px 9px #148b7d15;
-}
 .discover-screen .sample-note {
   margin: 10px 0 0;
   font-size: 8px;
@@ -3423,11 +3406,6 @@ small {
     padding-left: 17px;
     padding-right: 17px;
   }
-  .discovery-chips .chip {
-    padding-left: 9px;
-    padding-right: 9px;
-    font-size: 10px;
-  }
   .sun-decoration {
     margin-right: 4px;
     font-size: 48px;
@@ -4920,32 +4898,6 @@ small {
 .discovery-location-notice p + p {
   margin-top: 10px;
 }
-
-.event-date-picker {
-  margin: 18px 0 22px;
-  padding: 18px;
-  background: #f3f8f5;
-  border: 1px solid #dcebe4;
-  border-radius: 20px;
-}
-.event-date-picker h2 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  margin: 0 0 16px;
-}
-.event-date-picker .chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.event-date-picker input[type='date'] {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
 .web-event-schedule {
   margin: 14px 0;
   padding: 12px 14px;
@@ -5218,12 +5170,6 @@ small {
   font-size: 11px;
   padding-inline: 10px;
 }
-.drive-event-search {
-  padding: 16px 0;
-}
-.drive-event-search h2 {
-  font-size: 20px;
-}
 .drive-empty .empty-state {
   padding-inline: 5px;
 }
@@ -5291,13 +5237,10 @@ small {
   margin-top: 6px;
 }
 
-/* Start discovery with the category switch and destination cards. */
+/* Start discovery with destination cards. */
 .drive-home-feed {
   padding-top: 12px;
   scroll-margin-top: 12px;
-}
-.drive-home-feed .discovery-chips {
-  margin: 0 0 18px;
 }
 .drive-home-controls {
   border-top: 1px solid var(--line);

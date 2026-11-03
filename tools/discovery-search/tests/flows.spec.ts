@@ -137,7 +137,7 @@ test('実サーバーの無料モードを経由し、出典・保存・詳細�
   expect(posts).toBe(1)
 })
 
-test('駅未指定・空欄を拒否し、イベントは探し方を選ばず日付から探せる', async ({ page }) => {
+test('駅未指定・空欄を拒否し、終了したイベント検索を表示しない', async ({ page }) => {
   let posts = 0
   page.on('request', (r) => {
     if (r.url().endsWith('/api/spot-search/compare')) posts++
@@ -154,12 +154,8 @@ test('駅未指定・空欄を拒否し、イベントは探し方を選ばず�
   await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('1〜80文字')
   await page.getByRole('textbox', { name: 'お出かけを検索' }).fill(query.theme)
-  await page.getByRole('button', { name: 'イベント', exact: true }).click()
-  await expect(page.getByLabel('検索方法', { exact: true })).toHaveCount(0)
-  await expect(
-    page.getByRole('button', { name: '趣味のイベントを探す', exact: true }),
-  ).toBeVisible()
-  await expect(page.getByRole('textbox', { name: 'お出かけを検索' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'イベント', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('textbox', { name: 'お出かけを検索' })).toBeVisible()
   expect(posts).toBe(0)
 })
 
@@ -265,7 +261,7 @@ test('入力を変えても取得済みの候補を維持し、連打で追加�
   expect(posts).toBe(1)
 })
 
-test('イベントへ移った後に遅延応答で画面を差し替えず、不正なOriginをブリッジで拒否する', async ({
+test('趣味の結果へ移った後に遅延応答で画面を差し替えず、不正なOriginをブリッジで拒否する', async ({
   page,
   request,
 }) => {
@@ -280,7 +276,7 @@ test('イベントへ移った後に遅延応答で画面を差し替えず、�
   })
   await enter(page)
   await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
-  await page.getByRole('button', { name: 'イベント', exact: true }).click()
+  await page.getByRole('button', { name: '趣味のおすすめ', exact: true }).click()
   release()
   await expect(page.locator('.web-search-results')).toHaveCount(0)
   const rejected = await request.post('/api/spot-search/compare', {

@@ -274,10 +274,11 @@ export function decodeStoredState(raw: string | null): {
         problem = 'invalid'
       }
     }
-    if (state.discover.category === '今週末') {
-      state.discover.category = 'イベント'
-      state.discover.eventSelection = { mode: 'weekend', date: '' }
-    } else if (state.discover.category === 'スポット') state.discover.category = 'おすすめ'
+    // Retired event tabs must not hide the home feed or launch a dated search.
+    if (['イベント', '今週末'].includes(state.discover.category))
+      state.discover.driveMode = 'default'
+    state.discover.category = 'おすすめ'
+    delete state.discover.eventSelection
     return { state, problem }
   } catch {
     return { state, problem: 'invalid' }

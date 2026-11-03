@@ -15,7 +15,6 @@ export function braveQueries(query) {
     () => [],
   )
   hobbies.forEach((hobby, index) => groups[index % groups.length].push(hobby))
-  const dates = query.eventDates ? Object.values(query.eventDates).flat().join(' ') : ''
   const theme =
     query.drive?.mode === 'conditions'
       ? [...query.drive.activities, query.drive.timing, query.drive.road, query.drive.pace]
@@ -38,8 +37,7 @@ export function braveQueries(query) {
           query.drive ? `車で片道${query.drive.duration} ドライブ` : '駅周辺',
           (group.length ? group : hobbies).join(' '),
           theme,
-          dates,
-          query.purpose === 'events' ? 'イベント 開催日 会場 公式' : variants[index],
+          variants[index],
         ]
           .filter(Boolean)
           .join(' ')

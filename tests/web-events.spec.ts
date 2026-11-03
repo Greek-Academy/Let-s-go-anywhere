@@ -45,18 +45,16 @@ test('event saves retain schedule/source; different year/venue and permanent spo
 test('legacy category migration preserves recommended input and saved data; old events show ended notice', async ({
   page,
 }) => {
-  for (const category of ['今週末', 'スポット']) {
+  for (const category of ['イベント', '今週末', 'スポット']) {
     const state = createInitialState()
     state.discover.category = category
     state.discover.search = 'カフェ'
     state.savedEvents = ['fuji']
-    delete state.discover.eventSelection
+    state.discover.eventSelection = { mode: 'weekend', date: '' }
     const decoded = decodeStoredState(JSON.stringify(state))
     expect(decoded.problem).toBeNull()
-    expect(decoded.state.discover.category).toBe(category === '今週末' ? 'イベント' : 'おすすめ')
-    expect(decoded.state.discover.eventSelection?.mode).toBe(
-      category === '今週末' ? 'weekend' : 'today',
-    )
+    expect(decoded.state.discover.category).toBe('おすすめ')
+    expect(decoded.state.discover.eventSelection).toBeUndefined()
     expect(decoded.state.discover.search).toBe('カフェ')
     expect(decoded.state.savedEvents).toEqual(['fuji'])
   }

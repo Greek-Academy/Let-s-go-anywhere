@@ -1,4 +1,4 @@
-import { eventDates, addDays } from '../../src/domain/eventSearch.ts'
+import { eventDates } from '../../src/domain/eventSearch.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -412,43 +412,34 @@ test('expired in-flight lease can recover; late result cannot overwrite a newer 
   assert.equal((await (await f.send('owner', 'comparison-status')).json()).attemptCount, 2)
 })
 
-test('place/event searches continue past the old limit and preserve their usage count; invalid dates cost nothing', async () => {
+test('retired event searches cost nothing; place searches still exceed the old limit', async () => {
   const f = fixture()
   const dates = eventDates({ mode: 'today', date: '' })
-  const events = { ...query, theme: 'イベント', purpose: 'events', eventDates: dates }
-  assert.equal(
-    (
-      await f.send('mixed', 'compare', {
-        query: {
-          ...events,
-          eventDates: { start: addDays(dates.start, -1), end: addDays(dates.start, -1) },
-        },
-      })
-    ).status,
-    400,
-  )
-  assert.equal(f.paid().length, 0)
-  for (let i = 0; i < 5; i++) {
-    const result = await (
-      await f.send('mixed', 'compare', { query: i % 2 === 0 ? events : query })
-    ).json()
-    assert.equal(result.spots.length, 18)
-    assert.equal(Boolean(result.spots[0].event), i % 2 === 0)
+  for (const retired of [
+    { ...query, theme: 'イベント', purpose: 'events', eventDates: dates },
+    { ...query, eventDates: dates },
+  ]) {
+    const response = await f.send('retired', 'compare', { query: retired })
+    assert.equal(response.status, 400)
+    assert.match((await response.json()).error, /イベント検索は終了/)
   }
-  assert.equal((await f.send('mixed')).status, 200)
-  assert.equal((await f.send('mixed', 'compare', { query: events })).status, 200)
-  assert.equal((await (await f.send('mixed', 'comparison-status')).json()).attemptCount, 7)
-  assert.equal((await (await f.send('mixed', 'comparison-result')).json()).query.purpose, 'events')
+  assert.equal(f.paid().length, 0)
+  assert.equal((await (await f.send('retired', 'comparison-status')).json()).attemptCount, 0)
+  for (let i = 0; i < 7; i++) {
+    const result = await (await f.send('places', 'compare', { query })).json()
+    assert.equal(result.spots.length, 18)
+    assert.equal(result.spots[0].event, undefined)
+  }
+  assert.equal((await (await f.send('places', 'comparison-status')).json()).attemptCount, 7)
   assert.equal(f.paid().length, 14)
   const nearby = {
-    ...events,
+    ...query,
     stationId: undefined,
     region: '取得した現在地の周辺',
     location: { lat: 35.691, lng: 139.7 },
   }
-  assert.equal((await f.send('gps-events', 'compare', { query: nearby })).status, 200)
-  const restored = await (await f.send('gps-events', 'comparison-result')).json()
+  assert.equal((await f.send('gps-places', 'compare', { query: nearby })).status, 200)
+  const restored = await (await f.send('gps-places', 'comparison-result')).json()
   assert.equal(restored.query.location, undefined)
   assert.equal(restored.query.locationSearch, true)
-  assert.deepEqual(restored.query.eventDates, dates)
 })

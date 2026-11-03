@@ -54,7 +54,7 @@ function Participation({ parentBusy }: { parentBusy: boolean }) {
         />
       </label>
       <p className="small muted">
-        ドライブ先は出発地と自由入力または選択した条件、イベントは出発地・趣味・日付をOpenAIとAnthropicへ送信して調べます。検索条件と結果はCloudflareに7日間、本人用として保存します。回数台帳は残ります。現在地は約100m単位に丸めて検索時に送信します。所要時間の計算が有効な場合は、出発地と候補名・地域をGoogle
+        ドライブ先は出発地と趣味、自由入力または選択した条件をOpenAIとAnthropicへ送信して調べます。検索条件と結果はCloudflareに7日間、本人用として保存します。回数台帳は残ります。現在地は約100m単位に丸めて検索時に送信します。所要時間の計算が有効な場合は、出発地と候補名・地域をGoogle
         Mapsへ送ります。保管する結果からは座標と経路計算の結果を除きます。学習・共有相手の情報は自動送信しません。
       </p>
       <p className="small muted">

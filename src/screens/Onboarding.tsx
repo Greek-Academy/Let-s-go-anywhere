@@ -67,7 +67,7 @@ export function Onboarding() {
           ドライブのきっかけに。
         </h1>
         <p className="body-copy">
-          選んだ趣味と現在地から、ドライブ先やイベントを探します。複数選べます。あとから変更もできます。
+          選んだ趣味と現在地から、ドライブ先を探します。複数選べます。あとから変更もできます。
         </p>
         <HobbyChoices
           value={state.profile.interests}

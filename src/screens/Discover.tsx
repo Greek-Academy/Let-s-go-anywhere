@@ -1,5 +1,3 @@
-import { EventDatePicker } from '../components/EventDatePicker'
-import { defaultEventSelection, eventDates } from '../domain/eventSearch'
 import { useDiscoveryLocation } from '../state/DiscoveryLocationState'
 import { LOCATION_REGION } from '../domain/discoveryLocation'
 import { driveQuery, driveTheme } from '../domain/driveSearch'
@@ -185,8 +183,7 @@ export function Discover() {
   const samples = state.discover.usageSamples ?? false
   const setSamples = (usageSamples: boolean) =>
     update((s) => ({ ...s, discover: { ...s.discover, usageSamples } }))
-  const isEvent = state.discover.category === 'イベント'
-  const mode = isEvent ? 'events' : (state.discover.driveMode ?? 'default')
+  const mode = state.discover.driveMode ?? 'default'
   const selected = gps.enabled
     ? null
     : resolveDiscoveryRegion(
@@ -201,7 +198,6 @@ export function Discover() {
     : selected
       ? stationLabel(selected)
       : '現在地から行き先を探そう'
-  const dates = eventDates(state.discover.eventSelection ?? defaultEventSelection, now)
   const region = gps.enabled
     ? gps.fix
       ? LOCATION_REGION
@@ -219,9 +215,8 @@ export function Discover() {
       stationId: selected?.id,
       location: gps.enabled ? gps.fix?.center : undefined,
       theme: driveTheme(drive, state.discover.search),
-      category: nextMode === 'events' ? 'イベント' : 'おすすめ',
+      category: 'おすすめ',
       tag: '',
-      eventDates: nextMode === 'events' ? dates : undefined,
     }
     if (nextMode === 'free' && !state.discover.search.trim()) {
       patch({ driveMode: 'free' })
@@ -233,7 +228,7 @@ export function Discover() {
       setLocationOpen(true)
       return
     }
-    patch({ category: draft.category, ...(nextMode !== 'events' ? { driveMode: nextMode } : {}) })
+    patch({ category: 'おすすめ', driveMode: nextMode })
     setSamples(false)
     setPending(draft)
   }
@@ -256,8 +251,8 @@ export function Discover() {
     setAcquired(false)
     const drive = driveQuery(locationIntent, state.driveChoices, state.profile.interests)
     patch({
-      category: locationIntent === 'events' ? 'イベント' : 'おすすめ',
-      ...(locationIntent !== 'events' ? { driveMode: locationIntent } : {}),
+      category: 'おすすめ',
+      driveMode: locationIntent,
     })
     setSamples(false)
     setPending({
@@ -265,9 +260,8 @@ export function Discover() {
       region: LOCATION_REGION,
       location: gps.fix.center,
       theme: driveTheme(drive, state.discover.search),
-      category: locationIntent === 'events' ? 'イベント' : 'おすすめ',
+      category: 'おすすめ',
       tag: '',
-      eventDates: locationIntent === 'events' ? dates : undefined,
     })
   }, [acquired, gps.fix])
   const sampleOutings = outings.filter(
@@ -282,18 +276,14 @@ export function Discover() {
         title={
           gps.loading
             ? '現在地を取得しています…'
-            : isEvent
-              ? '趣味に合うイベントを探そう'
-              : region
-                ? '行き先を探してみましょう'
-                : '出発地を選んで探せます'
+            : region
+              ? '行き先を探してみましょう'
+              : '出発地を選んで探せます'
         }
         description={
           gps.loading
             ? '位置情報の許可が表示されたら、許可するとおすすめを探します。'
-            : isEvent
-              ? '下で日付や趣味を選んで検索できます。'
-              : '下で出発地や希望を選んで検索できます。'
+            : '下で出発地や希望を選んで検索できます。'
         }
       />
     </section>
@@ -303,17 +293,6 @@ export function Discover() {
       <div className="page-pad">
         <div className="drive-home-feed" ref={resultsRef}>
           <h1 className="sr-only">見つける</h1>
-          <div className="chips discovery-chips" aria-label="見つけるの種類">
-            {['おすすめ', 'イベント'].map((category) => (
-              <Chip
-                key={category}
-                selected={category === state.discover.category}
-                onClick={() => patch({ category })}
-              >
-                {category}
-              </Chip>
-            ))}
-          </div>
           {searchResults}
         </div>
         <div className="drive-home-controls">
@@ -405,129 +384,107 @@ export function Discover() {
               </button>
             </p>
           )}
-          {isEvent ? (
-            <section className="drive-event-search">
-              <h2>趣味から見つかるイベント</h2>
-              <p className="small muted">①で選んだ出発地と趣味を使って探します。</p>
-              <EventDatePicker
-                value={state.discover.eventSelection ?? defaultEventSelection}
-                now={now}
-                onChange={(eventSelection) => patch({ eventSelection })}
-              />
-              <PrimaryButton
-                icon={Search}
-                disabled={web.loading}
-                onClick={() => requestSearch('events')}
+          <section
+            className="drive-search-card drive-request-card"
+            aria-labelledby="drive-request-heading"
+          >
+            <h2 className="drive-search-heading" id="drive-request-heading">
+              <span aria-hidden="true">2</span>
+              気分・希望から探す
+            </h2>
+            <p className="small muted drive-shared-origin">
+              {region
+                ? `出発地「${originLabel}」を起点に探します。`
+                : '①で現在地または駅を選ぶと、同じ出発地から探せます。'}
+            </p>
+            <div className="drive-method-switch" role="group" aria-label="気分・希望の入力方法">
+              <button
+                type="button"
+                aria-pressed={searchMethod === 'free'}
+                aria-controls={`${searchMethodId}-free`}
+                onClick={() => setSearchMethod('free')}
               >
-                趣味のイベントを探す
-              </PrimaryButton>
-              <p className="small muted">
-                出発地・趣味・日付で10件を目安に探します。自由入力や気分の条件は使いません。
-              </p>
-            </section>
-          ) : (
-            <section
-              className="drive-search-card drive-request-card"
-              aria-labelledby="drive-request-heading"
-            >
-              <h2 className="drive-search-heading" id="drive-request-heading">
-                <span aria-hidden="true">2</span>
-                気分・希望から探す
-              </h2>
-              <p className="small muted drive-shared-origin">
-                {region
-                  ? `出発地「${originLabel}」を起点に探します。`
-                  : '①で現在地または駅を選ぶと、同じ出発地から探せます。'}
-              </p>
-              <div className="drive-method-switch" role="group" aria-label="気分・希望の入力方法">
-                <button
-                  type="button"
-                  aria-pressed={searchMethod === 'free'}
-                  aria-controls={`${searchMethodId}-free`}
-                  onClick={() => setSearchMethod('free')}
-                >
-                  <PencilLine size={18} aria-hidden="true" />
-                  自由に書く
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={searchMethod === 'conditions'}
-                  aria-controls={`${searchMethodId}-conditions`}
-                  onClick={() => setSearchMethod('conditions')}
-                >
-                  <SlidersHorizontal size={18} aria-hidden="true" />
-                  気分から選ぶ
-                </button>
-              </div>
-              <div id={`${searchMethodId}-free`} hidden={searchMethod !== 'free'}>
-                <form
-                  className="drive-free-search"
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    requestSearch('free')
-                  }}
-                >
-                  <label className="field-label">
-                    気になる場所や、したいこと
-                    <textarea
-                      aria-label="お出かけを検索"
-                      value={state.discover.search}
-                      maxLength={80}
-                      placeholder="海を眺めながら走って、おいしい海鮮を食べたい"
-                      onChange={(e) => patch({ search: e.target.value })}
-                    />
-                  </label>
-                  <p className="small muted">
-                    思いついたことを自由に。片道1〜5時間を目安に探します（80文字まで）。
-                  </p>
-                  <PrimaryButton type="submit" icon={Search} disabled={web.loading}>
-                    この希望で探す
-                  </PrimaryButton>
-                </form>
-              </div>
-              <div id={`${searchMethodId}-conditions`} hidden={searchMethod !== 'conditions'}>
-                <form
-                  className="drive-mood-search"
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    requestSearch('conditions')
-                  }}
-                >
-                  <DriveConditions
-                    value={state.driveChoices}
-                    onChange={(driveChoices) => update((s) => ({ ...s, driveChoices }))}
+                <PencilLine size={18} aria-hidden="true" />
+                自由に書く
+              </button>
+              <button
+                type="button"
+                aria-pressed={searchMethod === 'conditions'}
+                aria-controls={`${searchMethodId}-conditions`}
+                onClick={() => setSearchMethod('conditions')}
+              >
+                <SlidersHorizontal size={18} aria-hidden="true" />
+                気分から選ぶ
+              </button>
+            </div>
+            <div id={`${searchMethodId}-free`} hidden={searchMethod !== 'free'}>
+              <form
+                className="drive-free-search"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  requestSearch('free')
+                }}
+              >
+                <label className="field-label">
+                  気になる場所や、したいこと
+                  <textarea
+                    aria-label="お出かけを検索"
+                    value={state.discover.search}
+                    maxLength={80}
+                    placeholder="海を眺めながら走って、おいしい海鮮を食べたい"
+                    onChange={(e) => patch({ search: e.target.value })}
                   />
-                  <PrimaryButton type="submit" icon={Search} disabled={web.loading}>
-                    選んだ条件で探す
-                  </PrimaryButton>
-                  <p className="small muted">
-                    自由入力とは別の検索です。ここで選んだ条件を出発地と組み合わせて探します。
-                  </p>
-                </form>
-              </div>
-              <div className="chips wrap drive-results-switch" aria-label="表示する検索結果">
-                {(
-                  [
-                    ['default', '趣味のおすすめ'],
-                    ['free', '自由入力の結果'],
-                    ['conditions', '条件の結果'],
-                  ] as const
-                ).map(([driveMode, label]) => (
-                  <Chip
-                    key={driveMode}
-                    selected={mode === driveMode}
-                    onClick={() => {
-                      patch({ driveMode })
-                      if (driveMode !== 'default') setSearchMethod(driveMode)
-                      setSamples(false)
-                    }}
-                  >
-                    {label}
-                  </Chip>
-                ))}
-              </div>
-            </section>
-          )}
+                </label>
+                <p className="small muted">
+                  思いついたことを自由に。片道1〜5時間を目安に探します（80文字まで）。
+                </p>
+                <PrimaryButton type="submit" icon={Search} disabled={web.loading}>
+                  この希望で探す
+                </PrimaryButton>
+              </form>
+            </div>
+            <div id={`${searchMethodId}-conditions`} hidden={searchMethod !== 'conditions'}>
+              <form
+                className="drive-mood-search"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  requestSearch('conditions')
+                }}
+              >
+                <DriveConditions
+                  value={state.driveChoices}
+                  onChange={(driveChoices) => update((s) => ({ ...s, driveChoices }))}
+                />
+                <PrimaryButton type="submit" icon={Search} disabled={web.loading}>
+                  選んだ条件で探す
+                </PrimaryButton>
+                <p className="small muted">
+                  自由入力とは別の検索です。ここで選んだ条件を出発地と組み合わせて探します。
+                </p>
+              </form>
+            </div>
+            <div className="chips wrap drive-results-switch" aria-label="表示する検索結果">
+              {(
+                [
+                  ['default', '趣味のおすすめ'],
+                  ['free', '自由入力の結果'],
+                  ['conditions', '条件の結果'],
+                ] as const
+              ).map(([driveMode, label]) => (
+                <Chip
+                  key={driveMode}
+                  selected={mode === driveMode}
+                  onClick={() => {
+                    patch({ driveMode })
+                    if (driveMode !== 'default') setSearchMethod(driveMode)
+                    setSamples(false)
+                  }}
+                >
+                  {label}
+                </Chip>
+              ))}
+            </div>
+          </section>
         </div>
         {source === 'sample' && !web.active && (
           <>
@@ -600,7 +557,7 @@ export function Discover() {
           <p className="body-copy">
             現在地を一度取得し、その地点からドライブ先を探します。許可したあとに検索を1回実行し、候補をホームに表示します。
           </p>
-          {(locationIntent === 'default' || locationIntent === 'events') && (
+          {locationIntent === 'default' && (
             <p className="body-copy">
               {state.profile.interests.length
                 ? `検索に使う趣味：${state.profile.interests.join('・')}`

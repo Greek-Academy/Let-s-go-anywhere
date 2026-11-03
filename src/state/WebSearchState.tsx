@@ -1,7 +1,5 @@
 import { decodeDriveQuery, driveQuery, driveTheme, withoutDriveTravel } from '../domain/driveSearch'
 import type { DriveQuery } from '../domain/driveSearch'
-import { eventDateError } from '../domain/eventSearch'
-import type { EventDates } from '../domain/eventSearch'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { parseWebSearchResult, sameWebSpot } from '../domain/webSearch'
@@ -23,7 +21,6 @@ import { isNativeApp } from '../platform/runtime'
 
 export interface SearchDraft {
   drive?: DriveQuery
-  eventDates?: EventDates | null
   location?: DiscoveryCenter
   stationId?: string | null
   region: string | null
@@ -145,18 +142,16 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   const requestCenter = useRef<DiscoveryCenter | undefined>(undefined)
   const [loading, setLoading] = useState(false)
   const [waiting, setWaiting] = useState(false)
-  type ViewKey = 'places' | 'events' | 'default' | 'conditions'
+  type ViewKey = 'places' | 'default' | 'conditions'
   type View = { active: boolean; error: string; result: WebSearchResult | null }
   const emptyView = (): View => ({ active: false, error: '', result: null })
   const [views, setViews] = useState<Record<ViewKey, View>>({
     places: emptyView(),
-    events: emptyView(),
     default: emptyView(),
     conditions: emptyView(),
   })
-  const viewKey: ViewKey = ['イベント', '今週末'].includes(state.discover.category)
-    ? 'events'
-    : state.discover.driveMode === 'default' || state.discover.driveMode === 'conditions'
+  const viewKey: ViewKey =
+    state.discover.driveMode === 'default' || state.discover.driveMode === 'conditions'
       ? state.discover.driveMode
       : 'places'
   const requestView = useRef<ViewKey>('places')
@@ -214,7 +209,6 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       setWaiting(false)
       setViews({
         places: emptyView(),
-        events: emptyView(),
         default: emptyView(),
         conditions: emptyView(),
       })
@@ -282,7 +276,6 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       )
       return
     }
-    const isEvent = draft.category === 'イベント'
     let drive: DriveQuery | undefined
     try {
       drive = draft.drive ? decodeDriveQuery(draft.drive) : undefined
@@ -290,27 +283,20 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       setError('検索条件を確認してください。')
       return
     }
-    const theme = drive
-      ? driveTheme(drive, draft.theme)
-      : isEvent
-        ? 'イベント'
-        : searchTheme(draft.theme, draft.tag)
-    const inputError = isEvent
-      ? eventDateError(draft.eventDates ?? null)
-      : drive
-        ? searchThemeError(theme, '') && '気になる場所や、したいことを1〜80文字で入力してください。'
-        : searchThemeError(draft.theme, draft.tag)
+    if (draft.category === 'イベント' || drive?.mode === 'events') {
+      setError('イベント検索は終了しました。ホームからドライブ先を探してください。')
+      return
+    }
+    const theme = drive ? driveTheme(drive, draft.theme) : searchTheme(draft.theme, draft.tag)
+    const inputError = drive
+      ? searchThemeError(theme, '') && '気になる場所や、したいことを1〜80文字で入力してください。'
+      : searchThemeError(draft.theme, draft.tag)
     if (inputError) {
       setError(inputError)
       return
     }
-    if (isEvent && method !== 'comparison') {
-      setError('イベントはOpenAI・Claudeの比較検索で探せます。')
-      return
-    }
     const query: WebSearchResult['query'] = {
       ...(drive ? { drive } : {}),
-      ...(isEvent ? { purpose: 'events' as const, eventDates: draft.eventDates! } : {}),
       region: method === 'comparison' ? draft.region! : '京都市',
       theme,
       ...(method === 'comparison'
@@ -599,6 +585,8 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       const candidate = response as { query?: WebSearchResult['query'] }
       if (typeof candidate.query?.region !== 'string' || typeof candidate.query?.theme !== 'string')
         throw new Error('保存された検索条件を確認できません。')
+      if (candidate.query.purpose === 'events' || candidate.query.drive?.mode === 'events')
+        throw new Error('イベント検索は終了しました。保存した候補は「行きたい」で確認できます。')
       const next = await parseWebSearchResult(response, {
         region: candidate.query.region,
         theme: candidate.query.theme,
@@ -609,11 +597,18 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       if (next.kind !== 'comparison' || next.mode !== (config.demo ? 'sample' : 'live'))
         throw new Error('保存された検索方法を確認できません。')
       if (request === sequence.current) {
-        const restoredKey = next.query.purpose === 'events' ? 'events' : 'places'
+        const restoredKey =
+          next.query.drive?.mode === 'default' || next.query.drive?.mode === 'conditions'
+            ? next.query.drive.mode
+            : 'places'
         setViews((v) => ({ ...v, [restoredKey]: { active: true, error: '', result: next } }))
         update((s) => ({
           ...s,
-          discover: { ...s.discover, category: restoredKey === 'events' ? 'イベント' : 'おすすめ' },
+          discover: {
+            ...s.discover,
+            category: 'おすすめ',
+            driveMode: restoredKey === 'places' ? 'free' : restoredKey,
+          },
         }))
       }
     } catch (e) {

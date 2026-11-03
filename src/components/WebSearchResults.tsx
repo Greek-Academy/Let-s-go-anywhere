@@ -48,7 +48,7 @@ export function WebSearchResults() {
           )}
           {!!result.omitted && (
             <p className="small muted">
-              出典・日付・形式・所要時間などの確認で{result.omitted}件を除外しました。
+              出典・形式・所要時間などの確認で{result.omitted}件を除外しました。
             </p>
           )}
         </>

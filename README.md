@@ -1,5 +1,7 @@
 # Drive+ — スマートフォン向けUXモック
 
+2026-11-03：イベント検索と切り替えタブを終了しました。保存済みイベントは引き続き閲覧できます。[変更・確認方法](docs/reviews/event-search-retirement/README.md).
+
 2026-11-03：Macの開発画面でBrave Search＋Geminiを試せます。Googleの関連検索バーなしで既存カードを表示します。[設定・操作・実測結果](docs/BRAVE_SEARCH_TRIAL.md)。
 
 2026-11-02：Macの開発画面でGemini単独検索を試せます。[設定・操作・検証結果](docs/GEMINI_SEARCH_TRIAL.md)。公開版・iPhone版の検索先は変更していません。
@@ -8,7 +10,7 @@
 
 ## ドライブを楽しむホーム
 
-現在地を起点としたドライブデート、自由入力、気分からの条件検索、趣味のイベントへ変更しています。[無料の確認方法とRoutes APIのキー準備](docs/DRIVE_DISCOVERY.md)・[画面画像](docs/reviews/drive-discovery/README.md)をご覧ください。今回の実API検証・公開反映はまだです。
+現在地を起点としたドライブデート、自由入力、気分からの条件検索を利用できます。[無料の確認方法とRoutes APIのキー準備](docs/DRIVE_DISCOVERY.md)・[画面画像](docs/reviews/drive-discovery/README.md)をご覧ください。今回の実API検証・公開反映はまだです。
 
 ## 起動
 

@@ -1,4 +1,3 @@
-import { eventDates } from '../../../src/domain/eventSearch.ts'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { addDrivingTimes } from '../../spot-comparison/routes.mjs'
@@ -26,9 +25,6 @@ const query = (mode = 'default', changes = {}) => {
     location: { lat: 35.691, lng: 139.7 },
     theme: driveTheme(drive, '海辺のカフェ'),
     drive,
-    ...(mode === 'events'
-      ? { purpose: 'events', eventDates: eventDates({ mode: 'today', date: '' }) }
-      : {}),
   }
 }
 const spots = Array.from({ length: 20 }, (_, i) => ({
@@ -46,18 +42,20 @@ const row = (i, seconds = 9000) => ({
 })
 const ok = (data) => new Response(JSON.stringify(data))
 test('drive modes are independently validated and expand beyond the former 2km walking area', () => {
-  for (const mode of ['default', 'free', 'conditions', 'events']) {
+  for (const mode of ['default', 'free', 'conditions']) {
     const q = query(mode, { activities: ['夜景を見たい'], road: '高速道路を走りたい' })
     assert.deepEqual(validateComparisonQuery(q), q)
     const prompt = JSON.stringify(buildComparisonRequest('openai', q))
     assert.match(prompt, /Do not use a 2 km radius/)
     assert.match(prompt, /oneWayMinutes/)
     if (mode !== 'conditions') assert.deepEqual(q.drive.activities, [])
-    assert.deepEqual(q.drive.hobbies, ['default', 'events'].includes(mode) ? ['音楽'] : [])
+    assert.deepEqual(q.drive.hobbies, mode === 'default' ? ['音楽'] : [])
   }
   assert.throws(() => decodeDriveQuery({ ...driveQuery('free'), hobbies: ['自然'] }))
   assert.throws(() => decodeDriveQuery({ ...driveQuery('default'), road: '一般道でゆっくり' }))
-  assert.throws(() => validateComparisonQuery({ ...query('events'), purpose: 'places' }))
+  assert.throws(() =>
+    validateComparisonQuery({ ...query(), drive: { ...query().drive, mode: 'events' } }),
+  )
   assert.throws(() => validateComparisonQuery({ ...query(), privateMemo: 'private' }))
 })
 test('both providers receive the chosen hobbies for the home, while free and condition searches stay independent', () => {

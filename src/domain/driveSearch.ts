@@ -34,7 +34,7 @@ export const drivePaces = [
   '寄り道を楽しむ',
   '走る時間を楽しむ',
 ] as const
-export type DriveMode = 'default' | 'free' | 'conditions' | 'events'
+export type DriveMode = 'default' | 'free' | 'conditions'
 export interface DriveChoices {
   duration: (typeof driveDurations)[number]
   activities: (typeof driveActivities)[number][]
@@ -43,7 +43,8 @@ export interface DriveChoices {
   pace: (typeof drivePaces)[number]
 }
 export interface DriveQuery extends DriveChoices {
-  mode: DriveMode
+  /** Events are decoded only for legacy saved search records. */
+  mode: DriveMode | 'events'
   hobbies: string[]
 }
 export const emptyDriveChoices = (): DriveChoices => ({
@@ -61,10 +62,7 @@ export function driveQuery(
   return {
     ...(mode === 'conditions' ? choices : emptyDriveChoices()),
     mode,
-    hobbies:
-      mode === 'default' || mode === 'events'
-        ? hobbies.filter((h) => interests.some((i) => i.name === h))
-        : [],
+    hobbies: mode === 'default' ? hobbies.filter((h) => interests.some((i) => i.name === h)) : [],
   }
 }
 const fail = (): never => {

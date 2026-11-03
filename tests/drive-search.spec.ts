@@ -51,7 +51,7 @@ test('unknown drive conditions protect the original storage instead of resetting
       JSON.stringify({ ...state, driveChoices: { ...state.driveChoices, extra: true } }),
     ).problem,
   ).toBe('invalid')
-  expect(driveQuery('events', emptyDriveChoices(), ['自然', 'unknown']).hobbies).toEqual(['自然'])
+  expect(driveQuery('default', emptyDriveChoices(), ['自然', 'unknown']).hobbies).toEqual(['自然'])
 })
 test('time results distinguish real calculations and samples and accept only bounded transient values', () => {
   const travel = {

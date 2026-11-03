@@ -293,7 +293,7 @@ test('all outstanding Brave requests settle before a failed batch releases the a
   assert.equal(finished, true)
 })
 
-test('Brave HTTP mode preserves token guards, hides keys, and handles dated events without a Google widget', async (t) => {
+test('Brave HTTP mode preserves token guards, hides keys, rejects retired events before usage, and returns place cards without a Google widget', async (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'driveplus-brave-http-'))
   t.after(() => rmSync(directory, { recursive: true, force: true }))
   const server = createPilot({
@@ -310,15 +310,13 @@ test('Brave HTTP mode preserves token guards, hides keys, and handles dated even
   assert.equal(status.searchProvider, 'brave')
   assert.equal(status.configured, true)
   assert.doesNotMatch(JSON.stringify(status), /private-brave-key|private-gemini-key/)
-  const events = validateComparisonQuery({
+  const events = {
     stationId: query.stationId,
     theme: 'イベント',
     purpose: 'events',
-    drive: driveQuery('events', undefined, ['自然']),
+    drive: { ...driveQuery('default', undefined, ['自然']), mode: 'events' },
     eventDates: eventDates({ mode: 'weekend', date: '' }),
-  })
-  const searches = braveQueries(events)
-  assert.ok(searches.every((s) => s.includes(events.eventDates.start) && s.includes('イベント')))
+  }
   const options = {
     method: 'POST',
     headers: { Origin: origin, 'Content-Type': 'application/json' },
@@ -326,11 +324,16 @@ test('Brave HTTP mode preserves token guards, hides keys, and handles dated even
   }
   assert.equal((await fetch(`${origin}/api/compare`, options)).status, 403)
   options.headers['X-Pilot-Token'] = status.token
+  const retired = await fetch(`${origin}/api/compare`, options)
+  assert.equal(retired.status, 400)
+  assert.match((await retired.json()).error, /イベント検索は終了/)
+  assert.equal((await (await fetch(`${origin}/api/comparison-status`)).json()).attempts.length, 0)
+  options.body = JSON.stringify(query)
   const response = await fetch(`${origin}/api/compare`, options)
   assert.equal(response.status, 200)
   const result = await response.json()
   assert.equal(result.spots.length, 10)
-  assert.ok(result.spots.every((s) => s.event.occursOn.includes(events.eventDates.start)))
+  assert.ok(result.spots.every((s) => s.event === undefined))
   assert.equal(result.searchBackend, 'brave')
   assert.equal(result.searchAttribution, undefined)
   assert.equal((await fetch(`${origin}/api/search`, options)).status, 400)
