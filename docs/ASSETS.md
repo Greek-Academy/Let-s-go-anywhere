@@ -1,5 +1,18 @@
 # 画像素材
 
+## 検索待ち画面の日本の風景写真（#133、2026-11-03）
+
+`public/images/search-journey/` に4枚を同梱しています。承認済みの独立HTML試作からコピーしたもので、試作の原本は変更していません。画像のピクセル編集は行わず、CSSでトリミングと拡大表示をします。各写真には元のライセンスが適用されます。検索結果や現在の現地の様子を示す写真ではありません。
+
+| ファイル | 撮影者 | ライセンス・出典 |
+| --- | --- | --- |
+| `fuji.jpg` | Manishprabhune | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) · [Commons](https://commons.wikimedia.org/wiki/File:Chureito_Pagoda_and_Mount_Fuji.jpg) |
+| `tsunoshima.jpg` | Raita Futo | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0) · [Commons](https://commons.wikimedia.org/wiki/File:Tsunoshima_Bridge_%2832994549311%29.jpg) |
+| `oirase.jpg` | lumoplank | [CC0](https://creativecommons.org/publicdomain/zero/1.0/deed.en) · [Commons](https://commons.wikimedia.org/wiki/File:Oirase_Gorge_-_OiraseGorge7016.jpg) |
+| `shirakawago.jpg` | Ippukucho | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0) · [Commons](https://commons.wikimedia.org/wiki/File:ShirakawagoSnow.JPG) |
+
+撮影者・出典・ライセンス・表示加工は画面内の「Photo」からも確認できます。[取得時のメタデータ](../public/images/search-journey/sources.json)。[実装・確認結果](reviews/search-journey/README.md)。
+
 ## カード用のジャンル別イラスト（#116、2026-10-12）
 
 `public/images/spot-illustrations/` の6点は内蔵 image_gen で制作した架空のイメージです。下記Unsplash写真とは別の素材です。実在するお店・会場・風景の写真、料理や設備の確認済み情報としては使いません。

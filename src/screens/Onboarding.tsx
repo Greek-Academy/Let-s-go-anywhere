@@ -51,7 +51,7 @@ export function Onboarding() {
   if (step !== '1') return <Navigate to={state.onboarded ? '/discover' : '/onboarding/1'} replace />
   const finish = () => {
     update((s) => ({ ...s, onboarded: true }))
-    navigate('/discover', { replace: true })
+    navigate('/search/journey', { replace: true })
   }
   return (
     <div className="onboarding-page hobbies-onboarding">
@@ -81,7 +81,7 @@ export function Onboarding() {
       </div>
       <div className="onboarding-footer">
         <p className="small muted">
-          ホームを開くと現在地を取得しておすすめを探します。約100m単位の位置と趣味をAI検索に、位置を経路計算に使用します。許可しない場合は駅からも探せます。
+          次の画面で現在地を取得しておすすめを探します。約100m単位の位置と趣味をAI検索に、位置を経路計算に使用します。許可しない場合は駅からも探せます。
         </p>
         <PrimaryButton onClick={finish} icon={ArrowRight}>
           ドライブ先を見つける

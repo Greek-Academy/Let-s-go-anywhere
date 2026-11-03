@@ -32,6 +32,8 @@ test('profile station selection remains available without a station onboarding q
   await page.goto('/#/onboarding/1')
   await expect(page.getByRole('combobox')).toHaveCount(0)
   await page.getByRole('button', { name: 'ドライブ先を見つける', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('検索を完了できませんでした')
+  await page.getByRole('button', { name: 'ホームへ', exact: true }).click()
   await expect(page).toHaveURL(/#\/discover$/)
 })
 test('temporary departure is independent of saved station, preserves saves and cancels drafts', async ({

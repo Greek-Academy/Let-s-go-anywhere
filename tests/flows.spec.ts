@@ -38,6 +38,8 @@ test('hobby onboarding supports back, completion, tabs and reload', async ({ pag
     'true',
   )
   await page.getByRole('button', { name: 'ドライブ先を見つける', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('検索を完了できませんでした')
+  await page.getByRole('button', { name: 'ホームへ', exact: true }).click()
   await expect(page).toHaveURL(/#\/discover$/)
   await expect(page.getByRole('button', { name: /ラーメンタイプ診断/ })).toHaveCount(0)
   for (const name of ['行きたい', '車を探す', '学ぶ', 'マイページ', '見つける']) {
@@ -67,6 +69,8 @@ test('retired setup URLs return to the hobby setup and a single skip completes i
     await expect(page.getByRole('group', { name: '趣味を選ぶ' })).toBeVisible()
   }
   await page.getByRole('button', { name: 'スキップ', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('検索を完了できませんでした')
+  await page.getByRole('button', { name: 'ホームへ', exact: true }).click()
   await expect(page).toHaveURL(/#\/discover$/)
   await page.reload()
   expect((await readState(page)).onboarded).toBe(true)

@@ -1,0 +1,94 @@
+[
+  {
+    "id": "fuji",
+    "filename": "/images/search-journey/fuji.jpg",
+    "title": "Chureito Pagoda and Mount Fuji.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Chureito_Pagoda_and_Mount_Fuji.jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/9/9e/Chureito_Pagoda_and_Mount_Fuji.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "width": 1280,
+    "height": 718,
+    "metadata": {
+      "Artist": "<a href=\"//commons.wikimedia.org/wiki/User:Manishprabhune\" title=\"User:Manishprabhune\">Manishprabhune</a>",
+      "ImageDescription": "<i>Chūrei-tō</i> pagoda and Mount Fuji with cherry blossoms in the Arakurayama Sengen Park, Fujiyoshida, Yamanashi, central Japan.",
+      "LicenseShortName": "CC BY-SA 4.0",
+      "LicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "DateTimeOriginal": "17 April 2016",
+      "Credit": "<span class=\"int-own-work\" lang=\"en\">Own work</span>"
+    },
+    "bytes": 256679,
+    "place": "新倉山浅間公園",
+    "prefectureCity": "山梨県 · 富士吉田市",
+    "author": "Manishprabhune",
+    "checkedAt": "2026-11-03",
+    "usage": "Downloaded from Wikimedia Commons. No bitmap edits; displayed with CSS object-fit cropping and gentle zoom. The photograph retains its original license."
+  },
+  {
+    "id": "tsunoshima",
+    "filename": "/images/search-journey/tsunoshima.jpg",
+    "title": "Tsunoshima Bridge (32994549311).jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Tsunoshima_Bridge_%2832994549311%29.jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0f/Tsunoshima_Bridge_%2832994549311%29.jpg/1280px-Tsunoshima_Bridge_%2832994549311%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "width": 1280,
+    "height": 853,
+    "metadata": {
+      "Artist": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/128275472@N07\">Raita Futo</a> from Tokyo, Japan",
+      "ImageDescription": "角島大橋",
+      "LicenseShortName": "CC BY 2.0",
+      "LicenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "DateTimeOriginal": "2016-10-09 09:57",
+      "Credit": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/photos/raita/32994549311/\">Tsunoshima Bridge</a>"
+    },
+    "bytes": 332968,
+    "place": "角島大橋",
+    "prefectureCity": "山口県 · 下関市",
+    "author": "Raita Futo",
+    "checkedAt": "2026-11-03",
+    "usage": "Downloaded from Wikimedia Commons. No bitmap edits; displayed with CSS object-fit cropping and gentle zoom. The photograph retains its original license."
+  },
+  {
+    "id": "oirase",
+    "filename": "/images/search-journey/oirase.jpg",
+    "title": "Oirase Gorge - OiraseGorge7016.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Oirase_Gorge_-_OiraseGorge7016.jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/87/Oirase_Gorge_-_OiraseGorge7016.jpg/1280px-Oirase_Gorge_-_OiraseGorge7016.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "width": 1280,
+    "height": 1707,
+    "metadata": {
+      "Artist": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/199350666@N08\">lumoplank</a>",
+      "ImageDescription": "Kumoi Falls over a rocky cliff into a stream at Oirase Gorge, surrounded by trees in autumn foliage.",
+      "LicenseShortName": "CC0",
+      "LicenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "DateTimeOriginal": "27 October 2025",
+      "Credit": "<a rel=\"nofollow\" class=\"external free\" href=\"https://www.flickr.com/photos/199350666@N08/55106002576\">https://www.flickr.com/photos/199350666@N08/55106002576</a>"
+    },
+    "bytes": 1164711,
+    "place": "奥入瀬渓流・雲井の滝",
+    "prefectureCity": "青森県 · 十和田市",
+    "author": "lumoplank",
+    "checkedAt": "2026-11-03",
+    "usage": "Downloaded from Wikimedia Commons. No bitmap edits; displayed with CSS object-fit cropping and gentle zoom. The photograph retains its original license."
+  },
+  {
+    "id": "shirakawago",
+    "filename": "/images/search-journey/shirakawago.jpg",
+    "title": "ShirakawagoSnow.JPG",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:ShirakawagoSnow.JPG",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a3/ShirakawagoSnow.JPG/1280px-ShirakawagoSnow.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "width": 1280,
+    "height": 853,
+    "metadata": {
+      "Artist": "<a href=\"//commons.wikimedia.org/wiki/User:Ippukucho\" title=\"User:Ippukucho\">Ippukucho</a>",
+      "ImageDescription": "白川郷 雪景色",
+      "LicenseShortName": "CC BY 3.0",
+      "LicenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "DateTimeOriginal": "2012-03-22 11:29:42",
+      "Credit": "<span class=\"int-own-work\" lang=\"en\">Own work</span>"
+    },
+    "bytes": 361050,
+    "place": "白川郷",
+    "prefectureCity": "岐阜県 · 白川村",
+    "author": "Ippukucho",
+    "checkedAt": "2026-11-03",
+    "usage": "Downloaded from Wikimedia Commons. No bitmap edits; displayed with CSS object-fit cropping and gentle zoom. The photograph retains its original license."
+  }
+]

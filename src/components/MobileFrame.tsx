@@ -14,8 +14,9 @@ export function MobileFrame({ children }: { children: ReactNode }) {
   const stageRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const journey = location.pathname === '/search/journey'
   const welcome = location.pathname === '/welcome'
-  const onboarding = welcome || location.pathname.startsWith('/onboarding')
+  const onboarding = welcome || journey || location.pathname.startsWith('/onboarding')
   const mapMode =
     location.pathname === '/cars'
       ? memoryOnly
@@ -59,7 +60,7 @@ export function MobileFrame({ children }: { children: ReactNode }) {
           className={`mobile-frame ${state.settings.largeText ? 'large-text' : ''} ${state.settings.reducedMotion ? 'reduced-motion' : ''}`}
         >
           <div
-            className={`phone-screen ${welcome ? 'welcome-screen' : ''}`}
+            className={`phone-screen ${welcome ? 'welcome-screen' : ''} ${journey ? 'search-journey-screen' : ''}`}
             onClickCapture={(event) => {
               // WebKit does not focus a pointer-activated button by default. Record
               // the trigger before a sheet mounts, so closing it can return there.
@@ -67,7 +68,10 @@ export function MobileFrame({ children }: { children: ReactNode }) {
               if (button && !button.disabled) button.focus({ preventScroll: true })
             }}
           >
-            <div className={`status-bar ${welcome ? 'status-light' : ''}`} aria-hidden="true">
+            <div
+              className={`status-bar ${welcome || journey ? 'status-light' : ''}`}
+              aria-hidden="true"
+            >
               <span>9:41</span>
               <div className="dynamic-island" />
               <div className="status-icons">
@@ -79,7 +83,7 @@ export function MobileFrame({ children }: { children: ReactNode }) {
             <StorageNotice />
             <main
               ref={scrollRef}
-              className={`app-main ${map ? 'map-main' : ''} ${onboarding ? 'onboarding-main' : ''}`}
+              className={`app-main ${map ? 'map-main' : ''} ${onboarding ? 'onboarding-main' : ''} ${journey ? 'search-journey-main' : ''}`}
               id="app-scroll"
               tabIndex={-1}
               aria-label="メインコンテンツ"
@@ -89,7 +93,7 @@ export function MobileFrame({ children }: { children: ReactNode }) {
             {!onboarding && <BottomNavigation />}
             {onboarding && (
               <div
-                className={`onboarding-indicator ${welcome ? 'light' : ''}`}
+                className={`onboarding-indicator ${welcome || journey ? 'light' : ''}`}
                 aria-hidden="true"
               />
             )}

@@ -45,8 +45,14 @@ interface SearchStatus {
   maxAttempts: number | null
   attempts: unknown[]
 }
+export type SearchPhase =
+  'idle' | 'connecting' | 'waiting' | 'searching' | 'preparing' | 'complete' | 'error'
+type HomeSearchOptions = { retry?: boolean; stationId?: string; interactive?: boolean }
 interface SearchContext {
-  startHomeSearch: () => void
+  startHomeSearch: (options?: HomeSearchOptions) => void
+  homeSearchState: 'idle' | 'locating' | 'ready' | 'done'
+  searchPhase: SearchPhase
+  cancelHomeSearch: () => void
   savedSpots: WebSpot[]
   active: boolean
   loading: boolean
@@ -131,6 +137,9 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   const { state, update, toast, memoryOnly, storageProtected } = useApp()
   const gps = useDiscoveryLocation()
   const launchStarted = useRef(false)
+  const launchSequence = useRef(0)
+  const launchStation = useRef<string | undefined>(undefined)
+  const [searchPhase, setSearchPhase] = useState<SearchPhase>('idle')
   const [startup, setStartup] = useState<'idle' | 'locating' | 'ready' | 'done'>('idle')
   const locationRequest = useRef(false)
   const requestCenter = useRef<DiscoveryCenter | undefined>(undefined)
@@ -179,6 +188,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
       locationRequest.current = false
       setLoading(false)
       setWaiting(false)
+      setSearchPhase('error')
       const key = requestView.current
       setViews((v) => ({
         ...v,
@@ -192,7 +202,10 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const clear = () => {
       launchStarted.current = false
+      launchSequence.current++
+      launchStation.current = undefined
       setStartup('idle')
+      setSearchPhase('idle')
       sequence.current++
       controller.current?.abort()
       running.current = false
@@ -219,6 +232,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
   }, [state.onboarded])
   const showSamples = () => {
     sequence.current++
+    setSearchPhase('idle')
     controller.current?.abort()
     running.current = false
     locationRequest.current = false
@@ -233,6 +247,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     setError('')
     setResult(null)
     setStatus(null)
+    setSearchPhase('error')
     if (
       memoryOnly ||
       (!publicSearchOrigin &&
@@ -310,6 +325,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     requestCenter.current = draft.location
     running.current = true
     setLoading(true)
+    setSearchPhase('connecting')
     const request = ++sequence.current
     const abort = new AbortController()
     controller.current = abort
@@ -328,6 +344,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
         )
       waitingForSlot = true
       setWaiting(true)
+      setSearchPhase('waiting')
       await pauseForSearch(abort.signal)
     }
     try {
@@ -374,6 +391,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
         clearTimeout(timer)
         timer = setTimeout(() => abort.abort(), 130_000)
         sent = true
+        setSearchPhase('searching')
         let response: unknown
         try {
           response = await json(
@@ -399,6 +417,8 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
           await waitForSlot()
           continue
         }
+        if (request !== sequence.current) return
+        setSearchPhase('preparing')
         const next = await parseWebSearchResult(response, query)
         if ((config.searchProvider === 'brave') !== (next.searchBackend === 'brave'))
           throw new Error('検索元と接続先が一致しません。画面を更新してお試しください。')
@@ -412,7 +432,8 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
         break
       }
     } catch (e) {
-      if (request === sequence.current)
+      if (request === sequence.current) {
+        setSearchPhase('error')
         setError(
           abort.signal.aborted
             ? waitingForSlot
@@ -422,6 +443,7 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
               ? e.message
               : '検索を完了できませんでした。',
         )
+      }
     } finally {
       clearTimeout(timer)
       if (request === sequence.current) {
@@ -446,38 +468,84 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
           locationRequest.current = false
           setLoading(false)
           setWaiting(false)
+          setSearchPhase((phase) => (phase === 'preparing' ? 'complete' : phase))
         }
       }
     }
   }
   // Kept in the app provider: visiting another tab/detail does not start a paid search again.
   // A fresh app load (or a new signed-in session) gets one automatic attempt, with no retries.
-  const startHomeSearch = () => {
+  const startHomeSearch = (options: HomeSearchOptions = {}) => {
     if (
-      launchStarted.current ||
-      !state.onboarded ||
-      memoryOnly ||
-      (!publicSearchOrigin && (!import.meta.env.DEV || isNativeApp))
+      !options.interactive &&
+      (memoryOnly || (!publicSearchOrigin && (!import.meta.env.DEV || isNativeApp)))
     )
       return
+    if (
+      (launchStarted.current && !options.retry) ||
+      !state.onboarded ||
+      running.current ||
+      gps.loading
+    )
+      return
+    // Also consume an unsupported/cancelled attempt, so entering home never auto-retries it.
     launchStarted.current = true
+    const attempt = ++launchSequence.current
+    launchStation.current = options.stationId
+    setViews((views) => ({ ...views, default: emptyView() }))
+    setSearchPhase('idle')
     update((s) => ({
       ...s,
-      discover: { ...s.discover, category: 'おすすめ', driveMode: 'default', usageSamples: false },
+      discover: {
+        ...s.discover,
+        category: 'おすすめ',
+        driveMode: 'default',
+        usageSamples: false,
+        ...(options.stationId ? { region: 'station', stationId: options.stationId } : {}),
+      },
     }))
+    if (memoryOnly || (!publicSearchOrigin && (!import.meta.env.DEV || isNativeApp))) {
+      setStartup('done')
+      setSearchPhase('error')
+      setViews((views) => ({
+        ...views,
+        default: { active: true, result: null, error: unavailable },
+      }))
+      return
+    }
+    if (options.stationId) {
+      gps.reset()
+      setStartup('ready')
+      return
+    }
+    if (gps.fix) {
+      setStartup('ready')
+      return
+    }
     setStartup('locating')
-    void gps.locate().then((ok) => setStartup(ok ? 'ready' : 'done'))
+    void gps.locate().then((ok) => {
+      if (attempt === launchSequence.current) setStartup(ok ? 'ready' : 'done')
+    })
+  }
+  const cancelHomeSearch = () => {
+    launchStarted.current = true
+    launchSequence.current++
+    setStartup('done')
+    gps.cancel()
+    showSamples()
   }
   useEffect(() => {
     if (startup !== 'ready') return
     setStartup('done')
     // A different search/selection made while GPS was pending takes precedence.
-    if (!gps.fix || viewKey !== 'default' || running.current) return
+    if (viewKey !== 'default' || running.current) return
+    const station = railStation(launchStation.current)
+    if (!station && !gps.fix) return
     const drive = driveQuery('default', state.driveChoices, state.profile.interests)
     void search({
       drive,
-      region: LOCATION_REGION,
-      location: gps.fix.center,
+      region: station ? stationRegion(station) : LOCATION_REGION,
+      ...(station ? { stationId: station.id } : { location: gps.fix!.center }),
       theme: driveTheme(drive, ''),
       category: 'おすすめ',
       tag: '',
@@ -582,6 +650,9 @@ export function WebSearchProvider({ children }: { children: ReactNode }) {
     <Context.Provider
       value={{
         startHomeSearch,
+        homeSearchState: startup,
+        searchPhase,
+        cancelHomeSearch,
         savedSpots: groupPlaces(state.savedWebSpots),
         active,
         loading,

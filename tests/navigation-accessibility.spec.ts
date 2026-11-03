@@ -33,6 +33,9 @@ test('keyboard onboarding and all five tabs move focus to the new screen without
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   await expect(page.getByRole('button', { name: '自然', exact: true })).not.toBeFocused()
   await keyboardActivate(page, page.getByRole('button', { name: 'スキップ', exact: true }))
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+  await expect(page.getByRole('alert')).toContainText('検索を完了できませんでした')
+  await keyboardActivate(page, page.getByRole('button', { name: 'ホームへ', exact: true }))
   await expect(page).toHaveURL(/#\/discover$/)
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   // WebKit uses Option+Tab to include buttons in keyboard navigation by default.
