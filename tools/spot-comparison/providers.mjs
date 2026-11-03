@@ -14,6 +14,47 @@ import { comparisonSample } from './sample.mjs'
 import { addDrivingTimes } from './routes.mjs'
 import { providerCandidateLimits } from '../../src/domain/searchLimits.ts'
 
+// Keep diagnostics useful without copying upstream messages, URLs, keys or coordinates.
+function failureDetails(error, source) {
+  if (error instanceof PilotError) return { error: error.message, errorCode: error.code }
+  const networkCodes = new Set([
+    'ENOTFOUND',
+    'EAI_AGAIN',
+    'ECONNREFUSED',
+    'ECONNRESET',
+    'ENETUNREACH',
+    'EHOSTUNREACH',
+    'ETIMEDOUT',
+    'UND_ERR_CONNECT_TIMEOUT',
+    'UND_ERR_SOCKET',
+    'CERT_HAS_EXPIRED',
+    'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+  ])
+  const causes = Array.isArray(error?.cause?.errors) ? error.cause.errors : []
+  const code = [error?.code, error?.cause?.code, ...causes.map((e) => e?.code)].find((value) =>
+    networkCodes.has(value),
+  )
+  if (error?.name === 'TimeoutError' || error?.name === 'AbortError')
+    return {
+      error: `${source}から時間内に応答が届きませんでした。時間をおいて、もう一度お試しください。`,
+      errorCode: 'timeout',
+    }
+  if (code || (error instanceof TypeError && error.message === 'fetch failed'))
+    return {
+      error: `${source}に接続できませんでした。インターネット接続を確認して、もう一度お試しください。`,
+      errorCode: code ?? 'network',
+    }
+  if (error instanceof SyntaxError)
+    return {
+      error: `${source}の回答を読み取れませんでした。時間をおいて、もう一度お試しください。`,
+      errorCode: 'invalid_response',
+    }
+  return {
+    error: `${source}で通信または回答の処理に失敗しました。時間をおいて、もう一度お試しください。`,
+    errorCode: 'unknown',
+  }
+}
+
 export async function runComparison({
   query,
   demo = false,
@@ -32,6 +73,8 @@ export async function runComparison({
       const start = Date.now()
       let usage = null
       let braveCalls = 0
+      const providerName = { openai: 'OpenAI', anthropic: 'Claude', gemini: 'Gemini' }[provider]
+      let source = providerName
       try {
         let response, research, evidence
         if (demo) {
@@ -99,6 +142,7 @@ export async function runComparison({
             return upstream.json()
           }
           if (searchProvider === 'brave') {
+            source = 'Brave検索サービス'
             evidence = await searchBrave(query, {
               apiKey: braveApiKey,
               fetcher,
@@ -107,6 +151,7 @@ export async function runComparison({
                 braveCalls++
               },
             })
+            source = providerName
             response = await request(buildGeminiEvidenceRequest(query, evidence))
           } else response = await request(buildComparisonRequest(provider, query))
           usage = comparisonUsage(provider, response)
@@ -155,10 +200,7 @@ export async function runComparison({
             elapsedMs: Date.now() - start,
             usage,
             ...(searchProvider === 'brave' ? { braveSearchCalls: braveCalls } : {}),
-            error:
-              error instanceof PilotError
-                ? error.message
-                : '通信または回答の処理に失敗しました。請求額は未確定です。',
+            ...failureDetails(error, source),
           },
         }
       }

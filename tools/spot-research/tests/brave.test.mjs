@@ -173,6 +173,66 @@ test('Gemini cannot introduce new source IDs or URLs into Brave results; old Goo
   )
   assert.throws(() => parseComparisonResponse('gemini', extraction, query), /Web検索の実行/)
 })
+
+test('transport failures identify the failing service with safe diagnostics and no automatic retry', async () => {
+  const { context } = fixture()
+  const secret = 'private-key-or-location'
+  const cases = [
+    {
+      make: () => new TypeError('fetch failed', { cause: { code: 'ENOTFOUND', message: secret } }),
+      code: 'ENOTFOUND',
+      text: /接続できません/,
+    },
+    {
+      make: () =>
+        new TypeError('fetch failed', {
+          cause: new AggregateError([Object.assign(new Error(secret), { code: 'ECONNREFUSED' })]),
+        }),
+      code: 'ECONNREFUSED',
+      text: /接続できません/,
+    },
+    { make: () => new DOMException(secret, 'TimeoutError'), code: 'timeout', text: /時間内に応答/ },
+    { make: () => new TypeError('fetch failed'), code: 'network', text: /接続できません/ },
+    { make: () => new SyntaxError(secret), code: 'invalid_response', text: /回答を読み取れません/ },
+    {
+      make: () => Object.assign(new Error(secret), { cause: { code: secret, errors: secret } }),
+      code: 'unknown',
+      text: /通信または回答/,
+    },
+  ]
+  for (const target of ['brave', 'gemini']) {
+    for (const scenario of cases) {
+      let braveCalls = 0,
+        geminiCalls = 0
+      const result = await runComparison({
+        query,
+        searchProvider: 'brave',
+        braveApiKey: secret,
+        geminiApiKey: secret,
+        routesApiKey: secret,
+        fetcher: async (url) => {
+          if (url.includes('api.search.brave.com')) {
+            braveCalls++
+            if (target === 'brave') throw scenario.make()
+            return Response.json(context)
+          }
+          assert.ok(url.includes('generativelanguage'), 'must not call Routes on failure')
+          geminiCalls++
+          throw scenario.make()
+        },
+      })
+      const report = result.reports[0]
+      assert.equal(report.state, 'failed')
+      assert.equal(report.errorCode, scenario.code)
+      assert.match(report.error, target === 'brave' ? /^Brave検索サービス/ : /^Gemini/)
+      assert.match(report.error, scenario.text)
+      assert.equal(braveCalls, 3)
+      assert.equal(geminiCalls, target === 'brave' ? 0 : 1)
+      assert.equal(result.spots.length, 0)
+      assert.ok(!JSON.stringify(result).includes(secret))
+    }
+  }
+})
 test('Brave service requires both keys and never persists context or generated search results', async (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'driveplus-brave-'))
   t.after(() => rmSync(directory, { recursive: true, force: true }))

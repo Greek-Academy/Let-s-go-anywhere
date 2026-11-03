@@ -124,6 +124,14 @@ export function SearchJourney() {
   const photo = searchJourneyPhotos[photoIndex]
   const failedReport = web.result?.reports?.some((report) => report.state === 'failed')
   const locationFailed = failure && !web.active && !web.result
+  const searchFailed = !locationFailed && (!!web.error || !!failedReport)
+  const failureDetail =
+    web.error ||
+    web.result?.reports
+      ?.filter((report) => report.state === 'failed' && report.error)
+      .map((report) => report.error)
+      .join('\n') ||
+    gps.error
   const failureTitle = locationFailed
     ? '出発地を選んで、旅をはじめよう'
     : empty && !failedReport
@@ -232,24 +240,33 @@ export function SearchJourney() {
             <p>
               {locationFailed
                 ? '位置情報を使わず、駅からも探せます。'
-                : '出発地を変えるか、もう一度お試しください。'}
+                : searchFailed
+                  ? '詳しい状況を確認して、もう一度お試しください。'
+                  : '出発地を変えるか、もう一度お試しください。'}
             </p>
-            {(gps.error || web.error) && (
+            {failureDetail && (
               <details>
                 <summary>詳しい状況</summary>
-                <p>{web.error || gps.error}</p>
+                <p>{failureDetail}</p>
               </details>
             )}
-            <PrimaryButton icon={TrainFront} onClick={() => setStationOpen(true)}>
-              駅を選んで探す
+            <PrimaryButton
+              icon={searchFailed ? RotateCcw : TrainFront}
+              onClick={() => (searchFailed ? retry(retryStation.current) : setStationOpen(true))}
+            >
+              {searchFailed ? 'もう一度検索する' : '駅を選んで探す'}
             </PrimaryButton>
             <button
               type="button"
               className="journey-retry"
-              onClick={() => retry(retryStation.current)}
+              onClick={() => (searchFailed ? setStationOpen(true) : retry(retryStation.current))}
             >
-              <RotateCcw size={14} />
-              {locationFailed ? '現在地をもう一度取得する' : 'もう一度検索する'}
+              {searchFailed ? <TrainFront size={14} /> : <RotateCcw size={14} />}
+              {searchFailed
+                ? '駅を選んで探す'
+                : locationFailed
+                  ? '現在地をもう一度取得する'
+                  : 'もう一度検索する'}
             </button>
           </div>
         ) : (

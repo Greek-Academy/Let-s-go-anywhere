@@ -135,7 +135,7 @@ test('denied location offers station search and enters home with the chosen orig
   await expect(page.locator('.drive-origin-card')).toContainText('新宿駅（東京都）')
 })
 
-for (const kind of ['network', 'empty'] as const) {
+for (const kind of ['network', 'provider', 'empty'] as const) {
   test(`${kind} failure stays on recovery without 100% or automatic retries; explicit retry succeeds`, async ({
     page,
   }) => {
@@ -148,6 +148,15 @@ for (const kind of ['network', 'empty'] as const) {
       const response = await route.fetch()
       const data = await response.json()
       data.spots = []
+      if (kind === 'provider')
+        data.reports = data.reports.map((report: Record<string, unknown>) => ({
+          ...report,
+          state: 'failed',
+          count: 0,
+          omitted: 0,
+          error:
+            'Brave検索サービスに接続できませんでした。インターネット接続を確認して、もう一度お試しください。',
+        }))
       await route.fulfill({ json: data })
     })
     await enter(page)
@@ -156,6 +165,13 @@ for (const kind of ['network', 'empty'] as const) {
     )
     await expect(page).toHaveURL(/#\/search\/journey$/)
     await expect(page.getByRole('progressbar')).toHaveCount(0)
+    if (kind !== 'empty') {
+      await page.getByText('詳しい状況', { exact: true }).click()
+      await expect(page.locator('.journey-recovery details')).toContainText(
+        kind === 'provider' ? 'Brave検索サービスに接続できませんでした' : '検証用の通信失敗',
+      )
+      await expect(page.locator('.journey-recovery .button')).toHaveText('もう一度検索する')
+    } else await expect(page.getByText('詳しい状況', { exact: true })).toHaveCount(0)
     await page.waitForTimeout(1300)
     expect(calls).toBe(1)
     await page.getByRole('button', { name: 'もう一度検索する', exact: true }).click()
