@@ -43,6 +43,9 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   await expect(page.getByRole('button', { name: 'お出かけの絞り込み' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: '前回の比較結果を開く（無料）' })).toHaveCount(0)
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  // Cards can arrive before the final status refresh removes the loading notice.
+  // Measure the completed layout, not the brief in-flight layout on a slower runner.
+  await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
   expect(bodies).toHaveLength(1)
   expect(bodies[0].drive.duration).toBe('1〜5時間')
   await expect(
