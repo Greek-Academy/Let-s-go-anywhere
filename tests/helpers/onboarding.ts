@@ -14,4 +14,6 @@ export async function openHomeForTest(page: Page) {
   const home = new URL(page.url())
   home.hash = '/discover'
   await page.goto(home.href)
+  // A hash-only navigation keeps React state; reload to read the seeded record.
+  await page.reload()
 }
