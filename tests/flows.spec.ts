@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 import { createInitialState } from '../src/state/model'
@@ -18,7 +19,7 @@ test.afterEach(async ({ page }, testInfo) => {
 
 async function enter(page: Page, route = '/discover') {
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる' }).click()
+  await openHomeForTest(page)
   if (route !== '/discover') await page.goto(`/#${route}`)
 }
 async function readState(page: Page) {

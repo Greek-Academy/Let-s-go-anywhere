@@ -1379,17 +1379,6 @@ small {
   order: 2;
   margin-left: 6px;
 }
-.welcome-skip {
-  min-height: 46px;
-  color: #f2f8ef;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  width: 100%;
-  font-size: 12px;
-  margin-top: 4px;
-}
 .welcome-bottom > p {
   text-align: center;
   font-size: 9px;

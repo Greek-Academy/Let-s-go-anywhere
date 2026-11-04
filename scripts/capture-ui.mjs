@@ -15,7 +15,7 @@ await page.getByRole('button', { name: 'はじめる', exact: true }).click()
 await page.getByRole('button', { name: '自然', exact: true }).click()
 await page.screenshot({ animations: 'disabled', path: `${directory}/02-onboarding-desktop.png` })
 await page.getByRole('button', { name: '戻る', exact: true }).click()
-await page.getByRole('button', { name: 'まずは見てみる' }).click()
+await page.goto(new URL('#/discover', page.url()).href)
 for (const [name, route] of [
   ['03-discover', '/discover'],
   ['04-cars', '/cars'],

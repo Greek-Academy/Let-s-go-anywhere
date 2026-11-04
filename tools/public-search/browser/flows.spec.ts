@@ -1,3 +1,4 @@
+import { openHomeForTest } from '../../../tests/helpers/onboarding'
 import { test, expect } from '@playwright/test'
 import type { Page, APIRequestContext, BrowserContext } from '@playwright/test'
 // Same provider envelopes as the offline comparison tests. No paid services.
@@ -101,7 +102,7 @@ async function mockPublicSearch(context: BrowserContext, isBusy = () => false) {
 
 async function start(page: Page, request: APIRequestContext, email?: string) {
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる' }).click()
+  await openHomeForTest(page)
   await page.getByRole('button', { name: 'AI検索の参加・ログイン', exact: true }).click()
   await login(page, email ?? (await account(request)))
   await participate(page)

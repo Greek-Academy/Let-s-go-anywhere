@@ -86,7 +86,7 @@ test('invalid JSON is kept until explicit reset; cancel and a narrow-screen dial
   await page.setViewportSize({ width: 320, height: 568 })
   const raw = '{"memo":"未完了の保存データ"'
   await seed(page, raw, '/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる' }).click()
+  await page.getByRole('button', { name: 'はじめる', exact: true }).click()
   expect(await stored(page)).toBe(raw)
   await page.getByRole('button', { name: '保存の状態を確認' }).click()
   await page.getByRole('button', { name: 'モックの保存データを削除' }).click()

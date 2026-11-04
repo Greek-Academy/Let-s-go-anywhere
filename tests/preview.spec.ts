@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { showUnscopedSamples } from './helpers/discovery'
 import { expect, test } from '@playwright/test'
 import { spawnSync } from 'node:child_process'
@@ -40,7 +41,7 @@ test('built preview identifies sample content and restores saved data after a pa
     'content',
     /connect-src https:\/\/cyberjapandata\.gsi\.go\.jp\/xyz\/experimental_bvmap\/;/,
   )
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await showUnscopedSamples(page)
   await page.getByRole('button', { name: '森の週末コーヒーマーケットを保存', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()

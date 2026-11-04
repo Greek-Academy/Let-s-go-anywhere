@@ -1,10 +1,11 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 import { chooseStation } from './helpers/discovery'
 
 async function enter(page: Page) {
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await page.goto('/#/cars/sample')
 }
 const saved = (page: Page) =>

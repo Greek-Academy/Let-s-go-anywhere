@@ -6,11 +6,6 @@ import { Brand, IconButton, PrimaryButton } from '../components/ui'
 
 export function Welcome() {
   const navigate = useNavigate()
-  const { update } = useApp()
-  const skip = () => {
-    update((s) => ({ ...s, onboarded: true }))
-    navigate('/discover', { replace: true })
-  }
   return (
     <div className="welcome">
       <img className="welcome-photo" src="/images/fuji.jpg" alt="富士山の見える風景" />
@@ -36,9 +31,6 @@ export function Welcome() {
         <PrimaryButton icon={ArrowRight} onClick={() => navigate('/onboarding/1')}>
           はじめる
         </PrimaryButton>
-        <button className="welcome-skip" onClick={skip}>
-          まずは見てみる <ArrowRight size={15} />
-        </button>
         <p>登録不要 · あなたのペースで始められます</p>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { showUnscopedSamples } from './helpers/discovery'
@@ -5,7 +6,7 @@ import { showUnscopedSamples } from './helpers/discovery'
 async function enter(page: Page, time = '2026-09-16T03:00:00Z') {
   await page.clock.install({ time: new Date(time) })
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await showUnscopedSamples(page)
 }
 const savedIds = (page: Page) =>

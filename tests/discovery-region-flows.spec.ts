@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 import { createInitialState } from '../src/state/model'
@@ -15,7 +16,7 @@ async function destination(page: Page, query = 'しぶや', station = '渋谷駅
 }
 test.beforeEach(async ({ page }) => {
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
 })
 test.afterEach(async ({ page }, info) => {
   if (info.status === 'passed')

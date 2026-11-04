@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { showUnscopedSamples } from './helpers/discovery'
 import { expect, test } from './support/mapFixture'
 import type { Locator, Page } from '@playwright/test'
@@ -8,7 +9,7 @@ async function keyboardActivate(page: Page, target: Locator) {
 }
 async function enter(page: Page, route = '/discover') {
   await page.goto('/#/welcome')
-  await keyboardActivate(page, page.getByRole('button', { name: 'まずは見てみる' }))
+  await openHomeForTest(page)
   if (route !== '/discover') await page.goto('/#' + route)
 }
 

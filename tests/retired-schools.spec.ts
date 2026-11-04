@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expect, test } from './support/mapFixture'
 import { createInitialState } from '../src/state/model'
 
@@ -8,7 +9,7 @@ test.afterEach(async ({ page }, info) => {
 
 test('retired URLs lead to home without a referral form or a back loop', async ({ page }) => {
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる' }).click()
+  await openHomeForTest(page)
   const navigation = page.getByRole('navigation')
   await expect(navigation.getByRole('button')).toHaveText([
     '見つける',

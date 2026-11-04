@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expect, test, mapPattern } from './support/mapFixture'
 import { spawnSync } from 'node:child_process'
 import { createServer } from 'node:http'
@@ -81,7 +82,7 @@ test('a verified release restores the same origin after a failed deployment and 
     })
     await page.clock.install({ time: new Date('2026-09-16T03:00:00Z') })
     await page.goto(origin + '/#/welcome')
-    await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+    await openHomeForTest(page)
     // The saved sample is in Yamanashi; the initial discovery scope is Tokyo.
     await showUnscopedSamples(page)
     await page.getByRole('button', { name: '湖畔のオータム花火を保存', exact: true }).click()

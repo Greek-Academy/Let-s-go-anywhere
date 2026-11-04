@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
@@ -11,7 +12,7 @@ test.afterEach(async ({ page }, info) => {
 async function enter(page: Page, route = '/discover') {
   await page.clock.install({ time: new Date('2026-09-14T03:00:00Z') })
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる' }).click()
+  await openHomeForTest(page)
   await page.evaluate(() => {
     const s = JSON.parse(localStorage.getItem('driveplus.mock.v1')!)
     s.profile.area = '東京・渋谷駅周辺'
