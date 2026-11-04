@@ -82,7 +82,10 @@ test('reset removes old candidates and searches again with new hobbies and drivi
   )
   expect(queries[1].drive.hobbies).toEqual(['温泉'])
   expect(queries[1].location).toEqual({ lat: 35.691, lng: 139.7 })
-  await page.getByRole('navigation').getByRole('button', { name: '学ぶ', exact: true }).click()
+  await page
+    .getByRole('navigation')
+    .getByRole('button', { name: 'マイページ', exact: true })
+    .click()
   await page.getByRole('navigation').getByRole('button', { name: '見つける', exact: true }).click()
   expect(queries).toHaveLength(2)
 })

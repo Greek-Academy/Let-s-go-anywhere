@@ -311,7 +311,10 @@ test('location denial ends startup without AI calls, permits station search, and
     expect(body.location).toBeUndefined()
   }
   expect(bodies[0].stationId).toBeTruthy()
-  await page.getByRole('navigation').getByRole('button', { name: '学ぶ', exact: true }).click()
+  await page
+    .getByRole('navigation')
+    .getByRole('button', { name: 'マイページ', exact: true })
+    .click()
   await page.getByRole('navigation').getByRole('button', { name: '見つける', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(calls).toBe(3)
@@ -354,7 +357,10 @@ test('startup waits for an existing search, then sends only its own query once a
   await expect(page.locator('.web-search-results')).toHaveAttribute('aria-busy', 'false')
   await expect(page.getByRole('alert')).toHaveCount(0)
   expect(posts).toBe(1)
-  await page.getByRole('navigation').getByRole('button', { name: '学ぶ', exact: true }).click()
+  await page
+    .getByRole('navigation')
+    .getByRole('button', { name: 'マイページ', exact: true })
+    .click()
   await page.getByRole('navigation').getByRole('button', { name: '見つける', exact: true }).click()
   await expect(page.locator('.web-spot-card')).toHaveCount(10)
   expect(posts).toBe(1)
