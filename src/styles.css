@@ -4742,7 +4742,23 @@ small {
   margin-top: 6px;
 }
 
-/* Start discovery with destination cards. */
+/* Introduce the search briefly, keeping the destination cards in view. */
+.drive-results-intro {
+  margin: 0 0 20px;
+}
+.drive-results-intro h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+.drive-results-intro p {
+  margin: 0;
+  color: #5e7771;
+  font-size: var(--body-size);
+  line-height: 1.9;
+}
+
 .drive-home-feed {
   padding-top: 12px;
   scroll-margin-top: 12px;

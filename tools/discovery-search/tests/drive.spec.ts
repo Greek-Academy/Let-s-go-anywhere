@@ -53,14 +53,15 @@ test('GPS starts one search, ten time-labelled cards; modes are independent and 
   ).toBeVisible()
   const layout = await page.evaluate(() => {
     const feed = document.querySelector('.drive-home-feed')!.getBoundingClientRect()
+    const intro = document.querySelector('.drive-results-intro')!.getBoundingClientRect()
     const firstCard = document.querySelector('.web-spot-card')!.getBoundingClientRect()
     const controls = document.querySelector('.drive-home-controls')!
     const cards = document.querySelectorAll('.web-spot-card')
     const last = cards[cards.length - 1]
     const bottom = document.querySelector('.bottom-nav')?.getBoundingClientRect().top ?? innerHeight
     return {
-      afterFeedStart: firstCard.top >= feed.top,
-      gap: firstCard.top - feed.top,
+      afterFeedStart: intro.top >= feed.top && firstCard.top >= intro.bottom,
+      gap: firstCard.top - intro.bottom,
       visible: firstCard.top < bottom,
       controlsAfterCards: !!(
         last.compareDocumentPosition(controls) & Node.DOCUMENT_POSITION_FOLLOWING

@@ -7,6 +7,16 @@ import { EmptyState } from './ui'
 export function WebSearchResults() {
   const { result, loading, waiting, cancelSearch, error, status } = useWebSearch()
   const { state } = useApp()
+  // Describe the displayed result, even when the user has since edited the next search.
+  const drive = result?.query.drive
+  const fromHobbies = drive?.mode === 'default' && drive.hobbies.length > 0
+  const basis = fromHobbies
+    ? '選んだ趣味をもとに、'
+    : drive?.mode === 'free'
+      ? '入力した希望をもとに、'
+      : drive?.mode === 'conditions'
+        ? '選んだ条件に合わせて、'
+        : ''
   return (
     <section className="web-search-results" aria-label="Web検索の結果" aria-busy={loading}>
       {loading && (
@@ -32,6 +42,20 @@ export function WebSearchResults() {
       )}
       {result && (
         <>
+          {result.spots.length > 0 &&
+            result.query.purpose !== 'events' &&
+            drive?.mode !== 'events' && (
+              <header className="drive-results-intro">
+                <h2>
+                  {fromHobbies ? '好きなことから、次の行き先へ。' : '次のドライブ、どこへ行こう？'}
+                </h2>
+                <p>
+                  {drive
+                    ? `${basis}出発地から片道${drive.duration}を目安に、ドライブスポットを探しました。`
+                    : '入力した希望をもとに、立ち寄りたいスポットを集めました。'}
+                </p>
+              </header>
+            )}
           {result.kind === 'comparison' ? (
             <ComparisonResults result={result} />
           ) : result.spots.length ? (
