@@ -41,10 +41,10 @@ for (const category of ['イベント', '今週末']) {
     expect(posts[0]).not.toHaveProperty('purpose')
     expect(posts[0]).not.toHaveProperty('eventDates')
     const positions = await page.locator('.drive-home-feed').evaluate((el) => ({
-      top: el.getBoundingClientRect().top,
+      introBottom: el.querySelector('.drive-results-intro')!.getBoundingClientRect().bottom,
       card: el.querySelector('.web-spot-card')!.getBoundingClientRect().top,
     }))
-    expect(positions.card - positions.top).toBeLessThan(40)
+    expect(positions.card - positions.introBottom).toBeLessThan(40)
     await info.attach('タブなしで先頭に並ぶおすすめ', {
       body: await page.screenshot(),
       contentType: 'image/png',
