@@ -1,6 +1,6 @@
 import { HobbyChoices } from '../components/DriveSearchControls'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../state/AppState'
 import { Brand, IconButton, PrimaryButton } from '../components/ui'
 
@@ -28,7 +28,7 @@ export function Welcome() {
         </p>
       </div>
       <div className="welcome-bottom">
-        <PrimaryButton icon={ArrowRight} onClick={() => navigate('/onboarding/1')}>
+        <PrimaryButton icon={ArrowRight} onClick={() => navigate('/onboarding/guide')}>
           はじめる
         </PrimaryButton>
         <p>登録不要 · あなたのペースで始められます</p>
@@ -39,6 +39,7 @@ export function Welcome() {
 export function Onboarding() {
   const { step } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { state, update } = useApp()
   if (step !== '1') return <Navigate to={state.onboarded ? '/discover' : '/onboarding/1'} replace />
   const finish = () => {
@@ -48,7 +49,15 @@ export function Onboarding() {
   return (
     <div className="onboarding-page hobbies-onboarding">
       <div className="onboarding-header">
-        <IconButton icon={ArrowLeft} label="戻る" onClick={() => navigate('/welcome')} />
+        <IconButton
+          icon={ArrowLeft}
+          label="戻る"
+          onClick={() =>
+            location.state?.fromGuide
+              ? navigate('/onboarding/guide', { replace: true, state: { guidePage: 5 } })
+              : navigate('/welcome')
+          }
+        />
         <span className="onboarding-label">趣味の設定</span>
       </div>
       <div className="onboarding-content">

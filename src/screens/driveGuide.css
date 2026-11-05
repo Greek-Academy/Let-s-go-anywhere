@@ -1,0 +1,405 @@
+.phone-screen.drive-guide-screen,
+.drive-guide-screen > .status-bar,
+.drive-guide-main {
+  background: #fffef9;
+}
+.drive-guide-main {
+  overflow: hidden;
+}
+.drive-guide {
+  --guide-muted: #647a72;
+  --guide-line: #dbe5dc;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fffef9;
+  color: var(--ink);
+}
+.drive-guide .guide-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 23px 14px;
+  flex-shrink: 0;
+}
+.drive-guide .guide-header .brand {
+  font-size: 23px;
+}
+.drive-guide .guide-header > span:last-of-type {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--guide-muted);
+}
+.drive-guide .guide-close {
+  border: 1px solid var(--guide-line);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: white;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.drive-guide .guide-carousel {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  flex: 1;
+  min-height: 0;
+  container-type: size;
+}
+.drive-guide .guide-carousel::-webkit-scrollbar {
+  display: none;
+}
+.drive-guide .guide-page {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  padding: 8px 23px 16px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c3d5c6 transparent;
+}
+.drive-guide .guide-kicker {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--teal-dark);
+  font-weight: 700;
+  margin: 4px 0 12px;
+}
+.drive-guide .guide-kicker span {
+  border: 1px solid #bfcdc1;
+  border-radius: 4px;
+  padding: 3px 6px;
+  letter-spacing: 1px;
+}
+.drive-guide .guide-page h2 {
+  font-size: 25px;
+  letter-spacing: -0.7px;
+  line-height: 1.55;
+  margin: 0 0 17px;
+  font-weight: 750;
+  min-height: 78px;
+}
+.drive-guide .guide-page h2 em {
+  font-style: normal;
+  color: var(--teal);
+}
+.drive-guide .guide-comic {
+  position: relative;
+  height: clamp(170px, calc(100cqh - 330px), 380px);
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  border-radius: 5px 18px 5px 18px;
+  background: #eaf1e6;
+  box-shadow: 4px 4px 0 #e3e8da;
+  margin-bottom: 21px;
+}
+.drive-guide .guide-art {
+  background-image: url('/images/guide/story-comic.png');
+  background-size: 300% 200%;
+  background-repeat: no-repeat;
+  width: 100%;
+  aspect-ratio: 1;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.drive-guide .guide-scene-1 {
+  background-position: 0 0;
+}
+.drive-guide .guide-scene-2 {
+  background-position: 50% 0;
+}
+.drive-guide .guide-scene-3 {
+  background-position: 100% 0;
+}
+.drive-guide .guide-scene-4 {
+  background-position: 0 100%;
+}
+.drive-guide .guide-scene-5 {
+  background-position: 50% 100%;
+}
+.drive-guide .guide-scene-6 {
+  background-position: 100% 100%;
+}
+.drive-guide .guide-speech {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  max-width: calc(100% - 28px);
+  background: #fffef9f5;
+  border: 1.5px solid var(--ink);
+  border-radius: 50% 48% 46% 12% / 35% 40% 35% 16%;
+  padding: 13px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+  box-shadow: 2px 3px 0 #173e3910;
+  transform: rotate(-2deg);
+}
+.drive-guide .guide-speech::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 30px;
+  width: 13px;
+  height: 15px;
+  background: #fffef9;
+  border-right: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  transform: skewY(35deg);
+}
+.drive-guide .guide-caption {
+  font-size: 14px;
+  line-height: 1.9;
+  letter-spacing: 0.05px;
+  margin: 0;
+  color: #546d64;
+}
+.drive-guide .guide-caption strong {
+  color: var(--ink);
+  font-weight: 650;
+}
+.drive-guide .guide-chips {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.drive-guide .guide-chips span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--mint);
+  border: 1px solid #d1e6da;
+  border-radius: 24px;
+  padding: 7px 12px;
+  color: var(--teal-dark);
+}
+.drive-guide .guide-chips svg {
+  flex-shrink: 0;
+}
+.drive-guide .guide-query {
+  margin: 14px 0 0;
+  background: white;
+  border: 1px solid #c5d9cb;
+  border-radius: 12px;
+  padding: 11px 12px;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--teal-dark);
+}
+.drive-guide .guide-query svg {
+  flex-shrink: 0;
+}
+.drive-guide .guide-footnote {
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--guide-muted);
+  margin: 10px 0 0;
+}
+.drive-guide .guide-footer {
+  padding: 6px 23px 18px;
+  background: #fffef9;
+  box-shadow: 0 -7px 16px #fffef9;
+  position: relative;
+  flex-shrink: 0;
+}
+.drive-guide .guide-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.drive-guide .guide-dots {
+  display: flex;
+}
+.drive-guide .guide-dots button {
+  border: 0;
+  padding: 8px;
+  background: none;
+  width: 28px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+}
+.drive-guide .guide-dots button::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #d1dccc;
+  border-radius: 8px;
+  transition: width 0.2s;
+}
+.drive-guide .guide-dots button[aria-current] {
+  width: 40px;
+}
+.drive-guide .guide-dots button[aria-current]::after {
+  width: 25px;
+  background: var(--teal);
+}
+.drive-guide .guide-counter {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--guide-muted);
+}
+.drive-guide .guide-counter b {
+  color: var(--teal-dark);
+  font-size: 16px;
+}
+.drive-guide .guide-navigation {
+  display: flex;
+  gap: 12px;
+}
+.drive-guide .guide-back {
+  border: 1px solid #ccd9ce;
+  background: transparent;
+  min-width: 49px;
+  height: 49px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+}
+.drive-guide .guide-back:disabled {
+  opacity: 0.28;
+}
+.drive-guide .guide-next {
+  background: var(--teal);
+  border: 1px solid var(--teal);
+  border-radius: 14px;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 49px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 15px;
+  flex: 1;
+}
+.drive-guide .guide-next:hover {
+  background: var(--teal-dark);
+}
+.drive-guide .guide-hint {
+  font-size: 10px;
+  text-align: center;
+  color: var(--guide-muted);
+  margin: 10px 0 0;
+  letter-spacing: 0.6px;
+}
+.drive-guide button:focus-visible,
+.drive-guide [tabindex]:focus-visible {
+  outline: 3px solid #cf8b40;
+  outline-offset: 3px;
+}
+.drive-guide-entry {
+  position: relative;
+  background: #edf3e8;
+  border: 1px solid #d9e3d3;
+  border-radius: 20px;
+  padding: 26px 20px;
+  margin-top: 24px;
+}
+.drive-guide-entry .guide-entry-icon {
+  position: absolute;
+  right: 23px;
+  top: 27px;
+  color: var(--teal);
+  transform: rotate(-8deg);
+}
+.drive-guide-entry .guide-entry-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: var(--teal-dark);
+  line-height: 1.6;
+  margin: 0;
+}
+.drive-guide-entry h2 {
+  font-size: 20px;
+  margin: 13px 0;
+}
+.drive-guide-entry > p:not(.guide-entry-eyebrow) {
+  font-size: var(--body-size);
+  line-height: 1.9;
+  color: #647a72;
+}
+.drive-guide-entry button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: white;
+  border: 1px solid #bfcebe;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 23px;
+  color: var(--teal-dark);
+  font-weight: 700;
+  font-size: var(--body-size);
+  text-align: left;
+  gap: 10px;
+}
+.large-text .drive-guide .guide-caption {
+  font-size: 16px;
+}
+.large-text .drive-guide .guide-footnote,
+.large-text .drive-guide .guide-query,
+.large-text .drive-guide .guide-chips span {
+  font-size: 13px;
+}
+.large-text .drive-guide .guide-speech {
+  font-size: 16px;
+}
+.reduced-motion .drive-guide *,
+.reduced-motion .drive-guide *::after {
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .drive-guide *,
+  .drive-guide *::after {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (max-width: 350px) {
+  .drive-guide .guide-header,
+  .drive-guide .guide-page,
+  .drive-guide .guide-footer {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .drive-guide .guide-header {
+    gap: 8px;
+  }
+  .drive-guide .guide-page h2 {
+    font-size: 22px;
+    min-height: 69px;
+  }
+  .drive-guide .guide-speech {
+    font-size: 12px;
+    padding: 10px 14px;
+  }
+  .drive-guide .guide-caption {
+    font-size: 13px;
+  }
+  .drive-guide .guide-next {
+    font-size: 12px;
+  }
+}

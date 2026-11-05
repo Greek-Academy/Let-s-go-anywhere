@@ -1,4 +1,4 @@
-import { openHomeForTest } from './helpers/onboarding'
+import { finishGuideForTest, openHomeForTest } from './helpers/onboarding'
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 import { createInitialState } from '../src/state/model'
@@ -29,11 +29,13 @@ async function readState(page: Page) {
 test('hobby onboarding supports back, completion, tabs and reload', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'はじめる', exact: true }).click()
+  await finishGuideForTest(page)
   await expect(page.getByRole('combobox')).toHaveCount(0)
   await page.getByRole('button', { name: '自然', exact: true }).click()
   await page.getByRole('button', { name: '戻る', exact: true }).click()
-  await expect(page).toHaveURL(/#\/welcome$/)
-  await page.getByRole('button', { name: 'はじめる', exact: true }).click()
+  await expect(page).toHaveURL(/#\/onboarding\/guide$/)
+  await expect(page.locator('.guide-counter b')).toHaveText('06')
+  await finishGuideForTest(page)
   await expect(page.getByRole('button', { name: '自然', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',

@@ -32,6 +32,12 @@ test('keyboard onboarding and all four tabs move focus to the new screen without
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   await keyboardActivate(page, page.getByRole('button', { name: 'はじめる', exact: true }))
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+  await page.keyboard.press('End')
+  await keyboardActivate(
+    page,
+    page.getByRole('button', { name: 'さっそく、趣味を選ぶ', exact: true }),
+  )
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   await expect(page.getByRole('button', { name: '自然', exact: true })).not.toBeFocused()
   await keyboardActivate(page, page.getByRole('button', { name: 'スキップ', exact: true }))
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()

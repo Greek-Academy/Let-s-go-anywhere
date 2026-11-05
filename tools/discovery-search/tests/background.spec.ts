@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { finishGuideForTest } from '../../../tests/helpers/onboarding'
 import type { BrowserContext, Page } from '@playwright/test'
 import { createInitialState } from '../../../src/state/model'
 
@@ -82,6 +83,7 @@ test('reset then open a new tab: backgrounded search returns cards and times wit
   const request = await holdResult(next)
   await next.goto('/#/welcome')
   await next.getByRole('button', { name: 'はじめる', exact: true }).click()
+  await finishGuideForTest(next)
   await next.getByRole('button', { name: '買い物', exact: true }).click()
   await next.getByRole('button', { name: 'ドライブ先を見つける', exact: true }).click()
   await expect.poll(request.calls).toBe(1)

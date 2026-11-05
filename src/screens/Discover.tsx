@@ -43,6 +43,7 @@ import { ArrivalTeaser } from './Arrival'
 import { EventCard } from '../components/Cards'
 import { useWebSearch } from '../state/WebSearchState'
 import { WebSearchResults } from '../components/WebSearchResults'
+import { DriveGuideEntry } from './DriveGuide'
 import {
   BottomSheet,
   Chip,
@@ -523,6 +524,7 @@ export function Discover() {
           </span>
           <ArrowRight size={18} />
         </button>
+        <DriveGuideEntry />
       </div>
       {sns && <SnsSheet onClose={() => setSns(false)} />}
       {hobbiesOpen && (

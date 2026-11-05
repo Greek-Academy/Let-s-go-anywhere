@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { createInitialState } from '../../../src/state/model'
+import { finishGuideForTest } from '../../../tests/helpers/onboarding'
 
 async function enter(page: Page, location: 'success' | 'denied' | 'pending' = 'success') {
   const state = createInitialState()
@@ -29,7 +30,9 @@ async function enter(page: Page, location: 'success' | 'denied' | 'pending' = 's
     },
     { state, location },
   )
-  await page.goto('/#/onboarding/1')
+  await page.goto('/#/welcome')
+  await page.getByRole('button', { name: 'はじめる', exact: true }).click()
+  await finishGuideForTest(page)
   await page.getByRole('button', { name: '自然', exact: true }).click()
   await page.getByRole('button', { name: 'グルメ', exact: true }).click()
   await page.getByRole('button', { name: 'ドライブ先を見つける', exact: true }).click()
@@ -105,6 +108,19 @@ test('onboarding waits for the real response, reaches 100%, then shows panels wi
   expect(firstVisible).toBe(true)
   expect(bodies).toHaveLength(1)
   expect(bodies[0].drive.hobbies).toEqual(['自然', 'グルメ'])
+  const guide = page.getByRole('button', { name: 'このアプリの使い方', exact: true })
+  await guide.scrollIntoViewIfNeeded()
+  const scroll = await page.locator('#app-scroll').evaluate((el) => el.scrollTop)
+  await guide.click()
+  await expect(page).toHaveURL(/#\/guide$/)
+  await expect(page.getByRole('navigation')).toHaveCount(0)
+  await page.getByRole('button', { name: '使い方を閉じる', exact: true }).click()
+  await expect(guide).toBeFocused()
+  expect(
+    Math.abs((await page.locator('#app-scroll').evaluate((el) => el.scrollTop)) - scroll),
+  ).toBeLessThanOrEqual(1)
+  await expect(page.locator('.web-spot-card')).toHaveCount(10)
+  expect(bodies).toHaveLength(1)
   const saved = await page.evaluate(() => localStorage.getItem('driveplus.mock.v1')!)
   expect(saved).not.toContain('35.691')
   expect(saved).not.toContain('durationSeconds')

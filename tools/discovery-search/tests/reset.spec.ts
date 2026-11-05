@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { finishGuideForTest } from '../../../tests/helpers/onboarding'
 import type { Page } from '@playwright/test'
 import { createInitialState } from '../../../src/state/model'
 
@@ -36,6 +37,7 @@ async function reset(page: Page) {
 }
 async function startAgain(page: Page) {
   await page.getByRole('button', { name: 'はじめる', exact: true }).click()
+  await finishGuideForTest(page)
   await expect(page.getByText('0個の趣味を選択中')).toBeVisible()
   await page.getByRole('button', { name: '温泉', exact: true }).click()
   await page.getByRole('button', { name: 'ドライブ先を見つける', exact: true }).click()

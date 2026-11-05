@@ -25,6 +25,7 @@ import { EmptyState, Header } from './components/ui'
 import { Onboarding, Welcome } from './screens/Onboarding'
 import { Discover, EventDetail } from './screens/Discover'
 import { SearchJourney } from './screens/SearchJourney'
+import { DriveGuide } from './screens/DriveGuide'
 import { Arrival } from './screens/Arrival'
 import { Saved } from './screens/Saved'
 import { RealCars, RealStationDetail, CarMapSources } from './screens/RealCars'
@@ -66,7 +67,9 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Start />} />
         <Route path="/welcome" element={<Welcome />} />
+        <Route path="/onboarding/guide" element={<DriveGuide introductory />} />
         <Route path="/onboarding/:step" element={<Onboarding />} />
+        <Route path="/guide" element={<DriveGuide />} />
         <Route path="/discover" element={<Discover />} />
         <Route path="/search/journey" element={<SearchJourney />} />
         {/* The unmerged diagnosis pilot was withdrawn; old preview links return home. */}
