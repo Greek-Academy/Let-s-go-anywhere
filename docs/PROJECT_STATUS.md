@@ -2,7 +2,7 @@
 
 ## 2026-11-06：PRの確認先を2件に整理
 
-現在のアプリの変更は[PR #144](https://github.com/Greek-Academy/Let-s-go-anywhere/pull/144)に集約します。趣味・現在地からの検索、Brave＋Gemini、検索待ち画面、気分・自由入力、不要タブの終了、漫画ガイドを含みます。過去の9件は変更を引き継いだうえで閉じる対象です。ライブラリ更新の[PR #121](https://github.com/Greek-Academy/Let-s-go-anywhere/pull/121)は既知の脆弱性を減らす更新を含むため残します。どちらもマージ・公開済みの意味ではありません。[整理の対応表・保全・確認状況](reviews/pr-consolidation/README.md)。以下は変更当時の記録です。
+現在のアプリの変更は[PR #144](https://github.com/Greek-Academy/Let-s-go-anywhere/pull/144)に集約しました。趣味・現在地からの検索、Brave＋Gemini、検索待ち画面、気分・自由入力、不要タブの終了、漫画ガイドを含みます。過去の9件は変更を引き継いだうえで閉じました。ライブラリ更新の[PR #121](https://github.com/Greek-Academy/Let-s-go-anywhere/pull/121)は既知の脆弱性を減らす更新を含むため残しています。どちらもマージ・公開済みの意味ではありません。[整理の対応表・保全・確認状況](reviews/pr-consolidation/README.md)。以下は変更当時の記録です。
 
 ## 2026-11-06：漫画の使い方ガイド（Issue #143）
 
