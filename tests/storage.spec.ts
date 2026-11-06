@@ -61,6 +61,30 @@ test('valid saved data round-trips and known missing v1 sections receive indepen
   expect(second.state.profile.interests).toEqual([])
 })
 
+test('known withdrawn diagnosis data is omitted without weakening malformed-data protection', () => {
+  const before = sample()
+  const ramen = {
+    dataset: '2774febf7f831725e3da3564bfe1f5506d263e66ea2f94146903bb7609207c74',
+    cursor: 99,
+    answers: { q001: 'yes', q002: 'maybe', q099: 'no', q100: 'skip' },
+  }
+  expect(decodeStoredState(JSON.stringify({ ...before, ramen }))).toEqual({
+    state: before,
+    problem: null,
+  })
+  for (const invalid of [
+    null,
+    { ...ramen, cursor: 100 },
+    { ...ramen, answers: { q101: 'yes' } },
+    { ...ramen, answers: { q001: 'invalid' } },
+    { ...ramen, unexpected: true },
+  ]) {
+    const result = decodeStoredState(JSON.stringify({ ...before, ramen: invalid }))
+    expect(result.problem).toBe('invalid')
+    expect(result.state).toEqual(before)
+  }
+})
+
 test('invalid sections cannot enter the UI while valid independent sections remain readable', () => {
   const result = decodeStoredState(
     JSON.stringify({

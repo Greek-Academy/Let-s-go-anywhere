@@ -93,7 +93,8 @@ test('静的配信版では検索サーバーへ接続せず、保存したWeb�
   const { spots } = await parseWebSearchResult(response(), query)
   const initial = createInitialState()
   initial.onboarded = true
-  initial.discover.region = '京都府'
+  initial.discover.region = 'station'
+  initial.discover.stationId = '100216'
   initial.discover.search = query.theme
   initial.savedWebSpots = spots
   await page.addInitScript((state) => {
@@ -105,7 +106,7 @@ test('静的配信版では検索サーバーへ接続せず、保存したWeb�
     return route.abort()
   })
   await page.goto('/#/discover')
-  await page.getByRole('button', { name: 'Webで候補を探す', exact: true }).click()
+  await page.getByRole('button', { name: 'この希望で探す', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('検索サーバーをまだ接続していません')
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await page.locator('.saved-web-spot').getByRole('button').first().click()

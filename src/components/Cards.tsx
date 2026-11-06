@@ -2,16 +2,8 @@ import { OutingImage, OutingStatus, OutingPhotoCredit } from './OutingStatus'
 import { useContentTime } from '../content/ContentProvider'
 import { evaluateOuting } from '../domain/outingLifecycle'
 import { useNavigate } from 'react-router-dom'
-import {
-  CalendarDays,
-  CarFront,
-  Check,
-  ChevronRight,
-  Heart,
-  MapPin,
-  MoreHorizontal,
-} from 'lucide-react'
-import type { LearningContent, Outing, Station } from '../data/types'
+import { CalendarDays, CarFront, ChevronRight, Heart, MapPin, MoreHorizontal } from 'lucide-react'
+import type { Outing, Station } from '../data/types'
 import { useApp } from '../state/AppState'
 import { IconButton, Tag } from './ui'
 
@@ -155,34 +147,5 @@ export function StationCard({
         />
       )}
     </article>
-  )
-}
-export function LessonCard({ lesson }: { lesson: LearningContent }) {
-  const { state } = useApp()
-  const navigate = useNavigate()
-  const completed = state.learned.includes(lesson.id)
-  return (
-    <button
-      className="lesson-card"
-      data-focus-key={`lesson:${lesson.id}`}
-      onClick={() => navigate(`/learn/${lesson.id}`)}
-    >
-      <div className="lesson-photo">
-        <img src={lesson.image} alt="" loading="lazy" />
-        {completed && (
-          <span>
-            <Check size={13} />
-          </span>
-        )}
-      </div>
-      <div className="lesson-card-copy">
-        <Tag>{lesson.category}</Tag>
-        <h3>{lesson.title}</h3>
-        <p>
-          {lesson.time}分 · 読んで学ぶ{completed ? ' · 学習済み' : ''}
-        </p>
-      </div>
-      <ChevronRight size={17} />
-    </button>
   )
 }

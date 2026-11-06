@@ -11,7 +11,7 @@ const context = await browser.newContext({
 const page = await context.newPage()
 await page.clock.install({ time: new Date('2026-09-14T03:00:00Z') })
 await page.goto('http://localhost:5173/#/welcome')
-await page.getByRole('button', { name: 'まずは見てみる' }).click()
+await page.goto(new URL('#/discover', page.url()).href)
 await page.goto('http://localhost:5173/#/events/fuji/arrival')
 await page.screenshot({ path: `${dir}/arrival.png`, animations: 'disabled' })
 await page.goto('http://localhost:5173/#/discover')

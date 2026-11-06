@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expectMapStationCount } from './support/mapFixture'
 import { test, expect } from './support/mapFixture'
 import type { Page } from '@playwright/test'
@@ -17,7 +18,7 @@ import shinjuku from '../src/data/shinjuku-car-stations.osm.json' with { type: '
 
 async function enter(page: Page) {
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await page.getByRole('navigation').getByRole('button', { name: '車を探す', exact: true }).click()
 }
 async function search(page: Page, query: string) {

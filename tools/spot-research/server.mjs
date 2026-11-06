@@ -19,6 +19,7 @@ import {
 } from './core.mjs'
 import { Ledger } from './ledger.mjs'
 import { createComparison } from '../spot-comparison/service.mjs'
+import { localComparisonLimit } from '../spot-comparison/core.mjs'
 import { sampleResponse } from './sample.mjs'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
@@ -32,6 +33,11 @@ export function createPilot({
   demo = false,
   apiKey = '',
   anthropicApiKey = '',
+  routesApiKey = '',
+  geminiApiKey = '',
+  braveApiKey = '',
+  searchProvider = 'comparison',
+  comparisonLimit,
   directory = resolve(root, '.local-research'),
   fetcher = fetch,
   timeoutMs = 120_000,
@@ -42,6 +48,11 @@ export function createPilot({
     demo,
     apiKey,
     anthropicApiKey,
+    routesApiKey,
+    geminiApiKey,
+    braveApiKey,
+    searchProvider,
+    maxAttempts: comparisonLimit,
     directory: resolve(directory, 'comparison-v1'),
     fetcher,
     timeoutMs,
@@ -115,6 +126,8 @@ export function createPilot({
         throw new PilotError('input', '入力を読み取れませんでした。')
       }
       if (path === '/api/compare') return send(200, await comparison.search(input))
+      if (searchProvider !== 'comparison')
+        throw new PilotError('input', 'この接続先ではGemini検索を利用してください。', 400)
       const query = validateQuery(input)
       if (!demo && !apiKey)
         throw new PilotError(
@@ -195,9 +208,43 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const portIndex = process.argv.indexOf('--port')
   const port = portIndex >= 0 ? Number(process.argv[portIndex + 1]) : 4181
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid port')
+  const limitIndex = process.argv.indexOf('--comparison-limit')
+  const comparisonLimit = localComparisonLimit(
+    limitIndex >= 0 ? (process.argv[limitIndex + 1] ?? '') : undefined,
+  )
+  const directoryIndex = process.argv.indexOf('--data-dir')
+  if (directoryIndex >= 0 && !process.argv[directoryIndex + 1])
+    throw new Error('Missing research data directory')
+  const directory = directoryIndex >= 0 ? resolve(process.argv[directoryIndex + 1]) : undefined
+  const providerIndex = process.argv.indexOf('--search-provider')
+  const searchProvider = providerIndex >= 0 ? process.argv[providerIndex + 1] : 'comparison'
+  if (!['comparison', 'gemini', 'brave'].includes(searchProvider))
+    throw new Error('Search provider must be comparison, gemini or brave')
+  let geminiApiKey = ''
+  let braveApiKey = ''
   let apiKey = ''
   let anthropicApiKey = ''
-  if (!demo) {
+  let routesApiKey = ''
+  if (!demo && searchProvider !== 'comparison') {
+    try {
+      geminiApiKey =
+        parseEnv(readFileSync(resolve(root, '.env.gemini.local'), 'utf8')).GEMINI_API_KEY?.trim() ??
+        ''
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw new Error('Cannot read Gemini key file')
+    }
+  }
+  if (!demo && searchProvider === 'brave') {
+    try {
+      braveApiKey =
+        parseEnv(
+          readFileSync(resolve(root, '.env.brave.local'), 'utf8'),
+        ).BRAVE_SEARCH_API_KEY?.trim() ?? ''
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw new Error('Cannot read Brave key file')
+    }
+  }
+  if (!demo && searchProvider === 'comparison') {
     try {
       const env = parseEnv(readFileSync(resolve(root, '.env.research.local'), 'utf8'))
       apiKey = env.OPENAI_API_KEY?.trim() ?? ''
@@ -206,10 +253,32 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
       if (error.code !== 'ENOENT') throw new Error('Cannot read local key file')
     }
   }
-  createPilot({ demo, apiKey, anthropicApiKey }).listen(port, '127.0.0.1', () => {
+  if (!demo) {
+    try {
+      routesApiKey =
+        parseEnv(
+          readFileSync(resolve(root, '.env.routes.local'), 'utf8'),
+        ).GOOGLE_ROUTES_API_KEY?.trim() ?? ''
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw new Error('Cannot read routes key file')
+    }
+  }
+  createPilot({
+    demo,
+    apiKey,
+    anthropicApiKey,
+    routesApiKey,
+    geminiApiKey,
+    braveApiKey,
+    searchProvider,
+    comparisonLimit,
+    directory,
+  }).listen(port, '127.0.0.1', () => {
     console.log(
       `Drive+ ${demo ? '架空サンプル（通信なし）' : '実検索の検証'}: http://127.0.0.1:${port}`,
     )
-    console.log('検索は画面のボタン操作時のみ。APIキーは画面・ログに表示しません。')
+    console.log(
+      'アプリの起動時の自動検索または検索操作でAPIを利用します。APIキーは画面・ログに表示しません。',
+    )
   })
 }

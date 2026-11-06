@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { showUnscopedSamples } from './helpers/discovery'
@@ -5,7 +6,7 @@ import { showUnscopedSamples } from './helpers/discovery'
 async function enter(page: Page, time = '2026-09-16T03:00:00Z') {
   await page.clock.install({ time: new Date(time) })
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await showUnscopedSamples(page)
 }
 const savedIds = (page: Page) =>
@@ -51,9 +52,7 @@ test('a passed end boundary updates open discovery and saved detail without chan
   await page.clock.setSystemTime(new Date('2026-09-19T11:00:00Z'))
   await page.clock.runFor(30_001)
   await expect(page.getByRole('button', { name: '湖畔のオータム花火の詳細を見る' })).toHaveCount(0)
-  await page.getByRole('button', { name: 'イベント', exact: true }).click()
-  await page.getByRole('button', { name: '今週末', exact: true }).click()
-  await expect(page.locator('.event-card')).toHaveCount(1)
+  await expect(page.locator('.event-card')).toHaveCount(5)
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
   await expect(page.locator('.saved-outing')).toContainText('終了（サンプル）')
   await page.locator('.saved-outing').getByRole('button').first().click()

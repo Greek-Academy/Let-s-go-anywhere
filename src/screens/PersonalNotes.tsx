@@ -1,16 +1,16 @@
-import { BookOpen, Pencil } from 'lucide-react'
+import { UserRound, Pencil } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Header, PrimaryButton, useBack } from '../components/ui'
 import { useApp } from '../state/AppState'
 
 /** Reuse the v1 questions field so existing personal notes remain readable. */
-export function LearningNotes() {
+export function PersonalNotes() {
   const { state, update, storageProtected, memoryOnly } = useApp()
   const navigate = useNavigate()
-  const goBack = useBack('/learn')
+  const goBack = useBack('/profile')
   return (
     <div className="screen">
-      <Header back={goBack} title="学習メモ" />
+      <Header back={goBack} title="自分用メモ" />
       <div className="page-pad">
         <div className="feature-icon">
           <Pencil size={28} />
@@ -20,9 +20,9 @@ export function LearningNotes() {
           <br />
           自分の言葉で。
         </h1>
-        <p className="body-copy">学習で分からなかったことや、練習で確かめたいことを残せます。</p>
+        <p className="body-copy">行きたい場所や、ドライブで気づいたことを自由に残せます。</p>
         <label className="field-label">
-          自分用の学習メモ
+          自分用メモ
           <textarea
             rows={10}
             maxLength={20000}
@@ -34,7 +34,7 @@ export function LearningNotes() {
                 memo: { ...current.memo, questions: event.target.value },
               }))
             }
-            placeholder="例：駐車するときの見えにくい場所を、実車で確かめたい。"
+            placeholder="例：次のドライブで寄りたいカフェや、出発前に確かめたいこと。"
           />
         </label>
         <p className="small muted">
@@ -45,8 +45,8 @@ export function LearningNotes() {
               : '入力内容はこの端末に自動保存します。'}
           外部への送信はありません。
         </p>
-        <PrimaryButton icon={BookOpen} onClick={() => navigate('/learn')}>
-          学ぶに戻る
+        <PrimaryButton icon={UserRound} onClick={() => navigate('/profile')}>
+          マイページに戻る
         </PrimaryButton>
       </div>
     </div>

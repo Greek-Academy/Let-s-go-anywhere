@@ -1,9 +1,8 @@
-import { WebEventSchedule } from './WebEventSchedule'
-import { RecommendationBadges, RecommendationFeedback } from './RecommendationFeedback'
+import { DriveTravelInfo } from './DriveTravelInfo'
 import { providerNames } from '../domain/recommendations'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Heart, MapPin, ExternalLink } from 'lucide-react'
+import { Heart, ExternalLink } from 'lucide-react'
 import { SpotIllustration } from './SpotIllustration'
 import { spotIllustrationKind } from '../data/spotIllustrations'
 import type { WebSpot } from '../domain/webSearch'
@@ -40,23 +39,44 @@ export function WebSpotStatus({ spot }: { spot: WebSpot }) {
     </Tag>
   )
 }
+export function WebSpotHobby({ spot }: { spot: WebSpot }) {
+  return spot.hobby ? (
+    <span className="web-spot-hobby" aria-label={`この候補に反映した趣味：${spot.hobby}`}>
+      {spot.hobby}
+    </span>
+  ) : null
+}
 export function WebSpotSource({ spot }: { spot: WebSpot }) {
   const [url, setUrl] = useState<string | null>(null)
   const sources = spot.recommendations ?? [{ provider: null, sourceUrl: spot.sourceUrl }]
   return (
     <>
-      {sources.map((source) => (
-        <button
-          key={source.provider ?? 'legacy'}
-          className="text-button web-source"
-          onClick={() => setUrl(source.sourceUrl)}
-          aria-label={`${spot.name}の${source.provider ? providerNames[source.provider] + 'の' : ''}出典を確認`}
-        >
-          <ExternalLink size={14} aria-hidden="true" />
-          {source.provider ? providerNames[source.provider] + 'の' : ''}出典：
-          {new URL(source.sourceUrl).hostname}
-        </button>
-      ))}
+      {sources.map((source) =>
+        source.provider === 'gemini' ? (
+          <a
+            key={source.provider}
+            className="text-button web-source"
+            href={source.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${spot.name}のGeminiの出典を確認`}
+          >
+            <ExternalLink size={14} aria-hidden="true" />
+            Geminiの出典：{new URL(source.sourceUrl).hostname}
+          </a>
+        ) : (
+          <button
+            key={source.provider ?? 'legacy'}
+            className="text-button web-source"
+            onClick={() => setUrl(source.sourceUrl)}
+            aria-label={`${spot.name}の${source.provider ? providerNames[source.provider] + 'の' : ''}出典を確認`}
+          >
+            <ExternalLink size={14} aria-hidden="true" />
+            {source.provider ? providerNames[source.provider] + 'の' : ''}出典：
+            {new URL(source.sourceUrl).hostname}
+          </button>
+        ),
+      )}
       {url && (
         <ExternalModal
           title={spot.name}
@@ -91,9 +111,6 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
         onClick={() => navigate(`/web-spots/${spot.id}`)}
       >
         <WebSpotImage spot={spot} className="event-photo" />
-        <span className="photo-category">
-          {spot.event ? 'イベントの候補' : '常設スポットの候補'}
-        </span>
       </button>
       <button
         className={`save-heart ${saved ? 'saved' : ''}`}
@@ -105,26 +122,11 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
         <Heart size={20} fill={saved ? 'currentColor' : 'none'} strokeWidth={1.8} />
       </button>
       <div className="event-card-body">
-        <WebSpotStatus spot={spot} />
-        <RecommendationBadges spot={spot} />
         <button className="card-title-button" onClick={() => navigate(`/web-spots/${spot.id}`)}>
+          <WebSpotHobby spot={spot} />
           <h3>{spot.name}</h3>
+          <DriveTravelInfo travel={spot.travel} compact />
         </button>
-        <p className="event-subtitle">{spot.summary}</p>
-        <div className="event-meta">
-          <span>
-            <MapPin size={12} />
-            {spot.area}
-          </span>
-        </div>
-        <WebEventSchedule spot={spot} />
-        <WebSpotSource spot={spot} />
-        <RecommendationFeedback spot={spot} />
-        <p className="small muted">
-          検索：{searchDate(spot.retrievedAt)}
-          <br />
-          営業状況・料金・駐車場：未確認
-        </p>
       </div>
     </article>
   )

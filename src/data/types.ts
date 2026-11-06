@@ -2,7 +2,7 @@ import type { ListingLinks } from '../domain/externalLinks'
 import type { OutingLifecycle } from '../domain/outingLifecycle'
 import type { Prefecture } from './regions'
 
-export type Tab = 'discover' | 'saved' | 'cars' | 'learn'
+export type Tab = 'discover' | 'saved' | 'cars' | 'profile'
 export type StationType = 'すべて' | 'レンタカー' | 'カーシェア'
 export interface Outing {
   links?: ListingLinks
@@ -48,16 +48,6 @@ export interface Question {
   explanation: string
   scene: 'road' | 'parking' | 'highway'
 }
-export interface LearningContent {
-  id: string
-  title: string
-  category: string
-  time: number
-  image: string
-  uses: string[]
-  introduction: string
-  pages: { title: string; text: string }[]
-}
 export interface UserProfile {
   stationId?: string | null
   name: string
@@ -65,7 +55,7 @@ export interface UserProfile {
   companion: string
   interests: string[]
 }
-/** v1 storage: questions is now a private learning note; other fields retain existing goals. */
+/** v1 storage: questions is now a private personal note; other fields retain existing goals. */
 export interface ConsultationMemo {
   goal: string
   when: string

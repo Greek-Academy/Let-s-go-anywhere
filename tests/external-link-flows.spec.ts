@@ -1,10 +1,11 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
 async function enter(page: Page) {
   await page.clock.install({ time: new Date('2026-09-16T03:00:00Z') })
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await page.getByRole('navigation').getByRole('button', { name: '行きたい', exact: true }).click()
 }
 async function addLink(page: Page, url = 'https://external.example/posts/1?section=one#details') {

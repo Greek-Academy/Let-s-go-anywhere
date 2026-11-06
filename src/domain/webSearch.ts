@@ -1,5 +1,7 @@
 import { decodeEventDates, decodeEventSchedule, sameEventDates } from './eventSearch'
 import type { EventDates, EventSchedule } from './eventSearch'
+import { decodeDriveQuery, decodeDriveTravel, sameDriveQuery } from './driveSearch'
+import type { DriveQuery, DriveTravel } from './driveSearch'
 import { LOCATION_REGION, sameCenter, validDiscoveryCenter } from './discoveryLocation'
 import type { DiscoveryCenter } from './discoveryLocation'
 import { railStation, stationRegion } from './railStations'
@@ -7,8 +9,15 @@ import { decodeTags, decodeRecommendations, decodeReports } from './recommendati
 import type { Recommendation, ProviderReport } from './recommendations'
 import { outboundHttpsUrl, researchSourceUrl } from './externalLinks'
 import { samePlace } from './placeIdentity'
+import { decodeHobbyMatches, searchHobbies } from './hobbyBalance'
+import { providerCandidateLimits } from './searchLimits'
 
 export interface WebSpot {
+  /** Supported AI hobby classifications and the single display slot assigned after filtering. */
+  matchedHobbies?: string[]
+  hobby?: string
+  /** Transient routing result. Stripped before persistence and sharing. */
+  travel?: DriveTravel
   event?: EventSchedule
   id: string
   name: string
@@ -24,8 +33,11 @@ export interface WebSpot {
   likedFor?: string[]
 }
 export interface WebSearchResult {
+  searchBackend?: 'brave'
+  searchAttribution?: { html: string }
   spots: WebSpot[]
   query: {
+    drive?: DriveQuery
     purpose?: 'events'
     eventDates?: EventDates
     region: string
@@ -92,6 +104,8 @@ export function decodeSavedWebSpots(value: unknown): WebSpot[] {
       'recommendations',
       'tags',
       'likedFor',
+      'matchedHobbies',
+      'hobby',
     ]
     if (Object.keys(s).some((key) => !fields.includes(key)))
       throw new Error('不明な保存項目があります。')
@@ -132,7 +146,15 @@ export async function parseWebSearchResult(
   expected: WebSearchResult['query'],
 ): Promise<WebSearchResult> {
   const data = record(value)
+  const reports = data.kind === 'comparison' ? decodeReports(data.reports) : undefined
+  const poolLimit = reports?.[0]?.provider === 'gemini' ? providerCandidateLimits.gemini : 20
   const query = record(data.query)
+  const drive = query.drive === undefined ? undefined : decodeDriveQuery(query.drive)
+  if (
+    !sameDriveQuery(drive, expected.drive) ||
+    (drive && (drive.mode === 'events') !== (query.purpose === 'events'))
+  )
+    throw new Error('ドライブの検索条件と結果が一致しません。')
   const dates = query.purpose === 'events' ? decodeEventDates(query.eventDates) : undefined
   if (
     (query.purpose !== undefined && query.purpose !== 'events') ||
@@ -175,7 +197,7 @@ export async function parseWebSearchResult(
   if (
     !Number.isInteger(data.omitted) ||
     Number(data.omitted) < 0 ||
-    Number(data.omitted) > (data.kind === 'comparison' ? 20 : 3)
+    Number(data.omitted) > (data.kind === 'comparison' ? poolLimit : 3)
   )
     throw new Error('検索結果の件数を確認できません。')
   const mode = data.mode as WebSpot['mode']
@@ -188,6 +210,7 @@ export async function parseWebSearchResult(
     const metadata = comparisonMetadata(s)
     if (Boolean(metadata?.event) !== Boolean(dates))
       throw new Error('イベントの開催情報がありません。')
+    if (metadata?.matchedHobbies) decodeHobbyMatches(metadata.matchedHobbies, searchHobbies(drive))
     if (dates) decodeEventSchedule(s.event, dates)
     if ((data.kind === 'comparison') !== Boolean(metadata))
       throw new Error('検索方法と候補が一致しません。')
@@ -213,11 +236,55 @@ export async function parseWebSearchResult(
       verification: 'unconfirmed',
       mode,
       ...metadata,
+      ...(drive
+        ? {
+            travel:
+              s.travel === undefined
+                ? { status: 'unconfirmed' as const }
+                : decodeDriveTravel(s.travel, mode),
+          }
+        : {}),
     })
   }
+  const searchAttribution = data.searchAttribution
+  const brave = data.searchBackend === 'brave'
+  if (
+    data.searchBackend !== undefined &&
+    (!brave ||
+      reports?.length !== 1 ||
+      reports[0]?.provider !== 'gemini' ||
+      searchAttribution !== undefined)
+  )
+    throw new Error('検索元の情報を確認できません。')
+  if (
+    !brave &&
+    reports?.[0]?.provider === 'gemini' &&
+    reports[0].state === 'completed' &&
+    searchAttribution === undefined
+  )
+    throw new Error('Google検索の出典情報を確認できません。')
+  if (searchAttribution !== undefined) {
+    const attribution = record(searchAttribution)
+    if (
+      Object.keys(attribution).length !== 1 ||
+      typeof attribution.html !== 'string' ||
+      !attribution.html.trim() ||
+      attribution.html.length > 100_000 ||
+      data.kind !== 'comparison' ||
+      !Array.isArray(data.reports) ||
+      data.reports.length !== 1 ||
+      data.reports[0]?.provider !== 'gemini'
+    )
+      throw new Error('Google検索の出典情報を確認できません。')
+  }
   return {
+    ...(brave ? { searchBackend: 'brave' as const } : {}),
+    ...(searchAttribution
+      ? { searchAttribution: { html: (searchAttribution as { html: string }).html } }
+      : {}),
     spots,
     query: {
+      ...(drive ? { drive } : {}),
       ...(dates ? { purpose: 'events' as const, eventDates: dates } : {}),
       region: shortText(query.region, 120),
       theme: shortText(query.theme, 80),
@@ -231,8 +298,8 @@ export async function parseWebSearchResult(
     ...(data.kind === 'comparison'
       ? {
           kind: 'comparison' as const,
-          reports: decodeReports(data.reports),
-          duplicates: duplicateCount(data.duplicates),
+          reports: reports!,
+          duplicates: duplicateCount(data.duplicates, poolLimit),
         }
       : {}),
   }
@@ -240,9 +307,17 @@ export async function parseWebSearchResult(
 
 function comparisonMetadata(
   s: Record<string, unknown>,
-): Pick<WebSpot, 'recommendations' | 'tags' | 'likedFor' | 'event'> | undefined {
+):
+  | Pick<WebSpot, 'recommendations' | 'tags' | 'likedFor' | 'event' | 'matchedHobbies' | 'hobby'>
+  | undefined {
   if (s.recommendations === undefined) {
-    if (s.tags !== undefined || s.likedFor !== undefined || s.event !== undefined)
+    if (
+      s.tags !== undefined ||
+      s.likedFor !== undefined ||
+      s.event !== undefined ||
+      s.matchedHobbies !== undefined ||
+      s.hobby !== undefined
+    )
       throw new Error('提案元がありません。')
     return undefined
   }
@@ -257,7 +332,16 @@ function comparisonMetadata(
     throw new Error('提案元と出典が一致しません。')
   const likedFor = s.likedFor === undefined ? undefined : decodeTags(s.likedFor)
   if (likedFor?.some((t) => !tags.includes(t))) throw new Error('好みの理由が不正です。')
+  const matchedHobbies =
+    s.matchedHobbies === undefined ? undefined : decodeHobbyMatches(s.matchedHobbies)
+  if (
+    matchedHobbies
+      ? typeof s.hobby !== 'string' || !matchedHobbies.includes(s.hobby)
+      : s.hobby !== undefined
+  )
+    throw new Error('表示する趣味と候補が一致しません。')
   return {
+    ...(matchedHobbies ? { matchedHobbies, hobby: s.hobby as string } : {}),
     ...(s.event === undefined ? {} : { event: decodeEventSchedule(s.event) }),
     recommendations,
     tags,
@@ -273,8 +357,8 @@ function comparisonIdentity(mode: string, s: Record<string, unknown>) {
   const event = s.event === undefined ? undefined : decodeEventSchedule(s.event)
   return `${mode}:comparison:${norm(s.name)}|${norm(s.area)}${event ? `|event:${event.startDate}:${event.endDate}:${norm(event.venue)}` : ''}`
 }
-function duplicateCount(v: unknown): number {
-  if (!Number.isInteger(v) || Number(v) < 0 || Number(v) > 20)
+function duplicateCount(v: unknown, max: number): number {
+  if (!Number.isInteger(v) || Number(v) < 0 || Number(v) > max)
     throw new Error('重複件数が不正です。')
   return Number(v)
 }

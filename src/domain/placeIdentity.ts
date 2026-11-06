@@ -2,6 +2,8 @@ import type { EventSchedule } from './eventSearch.ts'
 import reviews from '../data/placeIdentityReviews.json' with { type: 'json' }
 
 interface Candidate {
+  matchedHobbies?: string[]
+  hobby?: string
   event?: EventSchedule
   name: string
   area: string
@@ -78,6 +80,14 @@ export function mergePlace<T extends Candidate>(first: T, second: T): T {
       : {}),
     recommendations,
     tags,
+    ...(first.hobby || second.hobby ? { hobby: first.hobby ?? second.hobby } : {}),
+    ...(first.matchedHobbies || second.matchedHobbies
+      ? {
+          matchedHobbies: [
+            ...new Set([...(first.matchedHobbies ?? []), ...(second.matchedHobbies ?? [])]),
+          ],
+        }
+      : {}),
     ...(explicit ? { likedFor: selected.filter((tag) => tags.includes(tag)) } : {}),
   }
 }

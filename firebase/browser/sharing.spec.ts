@@ -55,7 +55,9 @@ async function add(page: Page, name = '散歩の候補', url = 'https://example.
   await page.getByLabel('場所の名前', { exact: true }).fill(name)
   await page.getByLabel('公開ページのURL', { exact: true }).fill(url)
   await page.getByRole('button', { name: '共有前に内容を確認' }).click()
-  await expect(page.getByRole('dialog')).toContainText('個人メモ・学習・不安・現在地は送信しません')
+  await expect(page.getByRole('dialog')).toContainText(
+    '自分用メモ・チェックの回答・不安・現在地は送信しません',
+  )
   await page.getByLabel('共有メモ（任意）', { exact: true }).fill('一緒に行ってみたい')
   await page.getByRole('button', { name: 'この内容を共有リストに追加' }).click()
   await expect(page.getByRole('button', { name: '共有メモを編集' })).toBeVisible()

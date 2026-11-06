@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-03T07:37:00.223Z",
+  "scenario": "Simulated invalid response, followed by ONE real explicit retry; synthetic public Shinjuku coordinates; nature and food hobbies",
+  "requests": 2,
+  "realSearchRequests": 1,
+  "completeSeconds": 8.029,
+  "homeSeconds": 9.816,
+  "cards": 10,
+  "confirmedTravel": 10,
+  "errors": [],
+  "http": 200,
+  "spots": 10,
+  "backend": "brave",
+  "reports": [
+    {
+      "state": "completed",
+      "error": null,
+      "elapsedMs": 7735
+    }
+  ]
+}

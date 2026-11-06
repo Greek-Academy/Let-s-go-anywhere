@@ -37,33 +37,28 @@ test('JST midnight, Sunday remainder, next weekend and leap-day validity', () =>
   })
   assert.ok(eventDateError({ start: addDays(dates.start, -1), end: dates.end }))
 })
-test('event query has only location/date, bounded dates and the same paid-tool limits', () => {
-  const valid = validateComparisonQuery(query)
-  const o = buildComparisonRequest('openai', valid),
-    a = buildComparisonRequest('anthropic', valid)
-  const input = JSON.parse(o.input)
-  assert.deepEqual(input, JSON.parse(a.messages[0].content))
-  assert.equal(input.theme, undefined)
-  assert.deepEqual(input.eventDates, dates)
-  assert.match(o.instructions, /Exclude undated, past-year, cancelled/)
-  assert.equal(o.max_tool_calls, 2)
-  assert.equal(a.tools[0].max_uses, 2)
-  assert.equal(
-    o.text.format.schema.properties.spots.items.properties.event.properties.status.enum[0],
-    'scheduled',
-  )
-  for (const bad of [
-    { ...query, theme: 'カフェ' },
-    { ...query, eventDates: undefined },
-    { ...query, purpose: 'anything' },
-    { ...query, eventDates: { start: dates.start, end: addDays(dates.start, 3) } },
+test('retired event requests are rejected before building any provider prompt', () => {
+  for (const retired of [
+    query,
+    { ...query, purpose: undefined },
     {
-      ...query,
-      eventDates: { start: addDays(dates.start, -365), end: addDays(dates.start, -365) },
+      stationId: query.stationId,
+      theme: 'イベント',
+      drive: {
+        mode: 'events',
+        hobbies: [],
+        duration: '1〜5時間',
+        activities: [],
+        road: 'こだわらない',
+        timing: 'こだわらない',
+        pace: 'こだわらない',
+      },
     },
-    { ...query, eventDates: { start: addDays(dates.start, 366), end: addDays(dates.start, 366) } },
-  ])
-    assert.throws(() => validateComparisonQuery(bad))
+  ]) {
+    assert.throws(() => validateComparisonQuery(retired), /イベント検索は終了/)
+    for (const provider of ['openai', 'anthropic', 'gemini'])
+      assert.throws(() => buildComparisonRequest(provider, retired), /イベント検索は終了/)
+  }
 })
 test('both providers omit missing year/date, cancellation, wrong occurrence day and fabricated citations', () => {
   for (const provider of ['openai', 'anthropic']) {

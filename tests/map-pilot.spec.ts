@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expectMapStationCount } from './support/mapFixture'
 import { test, expect, mapFixture, mapPattern } from './support/mapFixture'
 import { TileCache, tileUrl, MissingTileError } from '../src/domain/mapTiles'
@@ -12,7 +13,7 @@ test('unavailable background tiles are distinguished from network failures', asy
   expect(cache.snapshot().failed).toBe(0)
   await context.route(mapPattern, (route) => route.fulfill({ status: 404, body: '' }))
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await page.getByRole('navigation').getByRole('button', { name: '車を探す', exact: true }).click()
   await expect(page.locator('.real-map-status')).toContainText('背景地図データがありません')
   await expectMapStationCount(page, 10)
@@ -88,7 +89,7 @@ test('three regions retain map/list selection, use only tile requests and reuse 
     return route.fulfill({ body: mapFixture, contentType: 'application/vnd.mapbox-vector-tile' })
   })
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await page.getByRole('navigation').getByRole('button', { name: '車を探す', exact: true }).click()
   for (const [name, count] of [
     ['大阪・梅田', 6],
@@ -126,7 +127,7 @@ test('malformed tiles show failure and can be retried without affecting stations
 }) => {
   await context.route(mapPattern, (route) => route.fulfill({ body: 'not a tile' }))
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await page.getByRole('navigation').getByRole('button', { name: '車を探す', exact: true }).click()
   await expect(page.locator('.real-map-status')).toContainText('地図を読み込めません')
   await expectMapStationCount(page, 10)

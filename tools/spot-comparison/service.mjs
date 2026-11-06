@@ -5,23 +5,47 @@ import { randomUUID } from 'node:crypto'
 import { Ledger } from '../spot-research/ledger.mjs'
 import { PilotError } from '../spot-research/core.mjs'
 import {
-  PROVIDERS,
   MODELS,
   SEARCH_LIMIT,
   COMPARISON_LIMIT,
+  localComparisonLimit,
   validateComparisonQuery,
   combineCandidates,
+  searchProviders,
 } from './core.mjs'
 import { runComparison } from './providers.mjs'
 
-export function createComparison({ demo, apiKey, anthropicApiKey, directory, fetcher, timeoutMs }) {
-  const ledger = new Ledger(directory, COMPARISON_LIMIT)
+export function createComparison({
+  demo,
+  apiKey,
+  anthropicApiKey,
+  routesApiKey,
+  geminiApiKey,
+  braveApiKey,
+  searchProvider = 'comparison',
+  directory,
+  fetcher,
+  timeoutMs,
+  maxAttempts = COMPARISON_LIMIT,
+}) {
+  const limit = localComparisonLimit(maxAttempts)
+  const providers = searchProviders(searchProvider)
+  const ledger = new Ledger(directory, limit)
   let busy = false
   let sampleResult = null
   const resultFile = join(directory, 'result.json')
-  const configured = () => demo || Boolean(apiKey && anthropicApiKey)
+  const configured = () =>
+    demo ||
+    (searchProvider === 'brave'
+      ? Boolean(geminiApiKey && braveApiKey)
+      : searchProvider === 'gemini'
+        ? Boolean(geminiApiKey)
+        : Boolean(apiKey && anthropicApiKey))
   return {
     lastResult() {
+      // Grounded Gemini answers and search suggestions remain in the current view only.
+      // In particular, do not persist suggestions that might contain location queries.
+      if (searchProvider !== 'comparison') return null
       if (demo) return sampleResult
       try {
         const result = JSON.parse(readFileSync(resultFile, 'utf8'))
@@ -43,22 +67,33 @@ export function createComparison({ demo, apiKey, anthropicApiKey, directory, fet
     status: () => ({
       demo,
       configured: configured(),
+      searchProvider,
       busy,
-      maxAttempts: COMPARISON_LIMIT,
+      maxAttempts: limit,
       attempts: demo ? [] : ledger.read().attempts,
-      providers: PROVIDERS.map((provider) => ({
+      providers: providers.map((provider) => ({
         provider,
         model: MODELS[provider],
-        configured: demo || Boolean(provider === 'openai' ? apiKey : anthropicApiKey),
+        configured:
+          demo ||
+          Boolean(
+            provider === 'gemini' ? geminiApiKey : provider === 'openai' ? apiKey : anthropicApiKey,
+          ),
       })),
-      maxSearchesPerProvider: SEARCH_LIMIT,
+      // Google Search controls its own query count; the prompt target is not a hard cap.
+      maxSearchesPerProvider:
+        searchProvider === 'brave' ? 4 : searchProvider === 'gemini' ? null : SEARCH_LIMIT,
     }),
     async search(input) {
       const query = validateComparisonQuery(input)
       if (!configured())
         throw new PilotError(
           'key',
-          'OpenAI・Anthropic両方のAPIキーを .env.research.local に設定し、検索サーバーを再起動してください。まだAPIへ送信していません。',
+          searchProvider === 'brave'
+            ? 'Brave SearchとGeminiのAPIキーを設定し、検索サーバーを再起動してください。まだAPIへ送信していません。'
+            : searchProvider === 'gemini'
+              ? 'GeminiのAPIキーを .env.gemini.local に設定し、検索サーバーを再起動してください。まだAPIへ送信していません。'
+              : 'OpenAI・Anthropic両方のAPIキーを .env.research.local に設定し、検索サーバーを再起動してください。まだAPIへ送信していません。',
           503,
         )
       if (busy) throw new PilotError('busy', '比較検索中です。結果を待ってください。', 409)
@@ -71,6 +106,10 @@ export function createComparison({ demo, apiKey, anthropicApiKey, directory, fet
           demo,
           apiKey,
           anthropicApiKey,
+          routesApiKey,
+          geminiApiKey,
+          braveApiKey,
+          searchProvider,
           fetcher,
           timeoutMs,
         })
@@ -82,6 +121,7 @@ export function createComparison({ demo, apiKey, anthropicApiKey, directory, fet
             { providers: reports },
             Date.now() - started,
           )
+        if (searchProvider !== 'comparison') return result
         if (demo) sampleResult = withoutSearchCoordinates(result)
         else {
           mkdirSync(directory, { recursive: true, mode: 0o700 })

@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-03T01:06:51.204Z",
+  "scenario": "New onboarding; synthetic public Shinjuku station coordinates; nature and food hobbies",
+  "homeSeconds": 8.69,
+  "calls": 1,
+  "count": 10,
+  "confirmedTravel": 10,
+  "errors": [],
+  "httpStatus": 200,
+  "spots": 10,
+  "backend": "brave",
+  "reports": [
+    {
+      "provider": "gemini",
+      "state": "completed"
+    }
+  ],
+  "completionObservedSeconds": 8.594,
+  "demo": false,
+  "serverElapsedMs": 7450
+}

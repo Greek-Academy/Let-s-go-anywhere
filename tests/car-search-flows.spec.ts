@@ -1,10 +1,11 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
 import { chooseStation } from './helpers/discovery'
 
 async function enter(page: Page) {
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await page.goto('/#/cars/sample')
 }
 const saved = (page: Page) =>
@@ -105,10 +106,9 @@ test('changing category clears incompatible provider; empty area and narrow enla
   await enter(page)
   await page.goto('/#/cars/search')
   await expect(page.getByRole('button', { name: /出発エリアを使う/ })).toBeDisabled()
-  await page.goto('/#/discover')
-  await page.getByRole('button', { name: '出発エリアを変更', exact: true }).click()
+  await page.goto('/#/profile/edit')
   await chooseStation(page, '出発する最寄駅', '新宿', '新宿駅（東京都）')
-  await page.getByRole('button', { name: '出発エリアを保存', exact: true }).click()
+  await page.getByRole('button', { name: '変更を保存', exact: true }).click()
   await page.goto('/#/settings')
   await page.getByRole('switch', { name: /文字を少し大きくする/ }).check()
   await page.goto('/#/cars/search')

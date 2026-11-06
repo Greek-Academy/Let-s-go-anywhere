@@ -1,9 +1,6 @@
 import type { WebSpot } from '../domain/webSearch'
-import { sameWebSpot } from '../domain/webSearch'
-import { groupPlaces } from '../domain/placeIdentity'
 import { providerNames } from '../domain/recommendations'
-import { useApp } from '../state/AppState'
-import { Chip, Tag } from './ui'
+import { Tag } from './ui'
 
 export function RecommendationBadges({ spot }: { spot: WebSpot }) {
   if (!spot.recommendations) return null
@@ -17,57 +14,19 @@ export function RecommendationBadges({ spot }: { spot: WebSpot }) {
     </div>
   )
 }
-export function RecommendationFeedback({ spot }: { spot: WebSpot }) {
-  const { state, update, storageProtected } = useApp()
-  const saved = groupPlaces(state.savedWebSpots).find((s) => sameWebSpot(s, spot))
-  const availableTags = saved?.tags ?? spot.tags ?? []
-  if (!spot.recommendations || !availableTags.length) return null
-  const selected = saved?.likedFor ?? saved?.tags ?? []
-  const change = (next: string[]) =>
-    update((s) => ({
-      ...s,
-      savedWebSpots: s.savedWebSpots.map((item) =>
-        sameWebSpot(item, spot)
-          ? { ...item, likedFor: next.filter((tag) => item.tags?.includes(tag)) }
-          : item,
-      ),
-    }))
+export function RecommendationFeatures({ spot }: { spot: WebSpot }) {
+  const tags = spot.tags ?? []
+  if (!spot.recommendations || !tags.length) return null
   return (
     <div className="recommendation-feedback">
-      <p className="small muted">
-        {saved ? '好きなところを選べます（任意）' : 'AIが整理した特徴・未確認'}
-      </p>
+      <p className="small muted">AIが整理した特徴・未確認</p>
       <div className="chips wrap">
-        {availableTags.map((tag) =>
-          saved ? (
-            <Chip
-              key={tag}
-              selected={selected.includes(tag)}
-              disabled={storageProtected}
-              onClick={() =>
-                change(
-                  selected.includes(tag) ? selected.filter((t) => t !== tag) : [...selected, tag],
-                )
-              }
-            >
-              {tag}
-            </Chip>
-          ) : (
-            <Tag key={tag} tone="neutral">
-              {tag}
-            </Tag>
-          ),
-        )}
+        {tags.map((tag) => (
+          <Tag key={tag} tone="neutral">
+            {tag}
+          </Tag>
+        ))}
       </div>
-      {saved && (
-        <button
-          className="text-button small"
-          disabled={storageProtected || !selected.length}
-          onClick={() => change([])}
-        >
-          このいいねを好み順に使わない
-        </button>
-      )}
     </div>
   )
 }

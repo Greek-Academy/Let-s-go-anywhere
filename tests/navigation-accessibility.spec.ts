@@ -1,3 +1,5 @@
+import { openHomeForTest } from './helpers/onboarding'
+import { showUnscopedSamples } from './helpers/discovery'
 import { expect, test } from './support/mapFixture'
 import type { Locator, Page } from '@playwright/test'
 
@@ -7,7 +9,7 @@ async function keyboardActivate(page: Page, target: Locator) {
 }
 async function enter(page: Page, route = '/discover') {
   await page.goto('/#/welcome')
-  await keyboardActivate(page, page.getByRole('button', { name: 'まずは見てみる' }))
+  await openHomeForTest(page)
   if (route !== '/discover') await page.goto('/#' + route)
 }
 
@@ -24,17 +26,31 @@ test.afterEach(async ({ page }, info) => {
 
 test('keyboard onboarding and all four tabs move focus to the new screen without opening a text field', async ({
   page,
+  browserName,
 }) => {
   await page.goto('/#/welcome')
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   await keyboardActivate(page, page.getByRole('button', { name: 'はじめる', exact: true }))
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
-  await expect(page.getByRole('combobox', { name: '出発する最寄駅' })).not.toBeFocused()
-  for (let step = 0; step < 3; step++) {
-    await keyboardActivate(page, page.getByRole('button', { name: 'スキップ', exact: true }))
-    await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
-  }
-  for (const name of ['行きたい', '車を探す', '学ぶ', '見つける']) {
+  await page.keyboard.press('End')
+  await keyboardActivate(
+    page,
+    page.getByRole('button', { name: 'さっそく、趣味を選ぶ', exact: true }),
+  )
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+  await expect(page.getByRole('button', { name: '自然', exact: true })).not.toBeFocused()
+  await keyboardActivate(page, page.getByRole('button', { name: 'スキップ', exact: true }))
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+  await expect(page.getByRole('alert')).toContainText('検索を完了できませんでした')
+  await keyboardActivate(page, page.getByRole('button', { name: 'ホームへ', exact: true }))
+  await expect(page).toHaveURL(/#\/discover$/)
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+  // WebKit uses Option+Tab to include buttons in keyboard navigation by default.
+  await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab')
+  await expect(
+    page.getByRole('button', { name: '出発地を選ぶ・変更する', exact: true }),
+  ).toBeFocused()
+  for (const name of ['行きたい', '車を探す', 'マイページ', '見つける']) {
     await keyboardActivate(
       page,
       page.getByRole('navigation').getByRole('button', { name, exact: true }),
@@ -54,6 +70,7 @@ test('detail back and browser forward restore the originating card and its scrol
   page,
 }) => {
   await enter(page)
+  await showUnscopedSamples(page)
   const card = page.locator('.event-photo-button').last()
   const label = await card.getAttribute('aria-label')
   await card.focus()
@@ -63,7 +80,10 @@ test('detail back and browser forward restore the originating card and its scrol
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   await keyboardActivate(page, page.getByRole('button', { name: '戻る', exact: true }))
   await expect(page.getByRole('button', { name: label!, exact: true })).toBeFocused()
-  expect(await page.locator('#app-scroll').evaluate((el) => el.scrollTop)).toBeCloseTo(scroll, 0)
+  // WebKit can round the restored offset by one CSS pixel in the scaled phone frame.
+  // Keep checking the originating card's focus above and the actual scroll offset here.
+  const restoredScroll = await page.locator('#app-scroll').evaluate((el) => el.scrollTop)
+  expect(Math.abs(restoredScroll - scroll)).toBeLessThanOrEqual(1)
   await page.goForward()
   await expect(page.getByRole('button', { name: '戻る', exact: true })).toBeFocused()
   await page.goBack()
@@ -74,10 +94,13 @@ test('same-page filtering keeps focus, while profile navigation returns to the m
   page,
 }) => {
   await enter(page)
-  const filter = page.getByRole('button', { name: 'イベント', exact: true })
+  const filter = page.getByRole('button', { name: '気分から選ぶ', exact: true })
   await keyboardActivate(page, filter)
   await expect(filter).toBeFocused()
-  await keyboardActivate(page, page.getByRole('button', { name: 'マイページを開く' }))
+  await keyboardActivate(
+    page,
+    page.getByRole('navigation').getByRole('button', { name: 'マイページ', exact: true }),
+  )
   const edit = page.getByRole('button', { name: 'プロフィール・出発エリア', exact: true })
   await keyboardActivate(page, edit)
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()

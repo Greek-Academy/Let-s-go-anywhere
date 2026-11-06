@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expectMapStationCount } from './support/mapFixture'
 import { test, expect, mapPattern } from './support/mapFixture'
 import type { Page } from '@playwright/test'
@@ -13,7 +14,7 @@ const persisted = (page: Page) =>
   page.evaluate(() => JSON.parse(localStorage.getItem('driveplus.mock.v1')!))
 async function enter(page: Page) {
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await page.getByRole('navigation').getByRole('button', { name: '車を探す', exact: true }).click()
   await expectMapStationCount(page, 10)
 }

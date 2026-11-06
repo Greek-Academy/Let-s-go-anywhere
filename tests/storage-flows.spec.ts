@@ -86,7 +86,7 @@ test('invalid JSON is kept until explicit reset; cancel and a narrow-screen dial
   await page.setViewportSize({ width: 320, height: 568 })
   const raw = '{"memo":"未完了の保存データ"'
   await seed(page, raw, '/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる' }).click()
+  await page.getByRole('button', { name: 'はじめる', exact: true }).click()
   expect(await stored(page)).toBe(raw)
   await page.getByRole('button', { name: '保存の状態を確認' }).click()
   await page.getByRole('button', { name: 'モックの保存データを削除' }).click()
@@ -212,7 +212,7 @@ test('markup and hostile URLs stay text and do not become published content or n
   await expect(page.getByRole('dialog').getByRole('link')).toHaveCount(0)
   await page.getByRole('button', { name: 'アプリに戻る', exact: true }).click()
   await page.getByRole('navigation').getByRole('button', { name: '見つける', exact: true }).click()
-  await expect(page.locator('.event-list')).not.toContainText(markup)
+  await expect(page.locator('.discover-screen')).not.toContainText(markup)
   expect(requests).toEqual([])
   expect(await stored(page)).toBe(raw)
 })

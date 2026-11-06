@@ -1,4 +1,6 @@
 import type { EventSelection } from '../domain/eventSearch'
+import { emptyDriveChoices } from '../domain/driveSearch'
+import type { DriveChoices } from '../domain/driveSearch'
 import { createRealMapState } from '../domain/realStations'
 import type { RealMapState } from '../domain/realStations'
 import { userProfile } from '../data/options'
@@ -18,6 +20,7 @@ import { emptyConditions } from '../domain/tripConditions'
 import type { TripConditions, ConditionFilter } from '../domain/tripConditions'
 
 export interface AppState {
+  driveChoices: DriveChoices
   realMap: RealMapState
   carSearch: CarSearchConditions
   searchConditions: TripConditions
@@ -30,6 +33,7 @@ export interface AppState {
   savedStations: string[]
   hiddenEvents: string[]
   links: SavedLink[]
+  /** Retired learning records remain in device storage; no active lesson UI. */
   learned: string[]
   learningDates: Record<string, string>
   quiz: {
@@ -53,7 +57,10 @@ export interface AppState {
     offset: { x: number; y: number }
   }
   discover: {
+    driveMode?: 'default' | 'free' | 'conditions'
+    usageSamples?: boolean
     category: string
+    /** Retired date selector, accepted only when migrating old device data. */
     eventSelection?: EventSelection
     search: string
     tag: string
@@ -65,6 +72,7 @@ export interface AppState {
   settings: { largeText: boolean; reducedMotion: boolean }
 }
 export const createInitialState = (): AppState => ({
+  driveChoices: emptyDriveChoices(),
   realMap: createRealMapState(),
   carSearch: { area: null, type: 'すべて', provider: null },
   searchConditions: emptyConditions(),
@@ -94,12 +102,13 @@ export const createInitialState = (): AppState => ({
     offset: { x: 0, y: 0 },
   },
   discover: {
+    driveMode: 'default',
+    usageSamples: false,
     category: 'おすすめ',
     search: '',
     tag: '',
     region: 'origin',
     stationId: null,
-    eventSelection: { mode: 'today', date: '' },
   },
   schoolFilters: { area: 'すべて', practice: 'すべて', budget: 'すべて', vehicle: 'すべて' },
   settings: { largeText: false, reducedMotion: false },

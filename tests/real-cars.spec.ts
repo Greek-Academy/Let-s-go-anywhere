@@ -1,3 +1,4 @@
+import { openHomeForTest } from './helpers/onboarding'
 import { expectMapStationCount } from './support/mapFixture'
 import { expect, test } from './support/mapFixture'
 import type { Page } from '@playwright/test'
@@ -17,7 +18,7 @@ import { mapPattern, mapFixture } from './support/mapFixture'
 
 async function enter(page: Page) {
   await page.goto('/#/welcome')
-  await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+  await openHomeForTest(page)
   await page.getByRole('navigation').getByRole('button', { name: '車を探す', exact: true }).click()
 }
 const state = (page: Page) =>

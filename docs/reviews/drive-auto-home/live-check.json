@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-20T15:32:05.943Z",
+  "mode": "live",
+  "automaticPosts": 1,
+  "returnedCards": 6,
+  "calculated": 5,
+  "unconfirmed": 1,
+  "providers": [
+    {
+      "provider": "openai",
+      "state": "completed",
+      "count": 8
+    },
+    {
+      "provider": "anthropic",
+      "state": "completed",
+      "count": 0
+    }
+  ],
+  "sourcesInDetail": 1,
+  "privateDataAbsent": true,
+  "pageErrors": 0,
+  "providerFilters": 0,
+  "metricsSections": 0
+}

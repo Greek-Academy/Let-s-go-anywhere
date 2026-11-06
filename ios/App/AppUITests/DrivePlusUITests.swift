@@ -125,7 +125,7 @@ final class DrivePlusUITests: XCTestCase {
         shot.name = "genre-only-native"
         shot.lifetime = .keepAlways
         add(shot)
-        tap("学ぶ")
+        tap("マイページ")
         tap("見つける")
     }
 
@@ -201,7 +201,7 @@ final class DrivePlusUITests: XCTestCase {
         add(shot)
         web.swipeDown()
         tap("戻る")
-        tap("学ぶ")
+        tap("マイページ")
         tap("見つける")
     }
 
@@ -287,7 +287,7 @@ final class DrivePlusUITests: XCTestCase {
         shot.lifetime = .keepAlways
         add(shot)
         XCTAssertTrue(bottom.isHittable, "The bottom of the home screen must be reachable")
-        tap("学ぶ")
+        tap("マイページ")
     }
 
     /// Change an unsupported simulator position to a public Japanese station.
@@ -412,56 +412,6 @@ final class DrivePlusUITests: XCTestCase {
         XCTAssertTrue(point.waitForExistence(timeout: 10))
     }
 
-    @MainActor
-    func testLearningColumns() throws {
-        continueAfterFailure = false
-        let app = XCUIApplication()
-        app.launchArguments += ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
-        app.launch()
-        let web = app.webViews.firstMatch
-        XCTAssertTrue(web.waitForExistence(timeout: 30))
-        let controls = web.descendants(matching: .any).matching(NSPredicate(
-            format: "elementType == %d OR elementType == %d",
-            XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.switch.rawValue))
-        func tap(_ label: String) {
-            let button = controls.matching(NSPredicate(format: "label == %@", label)).firstMatch
-            XCTAssertTrue(button.waitForExistence(timeout: 15), label)
-            for _ in 0..<16 {
-                if button.isHittable { break }
-                if label == "戻る" { web.swipeDown() } else { web.swipeUp() }
-            }
-            XCTAssertTrue(button.isHittable, label)
-            button.tap()
-        }
-        func capture(_ name: String) {
-            let shot = XCTAttachment(screenshot: app.screenshot())
-            shot.name = name
-            shot.lifetime = .keepAlways
-            add(shot)
-        }
-        if web.buttons["まずは見てみる"].waitForExistence(timeout: 3) { tap("まずは見てみる") }
-        tap("学ぶ")
-        tap("道中の判断")
-        let routeColumn = "曲がり損ねたら、予定を直せばいいを読む"
-        XCTAssertTrue(controls.matching(NSPredicate(format: "label == %@", routeColumn)).firstMatch.waitForExistence(timeout: 10))
-        XCTAssertFalse(controls.matching(NSPredicate(format: "label == %@", "借りた車、走り出す前にどこを見る？を読む")).firstMatch.exists)
-        capture("columns-01-filter")
-        tap(routeColumn)
-        XCTAssertTrue(web.staticTexts["こんな場面、ありませんか？"].firstMatch.waitForExistence(timeout: 10))
-        capture("columns-02-detail")
-        tap("コラム一覧へ戻る")
-        XCTAssertTrue(controls.matching(NSPredicate(format: "label == %@", routeColumn)).firstMatch.waitForExistence(timeout: 10))
-        tap("同乗者との過ごし方")
-        let focusColumn = "「いま集中するね」を、ふたりの合図にを読む"
-        tap(focusColumn)
-        XCTAssertTrue(web.staticTexts["気づきコラム"].firstMatch.waitForExistence(timeout: 10))
-        capture("columns-03-companions")
-        tap("戻る")
-        XCTAssertTrue(controls.matching(NSPredicate(format: "label == %@", focusColumn)).firstMatch.waitForExistence(timeout: 10))
-        XCTAssertFalse(controls.matching(NSPredicate(format: "label == %@", routeColumn)).firstMatch.exists)
-        capture("columns-04-back")
-    }
-
     /// Device-only sharing demo. Run on a dedicated simulator with synthetic data.
     @MainActor
     func testSharedWishlistDemo() throws {
@@ -553,7 +503,7 @@ final class DrivePlusUITests: XCTestCase {
             capture("01-welcome")
             tap("まずは見てみる")
         }
-        for tab in ["行きたい", "車を探す", "学ぶ", "見つける"] { tap(tab) }
+        for tab in ["行きたい", "車を探す", "マイページ", "見つける"] { tap(tab) }
         capture("02-discover")
         tap("探す地域を変更")
         tap("別の駅の周辺")
@@ -583,29 +533,24 @@ final class DrivePlusUITests: XCTestCase {
         pin.tap()
         capture("04-map")
         tap("閉じる")
-        tap("学ぶ")
-        tap("学習メモを開く")
+        tap("マイページ")
+        tap("自分用メモ")
         let memo = web.textViews.firstMatch
         XCTAssertTrue(memo.waitForExistence(timeout: 10))
         memo.tap()
-        memo.typeText("Simulator learning memo ")
+        memo.typeText("Simulator personal memo ")
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5))
-        capture("05-learning-keyboard")
+        capture("05-personal-note-keyboard")
         let done = app.buttons["完了"].exists ? app.buttons["完了"] : app.buttons["Done"]
         XCTAssertTrue(done.waitForExistence(timeout: 5))
         done.tap()
-        tap("学ぶに戻る")
-        tap("運転の再開")
-        tap("久しぶりの運転は、ペーパードライバー講習で練習しようを読む")
-        XCTAssertTrue(web.staticTexts["一人で走り出す前に、教わりながら練習する"].firstMatch.waitForExistence(timeout: 10))
-        capture("06-return-to-driving-column")
-        tap("コラム一覧へ戻る")
+        tap("マイページに戻る")
         app.terminate()
         app.launch()
-        tap("学ぶ")
-        tap("学習メモを開く")
-        XCTAssertTrue((memo.value as? String ?? "").contains("Simulator learning memo"))
-        capture("07-learning-memo-restored")
+        tap("マイページ")
+        tap("自分用メモ")
+        XCTAssertTrue((memo.value as? String ?? "").contains("Simulator personal memo"))
+        capture("07-personal-note-restored")
     }
 
     @MainActor

@@ -75,7 +75,7 @@ for (const [name, engine] of [
   }
   try {
     await page.goto(base.href + '#/welcome')
-    await page.getByRole('button', { name: 'まずは見てみる', exact: true }).click()
+    await page.goto(new URL('#/discover', page.url()).href)
     const start = performance.now()
     await page
       .getByRole('navigation')

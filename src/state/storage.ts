@@ -1,4 +1,5 @@
 import { createInitialState } from './model'
+import { decodeDriveChoices } from '../domain/driveSearch'
 import { stateStore } from '../platform/stateStore'
 import { isNativeApp } from '../platform/runtime'
 import type { AppState } from './model'
@@ -94,6 +95,18 @@ const sharedFields = [
   'knowledge',
 ] as const
 const initial = createInitialState()
+// Accept only the known withdrawn pilot shape, then omit it from future saves.
+// Otherwise its extra top-level key would block unrelated profile/outing writes.
+const retiredRamen = shape({
+  dataset: oneOf(['2774febf7f831725e3da3564bfe1f5506d263e66ea2f94146903bb7609207c74']),
+  cursor: number(0, 99, true),
+  answers: (value) => {
+    const entries = Object.entries(object(value))
+    if (entries.some(([key]) => !/^q(?:0[0-9][1-9]|0[1-9]0|100)$/.test(key))) return bad()
+    for (const [, answer] of entries) oneOf(['yes', 'maybe', 'no', 'skip'])(answer)
+    return undefined
+  },
+})
 const conditionsShape = shape(
   { date: text, departAt: text, returnBy: text, budget: text, avoid: list(oneOf(drivingScenes)) },
   { ...initial.searchConditions },
@@ -127,6 +140,13 @@ const consultation: Rule = (v) => {
   return parsed
 }
 const schema: Record<keyof AppState, Rule> = {
+  driveChoices: (value) => {
+    const choices = object(value)
+    // Migrate the former default without discarding other saved preferences.
+    return decodeDriveChoices(
+      choices.duration === '2〜5時間' ? { ...choices, duration: '1〜5時間' } : choices,
+    )
+  },
   realMap: shape({
     mode: oneOf(['map', 'list']),
     type: oneOf(['すべて', 'レンタカー', 'カーシェア']),
@@ -199,6 +219,8 @@ const schema: Record<keyof AppState, Rule> = {
   ),
   discover: shape(
     {
+      driveMode: oneOf(['default', 'free', 'conditions']),
+      usageSamples: bool,
       category: oneOf(['おすすめ', '今週末', 'イベント', 'スポット']),
       eventSelection: shape({ mode: oneOf(['today', 'weekend', 'custom']), date: text }),
       search: text,
@@ -207,6 +229,8 @@ const schema: Record<keyof AppState, Rule> = {
       stationId: nullable(id),
     },
     {
+      driveMode: 'default',
+      usageSamples: false,
       region: initial.discover.region,
       stationId: null,
       eventSelection: { mode: 'today', date: '' },
@@ -229,9 +253,18 @@ export function decodeStoredState(raw: string | null): {
     // Existing v1 records always have a profile and savedEvents. Other missing
     // sections are known legacy fields and receive defaults, not new approval.
     if (!own(data, 'profile') || !own(data, 'savedEvents')) return { state, problem: 'invalid' }
-    let problem: StorageProblem | null = Object.keys(data).some((key) => !own(schema, key))
+    let problem: StorageProblem | null = Object.keys(data).some(
+      (key) => key !== 'ramen' && !own(schema, key),
+    )
       ? 'invalid'
       : null
+    if (own(data, 'ramen')) {
+      try {
+        retiredRamen(data.ramen)
+      } catch {
+        problem = 'invalid'
+      }
+    }
     for (const key of Object.keys(schema) as (keyof AppState)[]) {
       if (!own(data, key)) continue
       try {
@@ -241,10 +274,11 @@ export function decodeStoredState(raw: string | null): {
         problem = 'invalid'
       }
     }
-    if (state.discover.category === '今週末') {
-      state.discover.category = 'イベント'
-      state.discover.eventSelection = { mode: 'weekend', date: '' }
-    } else if (state.discover.category === 'スポット') state.discover.category = 'おすすめ'
+    // Retired event tabs must not hide the home feed or launch a dated search.
+    if (['イベント', '今週末'].includes(state.discover.category))
+      state.discover.driveMode = 'default'
+    state.discover.category = 'おすすめ'
+    delete state.discover.eventSelection
     return { state, problem }
   } catch {
     return { state, problem: 'invalid' }

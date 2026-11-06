@@ -112,6 +112,8 @@ test('unconfirmed and expired input stays out of recommendations but its detail 
   await load(page, draft)
   await open(page)
   const preview = app(page)
+  // An empty card count can pass before the new iframe app has mounted.
+  await expect(preview.getByRole('navigation')).toBeVisible()
   await expect(preview.locator('.event-card')).toHaveCount(0)
   await page.getByRole('button', { name: '入力候補の詳細を見る' }).click()
   await expect(preview.getByRole('heading', { level: 1, name: draft.title })).toBeVisible()
@@ -128,6 +130,8 @@ test('unconfirmed and expired input stays out of recommendations but its detail 
   await close(page)
   await page.getByLabel('名称', { exact: true }).fill('未確認の架空スポット')
   await open(page)
+  // An empty card count can pass before the new iframe app has mounted.
+  await expect(preview.getByRole('navigation')).toBeVisible()
   await expect(preview.locator('.event-card')).toHaveCount(0)
   await page.getByRole('button', { name: '入力候補の詳細を見る' }).click()
   await expect(
@@ -153,13 +157,16 @@ test('identity errors and invalid JSON retain the editor; all tabs and reset sta
   await expect(page.getByLabel('名称', { exact: true })).toHaveValue(sampleDraft().title)
   await open(page)
   const preview = app(page)
-  for (const name of ['車を探す', '学ぶ', '見つける']) {
+  for (const name of ['車を探す', 'マイページ', '見つける']) {
     await preview.getByRole('navigation').getByRole('button', { name, exact: true }).click()
     await expect(
       preview.getByRole('navigation').getByRole('button', { name, exact: true }),
     ).toHaveAttribute('aria-current', 'page')
   }
-  await preview.getByRole('button', { name: 'マイページを開く', exact: true }).click()
+  await preview
+    .getByRole('navigation')
+    .getByRole('button', { name: 'マイページ', exact: true })
+    .click()
   await preview.getByRole('button', { name: '設定', exact: true }).click()
   await expect(preview.getByRole('heading', { name: '確認画面での保存' })).toBeVisible()
   await preview.getByRole('button', { name: 'モックの保存データを削除' }).click()
