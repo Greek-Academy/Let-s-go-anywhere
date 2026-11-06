@@ -1,0 +1,48 @@
+[
+  {
+    "phase": "after",
+    "browser": "mobile",
+    "calls": 1,
+    "heading": "次のドライブ、ここから。",
+    "copy": "選んだ趣味から次のドライブ、ここから。片道 1〜5時間 を目安に",
+    "height": 104.078125,
+    "firstCardTop": 177.078125,
+    "overflow": false
+  },
+  {
+    "browser": "mobile",
+    "scenario": "narrow and larger text",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "browser": "mobile",
+    "scenarios": "hobbies, edited inputs, no hobbies, free text, conditions, no results",
+    "sampleSearches": 5,
+    "paidApiCalls": 0,
+    "blockedExternalHosts": []
+  },
+  {
+    "phase": "after",
+    "browser": "webkit",
+    "calls": 1,
+    "heading": "次のドライブ、ここから。",
+    "copy": "選んだ趣味から次のドライブ、ここから。片道 1〜5時間 を目安に",
+    "height": 104.078125,
+    "firstCardTop": 177.078125,
+    "overflow": false
+  },
+  {
+    "browser": "webkit",
+    "scenario": "narrow and larger text",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "browser": "webkit",
+    "scenarios": "hobbies, edited inputs, no hobbies, free text, conditions, no results",
+    "sampleSearches": 5,
+    "paidApiCalls": 0,
+    "blockedExternalHosts": []
+  }
+]

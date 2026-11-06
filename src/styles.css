@@ -4742,21 +4742,78 @@ small {
   margin-top: 6px;
 }
 
-/* Introduce the search briefly, keeping the destination cards in view. */
+/* A compact introduction lets the destination photos lead the home screen. */
 .drive-results-intro {
-  margin: 0 0 20px;
+  margin: 0 0 18px;
+}
+.drive-results-intro .drive-results-kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: #58786e;
+  font-size: calc(var(--body-size) - 2px);
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+}
+.drive-results-symbol {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #edf5ef;
+  color: var(--teal);
+}
+.drive-results-rule {
+  flex: 1;
+  height: 1px;
+  margin-left: 4px;
+  background: linear-gradient(90deg, #d7e5dd, transparent);
 }
 .drive-results-intro h2 {
-  margin: 0 0 8px;
-  font-size: 19px;
-  line-height: 1.6;
-  letter-spacing: 0.01em;
+  margin: 7px 0 11px;
+  font-size: calc(var(--body-size) + 9px);
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.035em;
 }
-.drive-results-intro p {
+.drive-results-intro h2 span {
+  display: inline-block;
+}
+.drive-results-accent {
+  color: var(--teal);
+}
+.drive-results-intro .drive-results-distance {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
   margin: 0;
-  color: #5e7771;
-  font-size: var(--body-size);
-  line-height: 1.9;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #f1f6f2;
+  color: #58756c;
+  font-size: calc(var(--body-size) - 2px);
+  line-height: 1.6;
+}
+.drive-results-distance svg {
+  flex-shrink: 0;
+  color: var(--teal-dark);
+}
+.drive-results-distance strong {
+  color: var(--teal-dark);
+  font-size: calc(var(--body-size) - 1px);
+  font-weight: 600;
+}
+.drive-results-intro .drive-results-caption {
+  margin: 0;
+  color: #58756c;
+  font-size: calc(var(--body-size) - 1px);
+  line-height: 1.7;
 }
 
 .drive-home-feed {
