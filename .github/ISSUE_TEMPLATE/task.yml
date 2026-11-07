@@ -1,0 +1,41 @@
+name: 課題・改善を相談する
+description: 困っていること、対応したいこと、完了の目安を整理します。
+body:
+  - type: markdown
+    attributes:
+      value: |
+        初めて読む人にも分かる言葉で、1つの課題を記載してください。
+        同じ課題が既にあれば、そのIssueへ追記します。現在の一覧は #1 です。
+        APIキー・パスワード・詳しい現在地などは記載しないでください。
+  - type: textarea
+    id: problem
+    attributes:
+      label: どんな課題がありますか？
+      description: 誰が、どの画面や場面で、何に困っていますか？ 今の状態を具体的に書いてください。
+      placeholder: 例：ホームで候補がすぐに並ぶため、何をもとに選ばれた場所なのかが分かりません。
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: どう対応したいですか？
+      description: 使う人にとってどうなるとよいかを書きます。方法が未定なら、その旨と相談したい点を書いてください。
+      placeholder: 例：選んだ趣味と片道時間が分かる短い案内を、パネルの上に表示したいです。検索処理は変えません。
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: 何ができたら完了ですか？
+      description: 操作と期待する結果を1〜3個ほど挙げます。調査なら、何が分かればよいかを書いてください。
+      placeholder: |
+        - [ ] 趣味から検索すると、趣味と片道時間の目安が表示される。
+        - [ ] 自由入力から探したときも、その検索に合う案内になる。
+        - [ ] スマホで読みやすく、先頭のパネルも見える。
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 補足・画面画像・関連するIssue（任意）
+      description: 不具合なら再現する操作・端末・表示文言、改善なら参考画像を添えてください。費用・保存データ・外部送信への影響が分かればここへ書きます。
