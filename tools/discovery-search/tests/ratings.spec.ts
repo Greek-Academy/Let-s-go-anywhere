@@ -111,25 +111,36 @@ test('評価・件数・Google表記とリンクを表示し、評価なしの�
 test('10分経過後は評価を消して経路のGoogle表記を戻す。再取得リクエストは行わない', async ({
   page,
 }) => {
+  const now = Date.now()
+  await page.clock.install({ time: now })
   const result = await fixture()
-  result.spots[0].googleRating.checkedAt = new Date(Date.now() - 597000).toISOString()
-  result.spots[0].googleRating.expiresAt = new Date(Date.now() + 3000).toISOString()
-  // Exactly ten minutes, including any clock tick between construction calls.
-  result.spots[0].googleRating.expiresAt = new Date(
-    Date.parse(result.spots[0].googleRating.checkedAt) + 600000,
-  ).toISOString()
+  // Leave ample time to render on CI, then advance only the browser clock.
+  // The rating is five minutes old; the newly calculated travel time stays valid.
+  result.spots[0].googleRating.checkedAt = new Date(now - 300000).toISOString()
+  result.spots[0].googleRating.expiresAt = new Date(now + 300000).toISOString()
   let requests = 0
+  let searches = 0
+  page.on('request', (request) => {
+    if (
+      request.method() === 'POST' &&
+      new URL(request.url()).pathname === '/api/spot-search/compare'
+    )
+      searches++
+  })
   await page.route('https://places.googleapis.com/**', (r) => {
     requests++
     return r.abort()
   })
   await enter(page, result)
   await expect(page.locator('.google-place-rating')).toHaveCount(1)
-  await expect(page.locator('.google-place-rating')).toHaveCount(0, { timeout: 6000 })
+  expect(searches).toBe(1)
+  await page.clock.fastForward(300001)
+  await expect(page.locator('.google-place-rating')).toHaveCount(0)
   await expect(
     page.locator('.web-spot-card').first().getByText('Google Maps', { exact: true }),
   ).toHaveCount(1)
   expect(requests).toBe(0)
+  expect(searches).toBe(1)
 })
 
 test('壊れた評価だけを捨て、サンプルの回答を本物の評価として表示しない', async ({ page }, info) => {
