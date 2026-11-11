@@ -171,8 +171,10 @@ export function travelTimeLabel(seconds: number): string {
   const minutes = Math.ceil(seconds / 60)
   return `${Math.floor(minutes / 60) ? Math.floor(minutes / 60) + '時間' : ''}${minutes % 60 ? (minutes % 60) + '分' : minutes === 0 ? '1分未満' : ''}`
 }
-/** Route durations belong to the current origin and are never saved or shared. */
-export function withoutDriveTravel<T extends { travel?: DriveTravel }>(spot: T): Omit<T, 'travel'> {
-  const { travel: _travel, ...rest } = spot
+/** Google route and rating content stays in the current view, never saved or shared. */
+export function withoutDriveTravel<T extends { travel?: DriveTravel; googleRating?: unknown }>(
+  spot: T,
+): Omit<T, 'travel' | 'googleRating'> {
+  const { travel: _travel, googleRating: _googleRating, ...rest } = spot
   return rest
 }

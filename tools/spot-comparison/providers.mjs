@@ -1,3 +1,4 @@
+import { addPlaceRatings } from './ratings.mjs'
 import { PilotError } from '../spot-research/core.mjs'
 import {
   MODELS,
@@ -60,6 +61,7 @@ export async function runComparison({
   demo = false,
   apiKey,
   anthropicApiKey,
+  placesApiKey,
   routesApiKey,
   geminiApiKey,
   braveApiKey,
@@ -215,10 +217,12 @@ export async function runComparison({
     fetcher,
   })
 
+  const rated = await addPlaceRatings(driving.spots, { apiKey: placesApiKey, demo, fetcher })
   return {
     ...combined,
     ...(searchProvider === 'brave' ? { searchBackend: 'brave' } : {}),
-    spots: driving.spots,
+    spots: rated.spots,
+    placeRatings: rated.usage,
     omitted: results.reduce((sum, r) => sum + r.omitted, 0) + driving.excluded,
     reports,
     ...(results.find((r) => r.searchAttribution)?.searchAttribution

@@ -33,6 +33,7 @@ export function createPilot({
   demo = false,
   apiKey = '',
   anthropicApiKey = '',
+  placesApiKey,
   routesApiKey = '',
   geminiApiKey = '',
   braveApiKey = '',
@@ -48,6 +49,7 @@ export function createPilot({
     demo,
     apiKey,
     anthropicApiKey,
+    placesApiKey,
     routesApiKey,
     geminiApiKey,
     braveApiKey,
@@ -225,6 +227,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   let apiKey = ''
   let anthropicApiKey = ''
   let routesApiKey = ''
+  let placesApiKey = ''
   if (!demo && searchProvider !== 'comparison') {
     try {
       geminiApiKey =
@@ -255,6 +258,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   }
   if (!demo) {
     try {
+      placesApiKey =
+        parseEnv(
+          readFileSync(resolve(root, '.env.photos.local'), 'utf8'),
+        ).GOOGLE_PLACES_API_KEY?.trim() ?? ''
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw new Error('Cannot read Places key file')
+    }
+    try {
       routesApiKey =
         parseEnv(
           readFileSync(resolve(root, '.env.routes.local'), 'utf8'),
@@ -267,6 +278,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     demo,
     apiKey,
     anthropicApiKey,
+    placesApiKey,
     routesApiKey,
     geminiApiKey,
     braveApiKey,

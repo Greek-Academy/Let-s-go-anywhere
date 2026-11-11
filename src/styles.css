@@ -4768,3 +4768,38 @@ small {
   margin-top: 28px;
   padding-top: 16px;
 }
+
+/* Ratings sit beside their Google attribution, separate from AI descriptions. */
+.google-place-rating {
+  margin: 10px 0 0;
+}
+.google-place-rating > a:first-child {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: fit-content;
+  min-height: 28px;
+  color: #5e5e5e;
+  text-decoration: none;
+  font-size: 13px;
+}
+.google-place-rating > a:hover {
+  text-decoration: underline;
+}
+.google-rating-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: #8b5b12;
+}
+.google-place-rating .drive-maps-attribution {
+  margin-left: 4px;
+}
+.google-rating-provider {
+  display: block;
+  font-size: 12px;
+  color: #5e5e5e;
+  overflow-wrap: anywhere;
+}

@@ -1,6 +1,6 @@
 import { GoogleSearchAttribution } from '../components/GoogleSearchAttribution'
 import { WebEventSchedule } from '../components/WebEventSchedule'
-import { DriveTravelInfo } from '../components/DriveTravelInfo'
+import { WebSpotFacts } from '../components/WebSpotFacts'
 import { RecommendationBadges, RecommendationFeatures } from '../components/RecommendationFeedback'
 import { providerNames } from '../domain/recommendations'
 import { ShareCandidateButton } from '../sharing/components'
@@ -88,7 +88,7 @@ export function WebSpotDetail() {
         <p className="detail-subtitle">{spot.area}</p>
         <p className="body-copy">{spot.summary}</p>
         <WebEventSchedule spot={spot} />
-        <DriveTravelInfo travel={spot.travel} />
+        <WebSpotFacts spot={spot} />
         <SectionHeading title={spot.event ? 'イベントを提案した理由' : '希望に合うと考えた理由'} />
         {spot.recommendations ? (
           spot.recommendations.map((r) => (

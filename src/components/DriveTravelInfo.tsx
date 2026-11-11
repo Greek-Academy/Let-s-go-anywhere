@@ -6,9 +6,11 @@ import { travelTimeLabel } from '../domain/driveSearch'
 export function DriveTravelInfo({
   travel,
   compact = false,
+  showAttribution = true,
 }: {
   travel?: DriveTravel
   compact?: boolean
+  showAttribution?: boolean
 }) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
@@ -32,7 +34,7 @@ export function DriveTravelInfo({
               : '車での所要時間は未確認'}
           </span>
         </p>
-        {current?.status === 'calculated' && (
+        {current?.status === 'calculated' && showAttribution && (
           <span className="drive-maps-attribution" translate="no">
             Google Maps
           </span>
@@ -76,10 +78,10 @@ export function DriveTravelInfo({
         </p>
       )}
       <details className="small muted">
-        <summary>所要時間の情報について</summary>
+        <summary>所要時間・評価の情報について</summary>
         <p>
-          経路計算を使う場合、Google
-          Mapsの利用規約とプライバシーポリシーが適用されます。目安は表示中だけ利用し、行きたいリストや共有リストには保存しません。
+          経路計算や評価の表示にはGoogle
+          Mapsの利用規約とプライバシーポリシーが適用されます。候補の名前と地域をGoogleに送り、評価を確認します。所要時間・評価は表示中だけ利用し、行きたいリストや共有リストには保存しません。
         </p>
         <p>
           <a
