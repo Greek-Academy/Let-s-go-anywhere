@@ -148,3 +148,174 @@ test('expired/invalid ratings are dropped; current ratings never reach saved or 
     assert.ok(!JSON.stringify(history).includes('maps.google.com'))
   }
 })
+
+// Synthetic place/coordinates; municipality codes are public GSI reference data.
+const lake = { name: '架空の青葉湖', area: '東京都西多摩郡奥多摩町' }
+function naturalPlace(overrides = {}) {
+  return place({
+    displayName: { text: lake.name },
+    addressComponents: [{ longText: '日本', shortText: 'JP', types: ['country'] }],
+    types: ['lake', 'natural_feature', 'establishment'],
+    location: { latitude: 35.75, longitude: 139.05 },
+    ...overrides,
+  })
+}
+
+test('an addressless lake gets its rating only after its Google position confirms the expected municipality', async () => {
+  for (const [code, expected] of [
+    ['13308', true],
+    ['13205', false],
+    ['99999', false],
+    [null, false],
+  ]) {
+    let calls = 0
+    const result = await addPlaceRatings([lake], {
+      apiKey: 'secret',
+      fetcher: async (url, options) => {
+        calls++
+        if (calls === 1) {
+          assert.ok(options.headers['X-Goog-FieldMask'].includes('places.location'))
+          return Response.json({ places: [naturalPlace()] })
+        }
+        assert.equal(
+          url,
+          'https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat=35.75&lon=139.05',
+        )
+        assert.equal(options.headers, undefined, 'never forward the Google key')
+        assert.equal(options.body, undefined)
+        assert.equal(options.redirect, 'error')
+        return Response.json({ results: { muniCd: code, lv01Nm: 'fixture-only' } })
+      },
+    })
+    assert.equal(calls, 2)
+    assert.equal(Boolean(result.spots[0].googleRating), expected)
+    assert.equal(result.usage.locationChecks, 1)
+    assert.equal(result.usage.locationMatched, Number(expected))
+    assert.deepEqual(withoutDriveTravel(result.spots[0]), lake)
+    for (const forbidden of [
+      'latitude',
+      'longitude',
+      '35.75',
+      '139.05',
+      'muniCd',
+      'fixture-only',
+      'secret',
+    ])
+      assert.ok(!JSON.stringify(result).includes(forbidden))
+  }
+})
+
+test('location fallback cannot override another address, guess ambiguous names, or match a nearby business', async () => {
+  const pref = { longText: '長野県', types: ['administrative_area_level_1'] }
+  const city = { longText: '青梅市', types: ['locality'] }
+  const country = naturalPlace().addressComponents[0]
+  const cases = [
+    [naturalPlace({ displayName: { text: `${lake.name} 駐車場` } })],
+    [naturalPlace(), naturalPlace({ id: 'another_lake' })],
+    [naturalPlace({ addressComponents: [country, pref] })],
+    [naturalPlace({ addressComponents: [country, city] })],
+    [naturalPlace({ addressComponents: [] })],
+    [naturalPlace({ addressComponents: [{ ...country, shortText: 'US' }] })],
+    [naturalPlace({ types: ['parking'] })],
+    [naturalPlace({ types: ['natural_feature', 'parking'] })],
+    [naturalPlace({ types: ['cafe'] })],
+    [naturalPlace({ types: [] })],
+    [naturalPlace({ location: undefined })],
+    [naturalPlace({ location: { latitude: '35.75', longitude: 139.05 } })],
+    [naturalPlace({ location: { latitude: 35.75, longitude: 200 } })],
+    [naturalPlace({ location: { latitude: 0, longitude: 0 } })],
+    [null],
+  ]
+  for (const places of cases) {
+    let calls = 0
+    const result = await addPlaceRatings([lake], {
+      apiKey: 'secret',
+      fetcher: async () => {
+        calls++
+        return Response.json({ places })
+      },
+    })
+    assert.equal(calls, 1)
+    assert.deepEqual(result.spots, [lake])
+    assert.equal(result.usage.locationChecks, 0)
+  }
+  for (const area of ['東京都', '奥多摩町', '取得した現在地の周辺']) {
+    const result = await addPlaceRatings([{ ...lake, area }], {
+      apiKey: 'secret',
+      fetcher: async () => Response.json({ places: [naturalPlace()] }),
+    })
+    assert.equal(result.usage.locationChecks, 0)
+    assert.equal(result.spots[0].googleRating, undefined)
+  }
+})
+
+test('GSI outage, malformed data or a stalled response preserves cards and the shared absolute deadline', async () => {
+  for (const reverse of [
+    async () => Response.json({}, { status: 503 }),
+    async () => new Response('not json'),
+    async () => new Response('x'.repeat(256001)),
+    async () => new Promise(() => {}),
+  ]) {
+    const start = Date.now()
+    const result = await addPlaceRatings([lake], {
+      apiKey: 'secret',
+      timeoutMs: 25,
+      fetcher: async (url) =>
+        url.includes('places.googleapis.com')
+          ? Response.json({ places: [naturalPlace()] })
+          : reverse(),
+    })
+    assert.deepEqual(result.spots, [lake])
+    assert.equal(result.usage.failed, 1)
+    assert.ok(Date.now() - start < 1000)
+  }
+  const result = await addPlaceRatings(
+    Array.from({ length: 10 }, () => lake),
+    {
+      apiKey: 'secret',
+      timeoutMs: 25,
+      fetcher: async (url) =>
+        url.includes('places.googleapis.com')
+          ? Response.json({ places: [naturalPlace()] })
+          : new Promise(() => {}),
+    },
+  )
+  assert.equal(result.usage.locationChecks, 1, 'queued GSI calls stop on the same deadline')
+  assert.equal(result.usage.failed, 5)
+  assert.equal(result.usage.skipped, 5)
+})
+
+test('only missing-address natural places use GSI, at most ten serial requests; normal ratings remain unchanged', async () => {
+  let active = 0,
+    maximum = 0,
+    gsiCalls = 0
+  const result = await addPlaceRatings(
+    Array.from({ length: 15 }, () => lake),
+    {
+      apiKey: 'secret',
+      fetcher: async (url) => {
+        if (url.includes('places.googleapis.com'))
+          return Response.json({ places: [naturalPlace()] })
+        gsiCalls++
+        active++
+        maximum = Math.max(maximum, active)
+        await new Promise((resolve) => setTimeout(resolve, 3))
+        active--
+        return Response.json({ results: { muniCd: '13308' } })
+      },
+    },
+  )
+  assert.equal(result.usage.matched, 10)
+  assert.equal(result.usage.skipped, 5)
+  assert.equal(gsiCalls, 10)
+  assert.equal(maximum, 1)
+  const normal = await addPlaceRatings([spot], {
+    apiKey: 'secret',
+    fetcher: async (url) => {
+      assert.ok(url.includes('places.googleapis.com'))
+      return Response.json({ places: [place()] })
+    },
+  })
+  assert.equal(normal.usage.matched, 1)
+  assert.equal(normal.usage.locationChecks, 0)
+})

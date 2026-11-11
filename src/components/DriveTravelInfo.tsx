@@ -84,6 +84,13 @@ export function DriveTravelInfo({
           Mapsの利用規約とプライバシーポリシーが適用されます。候補の名前と地域をGoogleに送り、評価を確認します。所要時間・評価は表示中だけ利用し、行きたいリストや共有リストには保存しません。
         </p>
         <p>
+          湖や山など住所がない場所の確認には、スポットの位置と
+          <a href="https://maps.gsi.go.jp/" target="_blank" rel="noopener noreferrer">
+            国土地理院の情報
+          </a>
+          を加工して利用する場合があります。送るのはスポットの位置で、ご自身の現在地ではありません。
+        </p>
+        <p>
           <a
             href="https://maps.google.com/help/terms_maps/"
             target="_blank"

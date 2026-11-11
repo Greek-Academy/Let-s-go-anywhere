@@ -1,8 +1,9 @@
 import { decodePlaceRating } from '../../src/domain/placeRating.ts'
+import municipalityData from './gsi-municipalities.json' with { type: 'json' }
 
 const endpoint = 'https://places.googleapis.com/v1/places:searchText'
 const fields =
-  'places.id,places.displayName,places.addressComponents,places.rating,places.userRatingCount,places.googleMapsUri,places.attributions'
+  'places.id,places.displayName,places.addressComponents,places.location,places.types,places.rating,places.userRatingCount,places.googleMapsUri,places.attributions'
 const normalize = (s) =>
   typeof s === 'string'
     ? s
@@ -11,21 +12,70 @@ const normalize = (s) =>
         .replace(/[\s・「」『』]/gu, '')
     : ''
 
-/** Exact name plus prefecture and municipality. Never guess a branch from rank or proximity. */
-export function matchesRatingPlace(spot, place) {
-  if (!normalize(spot.name) || normalize(spot.name) !== normalize(place?.displayName?.text))
-    return false
-  const components = Array.isArray(place.addressComponents) ? place.addressComponents : []
-  const part = (type) => components.find((c) => Array.isArray(c.types) && c.types.includes(type))
-  const prefecture = normalize(part('administrative_area_level_1')?.longText)
-  const municipality = normalize(part('locality')?.longText)
+function address(place) {
+  const components = Array.isArray(place?.addressComponents) ? place.addressComponents : []
+  const part = (type) => components.find((c) => Array.isArray(c?.types) && c.types.includes(type))
+  return {
+    country: part('country')?.shortText,
+    prefecture: normalize(part('administrative_area_level_1')?.longText),
+    municipality: normalize(part('locality')?.longText),
+  }
+}
+
+function sameNameInJapan(spot, place) {
+  return (
+    Boolean(normalize(spot.name)) &&
+    normalize(spot.name) === normalize(place?.displayName?.text) &&
+    address(place).country === 'JP'
+  )
+}
+
+function matchesArea(spot, prefecture, municipality) {
   const area = normalize(spot.area)
   return (
-    part('country')?.shortText === 'JP' &&
     Boolean(prefecture && municipality) &&
     /[市区町村]$/u.test(municipality) &&
     area.includes(prefecture) &&
     area.includes(municipality)
+  )
+}
+
+/** Exact name plus prefecture and municipality. Never guess from rank or proximity. */
+export function matchesRatingPlace(spot, place) {
+  const { prefecture, municipality } = address(place)
+  return sameNameInJapan(spot, place) && matchesArea(spot, prefecture, municipality)
+}
+
+const municipalities = Object.fromEntries(
+  Object.entries(municipalityData.municipalities).map(([code, value]) => [
+    code,
+    value.split(',').map(normalize),
+  ]),
+)
+
+function needsLocationMatch(spot, place) {
+  if (!sameNameInJapan(spot, place)) return false
+  const { prefecture, municipality } = address(place)
+  const area = normalize(spot.area)
+  // Missing is different from contradictory: never override an explicit other address.
+  if ((prefecture && !area.includes(prefecture)) || (municipality && !area.includes(municipality)))
+    return false
+  if (prefecture && municipality) return false
+  if (!Object.values(municipalities).some(([pref, city]) => matchesArea(spot, pref, city)))
+    return false
+  const types = Array.isArray(place.types) ? place.types : []
+  if (!types.some((type) => ['natural_feature', 'lake', 'mountain_peak'].includes(type)))
+    return false
+  if (types.some((type) => ['parking', 'restaurant', 'cafe', 'lodging', 'store'].includes(type)))
+    return false
+  const { latitude, longitude } = place.location ?? {}
+  return (
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= 20 &&
+    latitude <= 46 &&
+    longitude >= 122 &&
+    longitude <= 154
   )
 }
 
@@ -63,7 +113,7 @@ async function withAbort(task, signal) {
   }
 }
 
-/** Only final visible candidates, one request each, no retries and no persistent cache. */
+/** Only final visible candidates, one Places request each, no retries or persistent cache. */
 export async function addPlaceRatings(
   spots,
   { apiKey, demo = false, fetcher = fetch, timeoutMs = 8000 } = {},
@@ -77,11 +127,39 @@ export async function addPlaceRatings(
     unavailable: 0,
     failed: 0,
     skipped: spots.length,
+    locationChecks: 0,
+    locationMatched: 0,
   }
   if (demo || !apiKey || !spots.length) return { spots: output, usage }
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   let next = 0
+  // The optional public geocoder is used serially, within the same overall deadline.
+  let locationQueue = Promise.resolve()
+  function matchByLocation(spot, place) {
+    const task = locationQueue.then(() =>
+      withAbort(async () => {
+        usage.locationChecks++
+        const url = new URL('https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress')
+        // Only the public place's position from Google, never the user's position or AI coordinates.
+        url.searchParams.set('lat', String(place.location.latitude))
+        url.searchParams.set('lon', String(place.location.longitude))
+        const data = await limitedJson(
+          await fetcher(url.href, { redirect: 'error', signal: controller.signal }),
+        )
+        const code = data?.results?.muniCd
+        const region =
+          typeof code === 'string' && /^\d{4,5}$/.test(code)
+            ? municipalities[code.padStart(5, '0')]
+            : undefined
+        if (!region || !matchesArea(spot, ...region) || controller.signal.aborted) return undefined
+        usage.locationMatched++
+        return place
+      }, controller.signal),
+    )
+    locationQueue = task.catch(() => {})
+    return task
+  }
   async function worker() {
     while (next < Math.min(spots.length, 10) && !controller.signal.aborted) {
       const index = next++
@@ -111,10 +189,15 @@ export async function addPlaceRatings(
             ),
           controller.signal,
         )
-        const matches = Array.isArray(data?.places)
-          ? data.places.filter((p) => matchesRatingPlace(spot, p))
-          : []
-        const place = matches.length === 1 ? matches[0] : undefined
+        const places = Array.isArray(data?.places) ? data.places : []
+        const matches = places.filter((p) => matchesRatingPlace(spot, p))
+        const unresolved = places.filter((p) => needsLocationMatch(spot, p))
+        const place =
+          matches.length === 1 && unresolved.length === 0
+            ? matches[0]
+            : matches.length === 0 && unresolved.length === 1
+              ? await matchByLocation(spot, unresolved[0])
+              : undefined
         const now = Date.now()
         const googleRating =
           place && typeof place.id === 'string' && /^[\w-]{5,200}$/.test(place.id)
