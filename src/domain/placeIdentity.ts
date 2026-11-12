@@ -13,7 +13,7 @@ interface Candidate {
   likedFor?: string[]
   mode?: string
 }
-const normalize = (text: string) =>
+export const normalizePlaceText = (text: string) =>
   text
     .normalize('NFKC')
     .toLowerCase()
@@ -26,30 +26,30 @@ function source(value: string) {
   url.searchParams.sort()
   return url.href
 }
-function reviewedIdentity(candidate: Candidate) {
+export function reviewedPlaceIdentity(candidate: Candidate) {
   return reviews.find(
     (entry) =>
-      entry.names.some((name) => normalize(name) === normalize(candidate.name)) &&
-      entry.areas.some((area) => normalize(area) === normalize(candidate.area)) &&
+      entry.names.some((name) => normalizePlaceText(name) === normalizePlaceText(candidate.name)) &&
+      entry.areas.some((area) => normalizePlaceText(area) === normalizePlaceText(candidate.area)) &&
       entry.sources.some((url) => source(url) === source(candidate.sourceUrl)),
   )?.id
 }
 
 /** Never infer that a shared name, ward or article URL identifies the same branch. */
 export function samePlace(a: Candidate, b: Candidate) {
-  if (a.mode !== b.mode || normalize(a.name) !== normalize(b.name)) return false
+  if (a.mode !== b.mode || normalizePlaceText(a.name) !== normalizePlaceText(b.name)) return false
   if (
     Boolean(a.event) !== Boolean(b.event) ||
     (a.event &&
       b.event &&
       (a.event.startDate !== b.event.startDate ||
         a.event.endDate !== b.event.endDate ||
-        normalize(a.event.venue) !== normalize(b.event.venue)))
+        normalizePlaceText(a.event.venue) !== normalizePlaceText(b.event.venue)))
   )
     return false
-  if (normalize(a.area) === normalize(b.area)) return true
-  const identity = reviewedIdentity(a)
-  return Boolean(identity && identity === reviewedIdentity(b))
+  if (normalizePlaceText(a.area) === normalizePlaceText(b.area)) return true
+  const identity = reviewedPlaceIdentity(a)
+  return Boolean(identity && identity === reviewedPlaceIdentity(b))
 }
 export function mergePlace<T extends Candidate>(first: T, second: T): T {
   const recommendations = [...(first.recommendations ?? [])]

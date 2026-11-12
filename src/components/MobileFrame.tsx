@@ -1,7 +1,7 @@
 import { StorageNotice } from './StorageStatus'
 import { useLayoutEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
-import { BatteryFull, CarFront, Check, Signal, Wifi } from 'lucide-react'
+import { BatteryFull, CarFront, Check, Signal, Wifi, X } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { useApp } from '../state/AppState'
 import { usePageNavigation } from '../hooks/usePageNavigation'
@@ -9,7 +9,7 @@ import { BottomNavigation } from './ui'
 import { isNativeApp } from '../platform/runtime'
 
 export function MobileFrame({ children }: { children: ReactNode }) {
-  const { state, message, memoryOnly } = useApp()
+  const { state, message, messageAction, toast, memoryOnly } = useApp()
   const location = useLocation()
   const stageRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
@@ -99,11 +99,31 @@ export function MobileFrame({ children }: { children: ReactNode }) {
               />
             )}
             <div id="overlay-root" />
-            <div className={`toast ${message ? 'visible' : ''}`} role="status" aria-live="polite">
+            <div
+              className={`toast ${message ? 'visible' : ''} ${messageAction ? 'toast-action' : ''}`}
+              role="status"
+              aria-live="polite"
+            >
               {message && (
                 <>
                   <Check size={16} />
-                  {message}
+                  <span>{message}</span>
+                  {messageAction && (
+                    <>
+                      <button autoFocus onClick={messageAction.run}>
+                        {messageAction.label}
+                      </button>
+                      <button
+                        aria-label="通知を閉じる"
+                        onClick={() => {
+                          toast('')
+                          document.getElementById('app-scroll')?.focus({ preventScroll: true })
+                        }}
+                      >
+                        <X size={16} />
+                      </button>
+                    </>
+                  )}
                 </>
               )}
             </div>

@@ -11,6 +11,7 @@ import {
   Check,
   ClipboardList,
   Heart,
+  EyeOff,
   Leaf,
   MapPin,
   Pencil,
@@ -93,6 +94,12 @@ export function Profile() {
             title="行きたいリスト"
             value={`${state.savedEvents.length + state.links.length + groupPlaces(state.savedWebSpots).length}件`}
             onClick={() => navigate('/saved')}
+          />
+          <MenuRow
+            icon={EyeOff}
+            title="非表示にしたスポット"
+            value={`${state.hiddenWebSpots.length}件`}
+            onClick={() => navigate('/profile/hidden-spots')}
           />
           <MenuRow icon={Pencil} title="自分用メモ" onClick={() => navigate('/profile/notes')} />
           <MenuRow
@@ -202,7 +209,7 @@ export function ProfileEdit() {
 }
 export function AppSettings() {
   const sharing = useSharing()
-  const { state, update, reset, toast, memoryOnly } = useApp()
+  const { state, update, reset, toast, memoryOnly, storageProtected, storageError } = useApp()
   const navigate = useNavigate()
   const [resetOpen, setResetOpen] = useState(false)
   return (
@@ -255,17 +262,26 @@ export function AppSettings() {
             title="プロフィールを変更"
             onClick={() => navigate('/profile/edit')}
           />
+          <MenuRow
+            icon={EyeOff}
+            title="非表示にしたスポット"
+            value={`${state.hiddenWebSpots.length}件`}
+            onClick={() => navigate('/profile/hidden-spots')}
+          />
           <MenuRow icon={Pencil} title="自分用メモ" onClick={() => navigate('/profile/notes')} />
         </div>
-        <PrimaryButton
-          variant="secondary"
-          onClick={() => {
-            update((s) => ({ ...s, hiddenEvents: [] }))
-            toast('非表示にしたお出かけを戻しました')
-          }}
-        >
-          おすすめの非表示をリセット
-        </PrimaryButton>
+        {state.hiddenEvents.length > 0 && (
+          <PrimaryButton
+            variant="secondary"
+            disabled={storageProtected || storageError}
+            onClick={() => {
+              update((s) => ({ ...s, hiddenEvents: [] }))
+              toast('サンプルのお出かけを再び表示しました')
+            }}
+          >
+            サンプルのお出かけの非表示をリセット
+          </PrimaryButton>
+        )}
         <StorageDetails />
         <SectionHeading title="このモックについて" />
         <div className="settings-about">
@@ -287,7 +303,7 @@ export function AppSettings() {
       {resetOpen && (
         <Modal title="保存データを削除しますか？" onClose={() => setResetOpen(false)}>
           <p className="body-copy">
-            初回設定、行きたい、車候補、自分用メモ、振り返り、旧版の学習履歴、旧版の相談記録、共有リストの端末内デモを含むデータをこの保存領域から削除し、最初の画面に戻ります。読み込めなかった元のデータと、保存されていない変更も失われます。この操作は取り消せません。
+            初回設定、行きたい、非表示にしたスポット、車候補、自分用メモ、振り返り、旧版の学習履歴、旧版の相談記録、共有リストの端末内デモを含むデータをこの保存領域から削除し、最初の画面に戻ります。読み込めなかった元のデータと、保存されていない変更も失われます。この操作は取り消せません。
           </p>
           {firebasePilot && !memoryOnly && (
             <p className="small muted">
