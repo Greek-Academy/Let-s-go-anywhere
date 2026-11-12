@@ -1,3 +1,4 @@
+import { HiddenSpots } from './screens/HiddenSpots'
 import { SharingProvider } from './sharing/SharingProvider'
 import { lazy, Suspense } from 'react'
 import { publicSearchOrigin } from './domain/publicSearchConfig'
@@ -164,6 +165,7 @@ function AppRoutes() {
         <Route path="/consult/*" element={<Navigate to="/discover" replace />} />
         <Route path="/consultations/*" element={<Navigate to="/discover" replace />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/hidden-spots" element={<HiddenSpots />} />
         <Route path="/profile/edit" element={<ProfileEdit />} />
         <Route path="/profile/notes" element={<PersonalNotes />} />
         <Route path="/profile/learning" element={<Navigate to="/profile" replace />} />

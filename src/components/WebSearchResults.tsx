@@ -1,3 +1,5 @@
+import { visibleWebSpots } from '../domain/hiddenSpots'
+import { HiddenSpotsEmpty } from './HiddenSpotsEmpty'
 import { ComparisonResults } from './ComparisonResults'
 import { useWebSearch } from '../state/WebSearchState'
 import { useApp } from '../state/AppState'
@@ -5,8 +7,13 @@ import { WebSpotCard } from './WebSpotCard'
 import { EmptyState } from './ui'
 
 export function WebSearchResults() {
-  const { result, loading, waiting, cancelSearch, error, status } = useWebSearch()
+  const { result: originalResult, loading, waiting, cancelSearch, error, status } = useWebSearch()
   const { state } = useApp()
+  // Keep the original result intact for details and immediate restoration.
+  const result = originalResult
+    ? { ...originalResult, spots: visibleWebSpots(originalResult.spots, state.hiddenWebSpots) }
+    : null
+  const allHidden = Boolean(originalResult?.spots.length && !result?.spots.length)
   // Describe the displayed result, even when the user has since edited the next search.
   const drive = result?.query.drive
   const fromHobbies = drive?.mode === 'default' && drive.hobbies.length > 0
@@ -57,13 +64,15 @@ export function WebSearchResults() {
               </header>
             )}
           {result.kind === 'comparison' ? (
-            <ComparisonResults result={result} />
+            <ComparisonResults result={result} allHidden={allHidden} />
           ) : result.spots.length ? (
             <div className="event-list">
               {result.spots.map((spot) => (
                 <WebSpotCard key={spot.id} spot={spot} />
               ))}
             </div>
+          ) : allHidden ? (
+            <HiddenSpotsEmpty />
           ) : (
             <EmptyState
               title="出典のある候補が見つかりませんでした"

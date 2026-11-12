@@ -1,3 +1,5 @@
+import { EyeOff } from 'lucide-react'
+import { useHiddenSpots } from '../hooks/useHiddenSpots'
 import { WebSpotFacts } from './WebSpotFacts'
 import { providerNames } from '../domain/recommendations'
 import { useState } from 'react'
@@ -101,6 +103,7 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
   const navigate = useNavigate()
   const { state, storageProtected } = useApp()
   const { toggleSaved } = useWebSearch()
+  const { hide, disabled } = useHiddenSpots()
   const saved = state.savedWebSpots.some((s) => sameWebSpot(s, spot))
   return (
     <article className="event-card web-spot-card">
@@ -127,6 +130,19 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
           <h3>{spot.name}</h3>
         </button>
         <WebSpotFacts spot={spot} compact />
+        <div className="web-spot-actions">
+          <button
+            className="text-button hide-spot-button"
+            disabled={disabled}
+            aria-label={`${spot.name}を今後表示しない`}
+            onClick={() => {
+              void hide(spot)
+            }}
+          >
+            <EyeOff size={14} />
+            今後表示しない
+          </button>
+        </div>
       </div>
     </article>
   )

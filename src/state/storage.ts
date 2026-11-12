@@ -8,6 +8,7 @@ import type { TripConditions } from '../domain/tripConditions'
 import { validTimestamp } from '../domain/dates'
 import { prefectures } from '../data/regions'
 import { decodeSavedWebSpots } from '../domain/webSearch'
+import { decodeHiddenWebSpots } from '../domain/hiddenSpots'
 import { carProviders } from '../data/carProviders'
 
 export const STORAGE_KEY = 'driveplus.mock.v1'
@@ -178,6 +179,7 @@ const schema: Record<keyof AppState, Rule> = {
   savedWebSpots: decodeSavedWebSpots,
   savedStations: list(id),
   hiddenEvents: list(id),
+  hiddenWebSpots: decodeHiddenWebSpots,
   learned: list(id),
   links: list(
     shape({ id, url: text, originalUrl: text, title: text, source: text, addedAt: date }, {}, [

@@ -1,10 +1,17 @@
+import { HiddenSpotsEmpty } from './HiddenSpotsEmpty'
 import type { WebSearchResult } from '../domain/webSearch'
 import { providerNames } from '../domain/recommendations'
 import { WebSpotCard } from './WebSpotCard'
 import { EmptyState } from './ui'
 import { GoogleSearchAttribution } from './GoogleSearchAttribution'
 
-export function ComparisonResults({ result }: { result: WebSearchResult }) {
+export function ComparisonResults({
+  result,
+  allHidden = false,
+}: {
+  result: WebSearchResult
+  allHidden?: boolean
+}) {
   const searchFailed = result.reports?.some((report) => report.state === 'failed')
   return (
     <div className="comparison-results">
@@ -14,6 +21,8 @@ export function ComparisonResults({ result }: { result: WebSearchResult }) {
             <WebSpotCard key={spot.id} spot={spot} />
           ))}
         </div>
+      ) : allHidden ? (
+        <HiddenSpotsEmpty />
       ) : (
         <EmptyState
           title={searchFailed ? '検索を完了できませんでした' : 'この条件の候補はありません'}

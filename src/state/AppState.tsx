@@ -10,11 +10,14 @@ import { Share } from '@capacitor/share'
 export { createInitialState, STORAGE_KEY }
 export type { AppState }
 
+type ToastAction = { label: string; run: () => void }
 type StateContext = {
   memoryOnly: boolean
   state: AppState
   update: (fn: (current: AppState) => AppState) => void
-  toast: (text: string) => void
+  updateAndSave: (fn: (current: AppState) => AppState) => Promise<boolean>
+  toast: (text: string, action?: ToastAction) => void
+  messageAction: ToastAction | undefined
   message: string
   toggleEvent: (id: string) => void
   toggleStation: (id: string) => void
@@ -56,7 +59,9 @@ export function AppStateProvider({
     return loaded.state
   })
   const persistedState = useRef<AppState | null>(persistence.current.raw === null ? null : state)
+  const currentState = useRef(state)
   const [message, setMessage] = useState('')
+  const [messageAction, setMessageAction] = useState<ToastAction>()
   const [storageProblem, setStorageProblem] = useState<StorageProblem | null>(
     () => persistence.current.problem,
   )
@@ -70,10 +75,10 @@ export function AppStateProvider({
     setStoragePending(true)
     // Native writes are asynchronous. Serialize them so rapid edits, StrictMode
     // effects and reset cannot overtake each other or overwrite a failed write.
-    queue.current = queue.current.then(async () => {
+    const operation = queue.current.then(async () => {
       try {
-        if (resetting.current || (persistence.current.blocked && !retry)) return
-        if (persistedState.current === value) return
+        if (resetting.current || (persistence.current.blocked && !retry)) return false
+        if (persistedState.current === value) return true
         const result = await writeStoredState(value, persistence.current.raw)
         persistence.current.raw = result.raw
         persistence.current.blocked = !!result.problem
@@ -81,11 +86,14 @@ export function AppStateProvider({
         if (!result.problem) persistedState.current = value
         if (result.problem === 'changed') persistence.current.protected = true
         setStorageProblem(result.problem)
+        return !result.problem
       } finally {
         pending.current -= 1
         setStoragePending(pending.current > 0)
       }
     })
+    queue.current = operation.then(() => undefined)
+    return operation
   }, [])
   useEffect(() => {
     // Reading an existing record must not rewrite it or create a false conflict in another tab.
@@ -93,12 +101,27 @@ export function AppStateProvider({
       persist(state)
   }, [state, persist, memoryOnly])
   useEffect(() => () => clearTimeout(timer.current), [])
-  const toast = useCallback((text: string) => {
+  const toast = useCallback((text: string, action?: ToastAction) => {
     clearTimeout(timer.current)
     setMessage(text)
-    timer.current = setTimeout(() => setMessage(''), 2800)
+    setMessageAction(action)
+    // Undo remains available until dismissed, replaced, or used.
+    if (!action) timer.current = setTimeout(() => setMessage(''), 2800)
   }, [])
-  const update = useCallback((fn: (current: AppState) => AppState) => setState(fn), [])
+  const update = useCallback((fn: (current: AppState) => AppState) => {
+    const next = fn(currentState.current)
+    currentState.current = next
+    setState(next)
+    return next
+  }, [])
+  const updateAndSave = useCallback(
+    async (fn: (current: AppState) => AppState) => {
+      if (resetting.current || persistence.current.protected) return false
+      const next = update(fn)
+      return memoryOnly || (await persist(next))
+    },
+    [memoryOnly, persist, update],
+  )
   const toggleEvent = (id: string) => {
     const saved = state.savedEvents.includes(id)
     update((s) => ({
@@ -117,7 +140,8 @@ export function AppStateProvider({
   }
   const reset = async () => {
     if (memoryOnly) {
-      setState(createInitialState())
+      update(() => createInitialState())
+      toast('')
       return true
     }
     if (resetting.current) return false
@@ -128,7 +152,8 @@ export function AppStateProvider({
         persistence.current = { raw: null, blocked: false, protected: false, problem: null }
         persistedState.current = null
         setStorageProblem(null)
-        setState(createInitialState())
+        update(() => createInitialState())
+        toast('')
         return true
       } catch {
         toast('保存データを削除できませんでした。端末の保存領域を確認してください。')
@@ -174,6 +199,8 @@ export function AppStateProvider({
         memoryOnly,
         state,
         update,
+        updateAndSave,
+        messageAction,
         message,
         toast,
         toggleEvent,

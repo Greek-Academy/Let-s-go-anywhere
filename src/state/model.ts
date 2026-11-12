@@ -4,6 +4,7 @@ import type { DriveChoices } from '../domain/driveSearch'
 import { createRealMapState } from '../domain/realStations'
 import type { RealMapState } from '../domain/realStations'
 import { userProfile } from '../data/options'
+import type { HiddenWebSpot } from '../domain/hiddenSpots'
 import type { WebSpot } from '../domain/webSearch'
 import type { DiscoveryRegion } from '../data/regions'
 import type { CarSearchConditions } from '../domain/carSearch'
@@ -32,6 +33,7 @@ export interface AppState {
   savedWebSpots: WebSpot[]
   savedStations: string[]
   hiddenEvents: string[]
+  hiddenWebSpots: HiddenWebSpot[]
   links: SavedLink[]
   /** Retired learning records remain in device storage; no active lesson UI. */
   learned: string[]
@@ -84,6 +86,7 @@ export const createInitialState = (): AppState => ({
   savedWebSpots: [],
   savedStations: [],
   hiddenEvents: [],
+  hiddenWebSpots: [],
   links: [],
   learned: [],
   learningDates: {},

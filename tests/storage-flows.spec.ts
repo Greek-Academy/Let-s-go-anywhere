@@ -47,7 +47,7 @@ test('corrupted nested storage keeps the app usable and preserves original bytes
     quiz: { answers: [] },
   })
   await seed(page, raw)
-  await expect(page.getByRole('alert')).toContainText('自動保存を停止')
+  await expect(page.locator('.storage-notice').getByRole('alert')).toContainText('自動保存を停止')
   for (const path of [
     '/saved',
     '/cars',

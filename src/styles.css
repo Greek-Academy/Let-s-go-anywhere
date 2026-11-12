@@ -4803,3 +4803,60 @@ small {
   color: #5e5e5e;
   overflow-wrap: anywhere;
 }
+
+/* Candidate exclusions stay separate from favorites and detail navigation. */
+.web-spot-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+  border-top: 1px solid #edf2ef;
+  padding-top: 4px;
+}
+.hide-spot-button {
+  min-height: 36px;
+  font-size: 12px;
+  color: #687e76;
+}
+.hidden-spots-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  margin: 24px 0;
+}
+.hidden-spots-list li {
+  padding: 20px;
+  border: 1px solid #dfe9e4;
+  border-radius: 18px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+.hidden-spots-list h2 {
+  font-size: 17px;
+  margin: 0 0 6px;
+}
+.hidden-spots-list p {
+  margin: 0 0 16px;
+}
+.hidden-spots-list button {
+  min-height: 44px;
+}
+.toast.toast-action {
+  pointer-events: auto;
+  width: calc(100% - 28px);
+  border-radius: 16px;
+  flex-wrap: wrap;
+}
+.toast-action > span {
+  flex: 1 1 140px;
+}
+.toast-action button {
+  color: white;
+  min-height: 44px;
+  padding: 6px 8px;
+  font-weight: 700;
+}
+.toast-action button:first-of-type {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
