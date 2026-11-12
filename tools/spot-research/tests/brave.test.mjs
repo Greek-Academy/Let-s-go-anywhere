@@ -25,6 +25,7 @@ function fixture() {
   const spots = Array.from({ length: 30 }, (_, i) => ({
     ...samples[i % 10],
     name: `架空の検証候補${i}`,
+    area: '東京都新宿区',
     sourceId: `s${i % 10}`,
   }))
   return {
@@ -92,7 +93,7 @@ test('Brave evidence rejects private/unsupported sources and distributes bounded
   )
   assert.throws(() => braveEvidence([{}]), /情報を取得できません/)
 })
-test('Brave pipeline uses three authenticated context calls, one tool-free Gemini call, one Routes call and ten balanced cards', async () => {
+test('Brave pipeline uses three authenticated context calls, one tool-free Gemini call, one Routes call, ten rating lookups and ten balanced cards', async () => {
   const { context, extraction } = fixture()
   const calls = []
   const result = await runComparison({
@@ -101,6 +102,7 @@ test('Brave pipeline uses three authenticated context calls, one tool-free Gemin
     braveApiKey: 'brave-secret',
     geminiApiKey: 'gemini-secret',
     routesApiKey: 'routes-secret',
+    placesApiKey: 'places-secret',
     fetcher: async (url, options) => {
       calls.push(url)
       if (url.startsWith('https://api.search.brave.com/')) {
@@ -116,6 +118,26 @@ test('Brave pipeline uses three authenticated context calls, one tool-free Gemin
         assert.equal(JSON.parse(body.contents[0].parts[0].text).conditions.targetTotal, 30)
         return Response.json(extraction)
       }
+      if (url.includes('places.googleapis.com')) {
+        assert.ok(calls.some((call) => call.includes('routes.googleapis.com')))
+        assert.equal(options.headers['X-Goog-Api-Key'], 'places-secret')
+        return Response.json({
+          places: [
+            {
+              id: 'ChIJ_test',
+              displayName: { text: body.textQuery.replace(' 東京都新宿区', '') },
+              addressComponents: [
+                { shortText: 'JP', types: ['country'] },
+                { longText: '東京都', types: ['administrative_area_level_1'] },
+                { longText: '新宿区', types: ['locality'] },
+              ],
+              rating: 4.3,
+              userRatingCount: 128,
+              googleMapsUri: 'https://maps.google.com/?cid=123',
+            },
+          ],
+        })
+      }
       assert.equal(body.destinations.length, 30)
       return Response.json(
         body.destinations.map((_, i) => ({
@@ -129,7 +151,9 @@ test('Brave pipeline uses three authenticated context calls, one tool-free Gemin
       )
     },
   })
-  assert.equal(calls.length, 5)
+  assert.equal(calls.length, 15)
+  assert.equal(result.placeRatings.matched, 10)
+  assert.ok(result.spots.every((s) => s.googleRating?.count === 128))
   assert.equal(result.reports[0].braveSearchCalls, 3)
   assert.equal(result.reports[0].usage.searchCalls, 0)
   assert.equal(result.searchBackend, 'brave')
@@ -267,6 +291,58 @@ test('Brave service requires both keys and never persists context or generated s
   })
   assert.equal(sample.spots.length, 10)
   assert.equal(sample.searchAttribution, undefined)
+})
+test('rating success and failure keep the final cards; ledger stores counts but no Google content or secrets', async (t) => {
+  const { context, extraction } = fixture()
+  for (const fail of [false, true]) {
+    const directory = mkdtempSync(join(tmpdir(), 'driveplus-ratings-ledger-'))
+    t.after(() => rmSync(directory, { recursive: true, force: true }))
+    const service = createComparison({
+      directory,
+      searchProvider: 'brave',
+      braveApiKey: 'secret',
+      geminiApiKey: 'secret',
+      placesApiKey: 'secret',
+      fetcher: async (url, options) => {
+        if (url.includes('api.search.brave.com')) return Response.json(context)
+        if (url.includes('generativelanguage')) return Response.json(extraction)
+        assert.ok(url.includes('places.googleapis.com'))
+        if (fail) return Response.json({ message: 'secret' }, { status: 429 })
+        return Response.json({
+          places: [
+            {
+              id: 'ChIJ_test',
+              displayName: {
+                text: JSON.parse(options.body).textQuery.replace(' 東京都新宿区', ''),
+              },
+              addressComponents: [
+                { shortText: 'JP', types: ['country'] },
+                { longText: '東京都', types: ['administrative_area_level_1'] },
+                { longText: '新宿区', types: ['locality'] },
+              ],
+              rating: 4.3,
+              userRatingCount: 128,
+              googleMapsUri: 'https://maps.google.com/?cid=123',
+              attributions: [
+                { provider: 'テスト提供元', providerUri: 'https://example.com/attribution' },
+              ],
+            },
+          ],
+        })
+      },
+    })
+    const result = await service.search(query)
+    assert.equal(result.spots.length, 10)
+    assert.equal(result.spots.filter((s) => s.googleRating).length, fail ? 0 : 10)
+    assert.deepEqual(readdirSync(directory), ['usage.json'])
+    const ledger = readFileSync(join(directory, 'usage.json'), 'utf8')
+    assert.equal(JSON.parse(ledger).attempts[0].usage.placeRatings.attempted, 10)
+    assert.doesNotMatch(
+      ledger,
+      /secret|googleRating|userRatingCount|maps.google|テスト提供元|新宿|4\.3/,
+    )
+    assert.equal(service.status().ratingsConfigured, true)
+  }
 })
 test('all outstanding Brave requests settle before a failed batch releases the app lock', async () => {
   let release

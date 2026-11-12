@@ -1,3 +1,5 @@
+import { decodePlaceRating } from './placeRating'
+import type { PlaceRating } from './placeRating'
 import { decodeEventDates, decodeEventSchedule, sameEventDates } from './eventSearch'
 import type { EventDates, EventSchedule } from './eventSearch'
 import { decodeDriveQuery, decodeDriveTravel, sameDriveQuery } from './driveSearch'
@@ -18,6 +20,8 @@ export interface WebSpot {
   hobby?: string
   /** Transient routing result. Stripped before persistence and sharing. */
   travel?: DriveTravel
+  /** Live Google Places rating; excluded from persistence and sharing. */
+  googleRating?: PlaceRating
   event?: EventSchedule
   id: string
   name: string
@@ -225,6 +229,7 @@ export async function parseWebSearchResult(
     seen.add(identity)
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(identity))
     const hash = [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('')
+    const googleRating = mode === 'live' ? decodePlaceRating(s.googleRating) : undefined
     spots.push({
       id: `web_${mode}_${hash}`,
       name: shortText(s.name),
@@ -236,6 +241,7 @@ export async function parseWebSearchResult(
       verification: 'unconfirmed',
       mode,
       ...metadata,
+      ...(googleRating ? { googleRating } : {}),
       ...(drive
         ? {
             travel:

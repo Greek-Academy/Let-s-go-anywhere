@@ -1,4 +1,4 @@
-import { DriveTravelInfo } from './DriveTravelInfo'
+import { WebSpotFacts } from './WebSpotFacts'
 import { providerNames } from '../domain/recommendations'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -125,8 +125,8 @@ export function WebSpotCard({ spot }: { spot: WebSpot }) {
         <button className="card-title-button" onClick={() => navigate(`/web-spots/${spot.id}`)}>
           <WebSpotHobby spot={spot} />
           <h3>{spot.name}</h3>
-          <DriveTravelInfo travel={spot.travel} compact />
         </button>
+        <WebSpotFacts spot={spot} compact />
       </div>
     </article>
   )

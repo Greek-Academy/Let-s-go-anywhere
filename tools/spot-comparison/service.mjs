@@ -19,6 +19,7 @@ export function createComparison({
   demo,
   apiKey,
   anthropicApiKey,
+  placesApiKey,
   routesApiKey,
   geminiApiKey,
   braveApiKey,
@@ -67,6 +68,7 @@ export function createComparison({
     status: () => ({
       demo,
       configured: configured(),
+      ratingsConfigured: !demo && Boolean(placesApiKey),
       searchProvider,
       busy,
       maxAttempts: limit,
@@ -106,6 +108,7 @@ export function createComparison({
           demo,
           apiKey,
           anthropicApiKey,
+          placesApiKey,
           routesApiKey,
           geminiApiKey,
           braveApiKey,
@@ -118,7 +121,7 @@ export function createComparison({
           ledger.finish(
             id,
             reports.every((r) => r.state === 'completed') ? 'completed' : 'failed',
-            { providers: reports },
+            { providers: reports, placeRatings: result.placeRatings },
             Date.now() - started,
           )
         if (searchProvider !== 'comparison') return result
