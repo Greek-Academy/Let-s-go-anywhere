@@ -3,6 +3,7 @@ import { useWebSearch } from '../state/WebSearchState'
 import { useApp } from '../state/AppState'
 import { WebSpotCard } from './WebSpotCard'
 import { EmptyState } from './ui'
+import { CarFront, Compass } from 'lucide-react'
 
 export function WebSearchResults() {
   const { result, loading, waiting, cancelSearch, error, status } = useWebSearch()
@@ -11,12 +12,12 @@ export function WebSearchResults() {
   const drive = result?.query.drive
   const fromHobbies = drive?.mode === 'default' && drive.hobbies.length > 0
   const basis = fromHobbies
-    ? '選んだ趣味をもとに、'
-    : drive?.mode === 'free'
-      ? '入力した希望をもとに、'
-      : drive?.mode === 'conditions'
-        ? '選んだ条件に合わせて、'
-        : ''
+    ? '選んだ趣味から'
+    : drive?.mode === 'conditions'
+      ? '選んだ気分・条件から'
+      : drive?.mode === 'default'
+        ? '出発地から'
+        : 'あなたの希望から'
   return (
     <section className="web-search-results" aria-label="Web検索の結果" aria-busy={loading}>
       {loading && (
@@ -46,14 +47,27 @@ export function WebSearchResults() {
             result.query.purpose !== 'events' &&
             drive?.mode !== 'events' && (
               <header className="drive-results-intro">
-                <h2>
-                  {fromHobbies ? '好きなことから、次の行き先へ。' : '次のドライブ、どこへ行こう？'}
-                </h2>
-                <p>
-                  {drive
-                    ? `${basis}出発地から片道${drive.duration}を目安に、ドライブスポットを探しました。`
-                    : '入力した希望をもとに、立ち寄りたいスポットを集めました。'}
+                <p className="drive-results-kicker">
+                  <span className="drive-results-symbol" aria-hidden="true">
+                    <Compass size={14} strokeWidth={1.7} />
+                  </span>
+                  {basis}
+                  <span className="drive-results-rule" aria-hidden="true" />
                 </p>
+                <h2>
+                  <span>次のドライブ、</span>
+                  <span className="drive-results-accent">ここから。</span>
+                </h2>
+                {drive ? (
+                  <p className="drive-results-distance">
+                    <CarFront size={15} strokeWidth={1.7} aria-hidden="true" />
+                    <span>
+                      片道 <strong>{drive.duration}</strong> を目安に
+                    </span>
+                  </p>
+                ) : (
+                  <p className="drive-results-caption">立ち寄りたいスポットを集めました。</p>
+                )}
               </header>
             )}
           {result.kind === 'comparison' ? (
