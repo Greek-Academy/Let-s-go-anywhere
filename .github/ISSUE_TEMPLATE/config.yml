@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 現在の課題一覧を見る
+    url: https://github.com/Greek-Academy/Let-s-go-anywhere/issues/1
+    about: 新しく作る前に、同じ課題がないか確認できます。
